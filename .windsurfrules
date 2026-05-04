@@ -1,0 +1,16 @@
+# Project Context: Military Vehicle Simulator (T-72 Driver's Cabin)
+
+## Tech Stack
+* Pure Vanilla JavaScript (ES6+)
+* HTML5
+* CSS3
+* NO frameworks, NO external libraries. The final build must be lightweight and run smoothly on legacy Windows machines.
+
+## Architecture & Principles
+1. **Separation of Concerns:** Keep UI logic (DOM manipulation) separate from business logic (State Machine).
+2. **State Management:** Use a centralized class/object (e.g., `TankState`) to manage the vehicle's parameters (battery, gear, pedals, engine status).
+3. **SVG Hitboxes:** Because the background is a 2D pre-rendered image with perspective, use an invisible inline `<svg>` overlay with `<polygon>` elements for precise, non-rectangular clickable areas.
+4. **Data-driven UI:** DOM elements should update based on state changes. Use `data-*` attributes to bind SVG hitboxes to specific state actions.
+
+## Goal
+Create a web-based simulator where the user can interact with cabin controls (switches, pedals, levers) in a specific sequence to start the engine.

@@ -1,0 +1,16 @@
+{
+  "name": "tank-driver-sim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Driver Sim (vanilla HTML/CSS/JS) - development server with auto-reload",
+  "scripts": {
+    "dev": "concurrently \"node live-reload-server.js\" \"serve -s . -l 8000\"",
+    "serve": "serve -s . -l 8000"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "serve": "^14.2.0",
+    "concurrently": "^8.2.2",
+    "ws": "^8.16.0"
+  }
+}

@@ -1,0 +1,315 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
+  background: #0b0f14;
+  color: #e6edf3;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.sim {
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url("./img/фон.jpg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.overlay-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 200;
+}
+
+.overlay {
+  position: absolute;
+  left: calc(var(--x, 0) * 1%);
+  top: calc(var(--y, 0) * 1%);
+  width: calc(var(--w, 100) * 1%);
+  height: calc(var(--h, 100) * 1%);
+  transform: rotate(calc(var(--rot, 0) * 1deg));
+  transform-origin: center;
+  object-fit: contain;
+  display: none;
+  pointer-events: none;
+  z-index: var(--z, 1);
+}
+
+.overlay.overlay-control {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.overlay.overlay-control:hover {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.6));
+}
+
+.scene.overlays-debug .overlay.overlay-control {
+  outline: 2px solid rgba(0, 170, 255, 0.85);
+  outline-offset: -2px;
+}
+
+.overlay.is-visible {
+  display: block;
+}
+
+.hitbox-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
+  pointer-events: none;
+  fill: transparent;
+  stroke: transparent;
+}
+
+.scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
+  pointer-events: none;
+}
+
+.instrument-panel-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.instrument-panel-modal.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.instrument-panel-hitbox-layer .hitbox {
+  pointer-events: none;
+}
+
+.scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox {
+  pointer-events: all;
+}
+
+.scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox.transparent {
+  fill: rgba(255, 0, 0, 0.25);
+  stroke: rgba(255, 0, 0, 0.55);
+}
+
+.instrument-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px;
+  gap: 10px;
+}
+
+.instrument-panel-back {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e6edf3;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.instrument-panel-back:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.instrument-panel-stage {
+  position: relative;
+  flex: 1;
+  margin: 0 10px 10px 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #000;
+  background-image: url("./img/Прибор фон.png");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.hitbox {
+  pointer-events: all;
+  cursor: pointer;
+  fill: rgba(255, 0, 0, 0.25);
+  stroke: rgba(255, 0, 0, 0.55);
+  stroke-width: 3;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
+}
+
+.hitbox:hover {
+  fill: rgba(0, 255, 0, 0.25);
+  stroke: rgba(0, 255, 0, 0.65);
+}
+
+.draft-hitbox {
+  pointer-events: none;
+  fill: rgba(0, 170, 255, 0.12);
+  stroke: rgba(0, 170, 255, 0.95);
+  stroke-width: 3;
+}
+
+.hitbox.transparent {
+  fill: transparent;
+  stroke: transparent;
+}
+
+.hitbox.transparent:hover {
+  fill: rgba(0, 255, 0, 0.15);
+  stroke: rgba(0, 255, 0, 0.4);
+}
+
+.hitbox-labels {
+  pointer-events: none;
+}
+
+.hitbox-label {
+  display: none;
+  pointer-events: none;
+  user-select: none;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 18px;
+  fill: rgba(255, 255, 255, 0.95);
+  stroke: rgba(0, 0, 0, 0.8);
+  stroke-width: 4px;
+  paint-order: stroke fill;
+}
+
+.hitbox-layer.labels-visible .hitbox-label {
+  display: block;
+}
+
+.debug-console {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 1100;
+  min-width: 280px;
+  max-width: calc(100% - 24px);
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: pre;
+  user-select: none;
+}
+
+.fullscreen-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.fullscreen-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fullscreen-modal-content {
+  background: #1a1f2e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 32px 40px;
+  max-width: 480px;
+  text-align: center;
+  color: #e6edf3;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.fullscreen-modal-content h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.fullscreen-modal-content p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.fullscreen-modal-button {
+  background: #238636;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fullscreen-modal-button:hover {
+  background: #2ea043;
+}
+
+.fullscreen-modal-button:focus {
+  outline: 2px solid #2ea043;
+  outline-offset: 2px;
+}
