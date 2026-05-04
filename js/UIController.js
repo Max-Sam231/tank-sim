@@ -464,17 +464,11 @@ class UIController {
         case "bca-tca":
           this.state.toggleBcaTca();
           break;
-        case "mzn-tow-cover":
-          this.state.toggleMznTowCover();
-          break;
         case "mzn-tow":
-          this.state.toggleMznTow();
-          break;
-        case "starter-cover":
-          this.state.toggleStarterCover();
+          this.state.cycleMznTow();
           break;
         case "starter":
-          this.state.toggleStarter();
+          this.state.cycleStarter();
           break;
         case "signal-lamps-cover":
           this.state.toggleSignalLampsCover();
@@ -629,10 +623,8 @@ class UIController {
       `water-antifreeze: ${snapshot.waterAntifreeze ? "ON" : "OFF"}`,
       `gpk: ${snapshot.gpk ? "ON" : "OFF"}`,
       `bca-tca: ${snapshot.bcaTca ? "ON" : "OFF"}`,
-      `mzn-tow-cover: ${snapshot.mznTowCover ? "ON" : "OFF"}`,
-      `mzn-tow: ${snapshot.mznTow ? "ON" : "OFF"}`,
-      `starter-cover: ${snapshot.starterCover ? "ON" : "OFF"}`,
-      `starter: ${snapshot.starter ? "ON" : "OFF"}`,
+      `mzn-tow: ${snapshot.mznTow}`,
+      `starter: ${snapshot.starter}`,
       `signal-lamps-cover: ${snapshot.signalLampsCover ? "ON" : "OFF"}`,
       `signal-lamps-control: ${snapshot.signalLampsControl ? "ON" : "OFF"}`,
       "",

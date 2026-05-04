@@ -42,10 +42,8 @@ class TankState {
     this.waterAntifreeze = false;
     this.gpk = false;
     this.bcaTca = false;
-    this.mznTowCover = false;
-    this.mznTow = false;
-    this.starterCover = false;
-    this.starter = false;
+    this.mznTow = 0; // 0=closed, 1=open idle, 2=open pressed
+    this.starter = 0; // 0=closed, 1=open idle, 2=open pressed
     this.signalLampsCover = false;
     this.signalLampsControl = false;
 
@@ -98,9 +96,7 @@ class TankState {
       waterAntifreeze: this.waterAntifreeze,
       gpk: this.gpk,
       bcaTca: this.bcaTca,
-      mznTowCover: this.mznTowCover,
       mznTow: this.mznTow,
-      starterCover: this.starterCover,
       starter: this.starter,
       signalLampsCover: this.signalLampsCover,
       signalLampsControl: this.signalLampsControl,
@@ -288,23 +284,13 @@ class TankState {
     this._emit();
   }
 
-  toggleMznTowCover() {
-    this.mznTowCover = !this.mznTowCover;
+  cycleMznTow() {
+    this.mznTow = (this.mznTow + 1) % 3;
     this._emit();
   }
 
-  toggleMznTow() {
-    this.mznTow = !this.mznTow;
-    this._emit();
-  }
-
-  toggleStarterCover() {
-    this.starterCover = !this.starterCover;
-    this._emit();
-  }
-
-  toggleStarter() {
-    this.starter = !this.starter;
+  cycleStarter() {
+    this.starter = (this.starter + 1) % 3;
     this._emit();
   }
 
