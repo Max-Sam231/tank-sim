@@ -556,9 +556,8 @@ class UIController {
       
       const action = hitbox.dataset.action;
       if (action === "manometer") {
-        // Simulate pressure reading
-        const pressure = Math.round(50 + Math.random() * 200); // Random pressure 50-250 PSI
-        this.state.setManometer(pressure);
+        const snapshot = this.state.getSnapshot();
+        this.state.setManometer(Math.round(Number(snapshot.air_start_pressure) || 0));
       }
     });
 
@@ -593,7 +592,7 @@ class UIController {
       `last:    ${this._lastAction || "-"}`,
       "",
       "Controls:",
-      `manometer: ${snapshot.manometer > 0 ? snapshot.manometer + " PSI" : "0 PSI"}`,
+      `manometer: ${snapshot.manometer > 0 ? snapshot.manometer + " kg/cm²" : "0 kg/cm²"}`,
       `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
       `BCN: ${snapshot.bcn ? "ON" : "OFF"}`,
@@ -627,6 +626,26 @@ class UIController {
       `starter: ${snapshot.starter}`,
       `signal-lamps-cover: ${snapshot.signalLampsCover ? "ON" : "OFF"}`,
       `signal-lamps-control: ${snapshot.signalLampsControl ? "ON" : "OFF"}`,
+      "",
+      "Sensors:",
+      `air L: ${snapshot.air_left_cylinder.toFixed(1)} kg/cm²`,
+      `air R: ${snapshot.air_right_cylinder.toFixed(1)} kg/cm²`,
+      `air start: ${snapshot.air_start_pressure.toFixed(1)} kg/cm²`,
+      `rpm: ${snapshot.engine_rpm}`,
+      `oil eng: ${snapshot.oil_pressure_engine.toFixed(1)} kg/cm²`,
+      `oil kpp: ${snapshot.oil_pressure_gearbox.toFixed(1)} kg/cm²`,
+      `fuel p: ${snapshot.fuel_pressure.toFixed(1)} kg/cm²`,
+      `coolant: ${snapshot.coolant_temp.toFixed(0)}°C`,
+      `oil t: ${snapshot.oil_temp.toFixed(0)}°C`,
+      `voltage: ${snapshot.voltage.toFixed(1)} V`,
+      `speed: ${snapshot.speed_kmh.toFixed(1)} km/h`,
+      "",
+      "Lamps:",
+      `charge: ${snapshot.lamp_battery_charge ? "ON" : "OFF"}`,
+      `oil alarm: ${snapshot.lamp_oil_pressure_alarm ? "ON" : "OFF"}`,
+      `overheat: ${snapshot.lamp_overheat ? "ON" : "OFF"}`,
+      `fuel reserve: ${snapshot.lamp_fuel_reserve ? "ON" : "OFF"}`,
+      `gear: ${snapshot.lamp_gear_engaged ? "ON" : "OFF"}`,
       "",
       `hitbox:  ${this._hitboxVisible ? "VISIBLE" : "HIDDEN"}`,
       "[H] toggle"

@@ -237,6 +237,8 @@ body {
   z-index: 1100;
   min-width: 280px;
   max-width: calc(100% - 24px);
+  max-height: 70vh;
+  overflow-y: auto;
   background: rgba(0, 0, 0, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
@@ -249,6 +251,296 @@ body {
   line-height: 1.35;
   white-space: pre;
   user-select: none;
+}
+
+.sim-finish-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1100;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.65);
+  color: rgba(255, 255, 255, 0.95);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sim-finish-button:active {
+  transform: translateY(1px);
+}
+
+.scenario-menu {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 1200;
+  max-width: calc(100% - 24px);
+}
+
+.scenario-menu.is-hidden {
+  display: none;
+}
+
+.scenario-menu-content {
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.scenario-menu-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.scenario-menu-field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.scenario-menu-label {
+  display: block;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+.scenario-menu-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.scenario-menu-apply {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.95);
+  cursor: pointer;
+}
+
+.scenario-menu-apply:active {
+  transform: translateY(1px);
+}
+
+/* Start Menu */
+.start-menu-container {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #000;
+  color: #fff;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+}
+
+.start-menu-container.is-hidden {
+  display: none;
+}
+
+.start-screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.start-screen.is-active {
+  display: block;
+}
+
+/* Start Fullscreen Modal */
+.start-fullscreen-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.start-fullscreen-modal-content {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #fff;
+  max-width: 400px;
+}
+
+.start-fullscreen-modal-content h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.start-fullscreen-modal-content p {
+  margin: 0 0 24px 0;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.start-fullscreen-modal-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.start-fullscreen-modal-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Main Screen */
+.start-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  gap: 16px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.start-nav-item {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  font-family: inherit;
+  text-align: left;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.start-nav-item:hover {
+  opacity: 0.7;
+}
+
+/* Training Screen */
+.training-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 40px;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.training-back {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.training-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.training-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding: 20px;
+}
+
+.scenario-menu-full {
+  width: 100%;
+  max-width: 400px;
+}
+
+.scenario-menu-content-full {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.scenario-menu-apply-full {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.scenario-menu-apply-full:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.scenario-menu-apply-full:active {
+  transform: translateY(1px);
+}
+
+/* Instruction Screen */
+.instruction-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 40px;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.instruction-back {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.instruction-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.instruction-content {
+  padding: 40px;
+}
+
+.instruction-placeholder {
+  font-size: 18px;
+  opacity: 0.7;
 }
 
 .fullscreen-modal {
