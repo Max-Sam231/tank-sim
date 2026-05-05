@@ -605,3 +605,93 @@ body {
   outline: 2px solid #2ea043;
   outline-offset: 2px;
 }
+
+.finish-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.finish-report-modal.hidden {
+  display: none;
+}
+
+.finish-report-modal-content {
+  width: min(960px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  background: #10161f;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.finish-report-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.finish-report-title {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.finish-report-body {
+  padding: 16px 20px;
+  overflow: auto;
+}
+
+.finish-report-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.finish-report-item {
+  padding: 8px 8px;
+  margin: 0;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.finish-report-item.is-done {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+.finish-report-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  justify-content: flex-end;
+}
+
+.finish-report-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+}
+
+.finish-report-btn:active {
+  transform: translateY(1px);
+}
+
+.finish-report-btn-secondary {
+  background: rgba(0, 0, 0, 0.25);
+}

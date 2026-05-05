@@ -2,6 +2,7 @@ class TankState {
   constructor() {
     this.isBatteryOn = false;
     this.isBrakePressed = false;
+    this.parkingBrakeLatched = false;
 
     this.scenario = {
       startMethod: "starter-generator",
@@ -82,7 +83,87 @@ class TankState {
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
 
+    this._brakeHoldTime = 0;
+    this._brakeHoldTriggered = false;
+
     this._listeners = new Set();
+  }
+
+  reset() {
+    this.isBatteryOn = false;
+    this.isBrakePressed = false;
+    this.parkingBrakeLatched = false;
+
+    this.manometer = 0;
+    this.instrumentPanel = false;
+    this.leftTank = false;
+    this.bcn = false;
+    this.shutters = false;
+    this.rightTank = false;
+    this.fuelPrimerLever = false;
+    this.fuelManualFeed = 0;
+    this.gearLever = "neutral";
+    this.gasPedal = false;
+    this.airBleedValve = false;
+
+    this.azr = 0;
+    this.epk = false;
+    this.horn = false;
+    this.mznEngine = false;
+    this.ammeterButton = false;
+
+    this.leftRightTanks = 1;
+    this.sparkPlug = 1;
+    this.engineStart = 1;
+
+    this.emergencyHatchRotation = false;
+    this.oilPumpGearbox = false;
+    this.commanderCall = false;
+    this.airIntake = false;
+
+    this.heating = false;
+    this.combined = false;
+    this.leftLights = false;
+    this.rightLights = false;
+    this.gabrateLights = false;
+    this.lightsAll = false;
+    this.waterAntifreeze = false;
+    this.gpk = false;
+    this.bcaTca = false;
+    this.mznTow = 0;
+    this.starter = 0;
+    this.signalLampsCover = false;
+    this.signalLampsControl = false;
+
+    this.sensors.air_left_cylinder = 80.0;
+    this.sensors.air_right_cylinder = 80.0;
+    this.sensors.air_start_pressure = 0.0;
+    this.sensors.engine_rpm = 0;
+    this.sensors.oil_pressure_engine = 0.0;
+    this.sensors.oil_pressure_gearbox = 0.0;
+    this.sensors.fuel_pressure = 0.0;
+    this.sensors.coolant_temp = Number.isFinite(this.scenario?.ambientTempC) ? this.scenario.ambientTempC : 20.0;
+    this.sensors.oil_temp = Number.isFinite(this.scenario?.ambientTempC) ? this.scenario.ambientTempC : 20.0;
+    this.sensors.voltage = 0.0;
+    this.sensors.speed_kmh = 0.0;
+    this.sensors.fuel_level = 100.0;
+    this.sensors.is_bcn_active = false;
+    this.sensors.is_mzn_active = false;
+
+    this.lamps.battery_charge = false;
+    this.lamps.oil_pressure_alarm = false;
+    this.lamps.overheat = false;
+    this.lamps.fuel_reserve = false;
+    this.lamps.gear_engaged = false;
+
+    this._engineRunning = false;
+    this._crankTime = 0;
+    this._batteryVoltage = 25.0;
+    this._timeSinceLastEmit = 0;
+    this._brakeHoldTime = 0;
+    this._brakeHoldTriggered = false;
+
+    this._emit();
   }
 
   subscribe(listener) {
@@ -99,6 +180,9 @@ class TankState {
     return {
       isBatteryOn: this.isBatteryOn,
       isBrakePressed: this.isBrakePressed,
+      brakeEffective: this.isBrakePressed || this.parkingBrakeLatched,
+      parkingBrakeLatched: this.parkingBrakeLatched,
+      engineRunning: this._engineRunning,
 
       scenario: { ...this.scenario },
       scenario_start_method: this.scenario.startMethod,
@@ -242,6 +326,18 @@ class TankState {
     const isMassOn = Boolean(this.isBatteryOn);
     const starterPressed = this.starter === 2;
 
+    if (this.isBrakePressed) {
+      this._brakeHoldTime += dt;
+      if (!this._brakeHoldTriggered && this._brakeHoldTime >= 1.0) {
+        this.parkingBrakeLatched = !this.parkingBrakeLatched;
+        this._brakeHoldTriggered = true;
+        changed = true;
+      }
+    } else {
+      this._brakeHoldTime = 0;
+      this._brakeHoldTriggered = false;
+    }
+
     const startMethod = this.scenario.startMethod;
     const requiresAirStart = startMethod === "air-start";
 
@@ -262,7 +358,7 @@ class TankState {
     changed = this._setSensorBool("is_bcn_active", isBcnActive) || changed;
     changed = this._setSensorBool("is_mzn_active", isMznActive) || changed;
 
-    let targetFuelPressure = isBcnActive ? 1.8 : 0.0;
+    let targetFuelPressure = this._engineRunning ? 1.8 : (isBcnActive ? 1.8 : 0.0);
     const fuelPressure = this._approach(this.sensors.fuel_pressure, targetFuelPressure, 3.0, dt);
     changed = this._setSensor("fuel_pressure", fuelPressure, { min: 0, max: 3 }) || changed;
 
@@ -311,9 +407,10 @@ class TankState {
 
     const fuelOk = fuelPressure >= 0.8;
     const airOk = requiresAirStart ? airStartPressure >= 10.0 : true;
+    const primerOk = Boolean(this.fuelPrimerLever);
     const manualOk = this.fuelManualFeed >= 10;
 
-    if (isCranking && fuelOk && airOk && manualOk) {
+    if (isCranking && fuelOk && airOk && manualOk && primerOk) {
       this._crankTime += dt;
     } else {
       this._crankTime = 0;
@@ -344,7 +441,8 @@ class TankState {
     let targetOilEngine = 0.0;
     if (this._engineRunning) targetOilEngine = 5.5;
     else if (isMznActive && voltage >= 20.0) targetOilEngine = 3.5;
-    const oilEngine = this._approach(this.sensors.oil_pressure_engine, targetOilEngine, 6.0, dt);
+    const oilEngineRate = this._engineRunning ? 6.0 : 1.2;
+    const oilEngine = this._approach(this.sensors.oil_pressure_engine, targetOilEngine, oilEngineRate, dt);
     changed = this._setSensor("oil_pressure_engine", oilEngine, { min: 0, max: 10 }) || changed;
 
     const targetOilGearbox = this._engineRunning ? 2.5 : 0.0;
@@ -419,6 +517,21 @@ class TankState {
     this._emit();
   }
 
+  setMznEnginePressed(isPressed) {
+    const next = Boolean(isPressed);
+    if (this.mznEngine === next) return;
+    this.mznEngine = next;
+    this._emit();
+  }
+
+  setStarterPressed(isPressed) {
+    const next = Boolean(isPressed);
+    const desired = next ? 2 : 1;
+    if (this.starter === desired) return;
+    this.starter = desired;
+    this._emit();
+  }
+
   // Manometer - set pressure value
   setManometer(value) {
     this.manometer = Math.max(0, Math.min(300, value)); // 0-300 PSI
@@ -426,7 +539,13 @@ class TankState {
   }
 
   toggleInstrumentPanel() {
-    this.instrumentPanel = !this.instrumentPanel;
+    this.setInstrumentPanelOpen(!this.instrumentPanel);
+  }
+
+  setInstrumentPanelOpen(isOpen) {
+    const next = Boolean(isOpen);
+    if (this.instrumentPanel === next) return;
+    this.instrumentPanel = next;
     this._emit();
   }
 
@@ -499,8 +618,7 @@ class TankState {
   }
 
   toggleMznEngine() {
-    this.mznEngine = !this.mznEngine;
-    this._emit();
+    this.setMznEnginePressed(!this.mznEngine);
   }
 
   toggleAmmeterButton() {

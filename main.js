@@ -2,6 +2,8 @@ import { TankState } from './js/TankState.js';
 import { UIController } from './js/UIController.js';
 import { FullscreenManager } from './js/FullscreenManager.js';
 import { StartMenu } from './js/StartMenu.js';
+import { TrainingEngine } from './js/TrainingEngine.js';
+import { FinishReportModal } from './js/FinishReportModal.js';
 
 function bootstrap() {
   const sceneEl = document.getElementById("scene");
@@ -13,6 +15,18 @@ function bootstrap() {
 
   const state = new TankState();
   const ui = new UIController({ rootEl: sceneEl, consoleEl, state });
+
+  const training = new TrainingEngine({ state });
+
+  const reportModal = new FinishReportModal({
+    onContinue: () => {
+      startLoop();
+    },
+    onMenu: () => {
+      stopLoop();
+      startMenu.show();
+    },
+  });
 
   let rafId = null;
   let isLoopRunning = false;
@@ -41,7 +55,10 @@ function bootstrap() {
   const startMenu = new StartMenu({
     rootEl: startMenuContainerEl,
     onTrainingStart: ({ startMethod, ambientTemp }) => {
+      stopLoop();
       state.setScenario({ startMethod, ambientTempC: ambientTemp });
+      state.reset();
+      training.setGoal({ startMethod, ambientTempC: ambientTemp });
       startMenu.hide();
       startLoop();
     },
@@ -53,7 +70,7 @@ function bootstrap() {
   if (finishBtnEl) {
     finishBtnEl.addEventListener("click", () => {
       stopLoop();
-      startMenu.show();
+      reportModal.show(training.getReport());
     });
   }
 

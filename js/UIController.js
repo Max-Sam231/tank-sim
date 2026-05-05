@@ -13,6 +13,7 @@ class UIController {
     this._svgEl = this.rootEl.querySelector("svg.hitbox-layer");
     this._lastClick = null;
     this._lastAction = null;
+    this._touchHeldAction = null;
     this._hitboxVisible = true;
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
@@ -374,7 +375,7 @@ class UIController {
           break;
         case "instrument-panel":
           this._showInstrumentPanel();
-          this.state.toggleInstrumentPanel();
+          this.state.setInstrumentPanelOpen(true);
           break;
         case "left-tank":
           this.state.toggleLeftTank();
@@ -393,7 +394,7 @@ class UIController {
           break;
         case "fuel-manual-feed":
           // Increase fuel feed by 10% on click
-          this.state.adjustFuelManualFeed(10);
+          this.state.adjustFuelManualFeed(event.shiftKey ? -10 : 10);
           break;
         case "gear-lever":
           this.state.cycleGearLever();
@@ -468,7 +469,6 @@ class UIController {
           this.state.cycleMznTow();
           break;
         case "starter":
-          this.state.cycleStarter();
           break;
         case "signal-lamps-cover":
           this.state.toggleSignalLampsCover();
@@ -491,6 +491,9 @@ class UIController {
       } else if (action === "gas-pedal") {
         event.preventDefault();
         this.state.setGasPedal(true);
+      } else if (action === "starter") {
+        event.preventDefault();
+        this.state.setStarterPressed(true);
       }
     });
 
@@ -498,11 +501,12 @@ class UIController {
       const el = event.target.closest?.(".hitbox, .overlay-control");
       const action = el?.dataset?.action;
 
-      if (action === "brake-pedal" || action === "gas-pedal") {
+      if (action === "brake-pedal" || action === "gas-pedal" || action === "starter") {
         event.preventDefault();
       }
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
+      this.state.setStarterPressed(false);
     };
 
     window.addEventListener("mouseup", releasePedals);
@@ -510,6 +514,7 @@ class UIController {
     this.rootEl.addEventListener("mouseleave", () => {
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
+      this.state.setStarterPressed(false);
     });
 
     this.rootEl.addEventListener(
@@ -530,10 +535,16 @@ class UIController {
 
         if (action === "brake-pedal") {
           event.preventDefault();
+          this._touchHeldAction = "brake-pedal";
           this.state.setBrakePressed(true);
         } else if (action === "gas-pedal") {
           event.preventDefault();
+          this._touchHeldAction = "gas-pedal";
           this.state.setGasPedal(true);
+        } else if (action === "starter") {
+          event.preventDefault();
+          this._touchHeldAction = "starter";
+          this.state.setStarterPressed(true);
         }
       },
       { passive: false }
@@ -542,9 +553,11 @@ class UIController {
     window.addEventListener(
       "touchend",
       (event) => {
-        event.preventDefault();
+        if (this._touchHeldAction) event.preventDefault();
         this.state.setBrakePressed(false);
         this.state.setGasPedal(false);
+        this.state.setStarterPressed(false);
+        this._touchHeldAction = null;
       },
       { passive: false }
     );
@@ -579,10 +592,23 @@ class UIController {
         this._toggleHitboxVisibility();
       }
     });
+
+    const backButton = document.getElementById("instrumentPanelBack");
+    if (backButton) {
+      backButton.addEventListener("click", () => {
+        this.state.setInstrumentPanelOpen(false);
+      });
+    }
   }
 
   _render(snapshot) {
     this._renderOverlays(snapshot);
+
+    const panelModal = document.getElementById("instrumentPanelModal");
+    if (panelModal) {
+      panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
+      this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
+    }
 
     const lines = [
       "TankState",
