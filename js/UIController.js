@@ -1,10 +1,12 @@
 import { CONTROL_OVERLAY_DEFS } from './ControlOverlayDefs.js';
 
 class UIController {
-  constructor({ rootEl, consoleEl, state }) {
+  constructor({ rootEl, consoleEl, state, isDebug = true }) {
     this.rootEl = rootEl;
     this.consoleEl = consoleEl;
     this.state = state;
+
+    this.isDebug = Boolean(isDebug);
 
     this._overlayLayerEl = this.rootEl.querySelector(".overlay-layer");
     this._overlayEls = Array.from(this.rootEl.querySelectorAll(".overlay[data-action][data-when]"));
@@ -14,7 +16,7 @@ class UIController {
     this._lastClick = null;
     this._lastAction = null;
     this._touchHeldAction = null;
-    this._hitboxVisible = true;
+    this._hitboxVisible = this.isDebug;
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
 
@@ -22,7 +24,7 @@ class UIController {
 
     this._ensureCabinControlOverlays();
     this._ensureInstrumentPanelControlOverlays();
-    this._ensureHitboxLabels();
+    if (this.isDebug) this._ensureHitboxLabels();
     this._syncHitboxVisibility();
 
     this.state.subscribe((snapshot) => {
@@ -469,12 +471,10 @@ class UIController {
           this.state.cycleMznTow();
           break;
         case "starter":
+          this.state.cycleStarter();
           break;
-        case "signal-lamps-cover":
-          this.state.toggleSignalLampsCover();
-          break;
-        case "signal-lamps-control":
-          this.state.toggleSignalLampsControl();
+        case "signal-lamps":
+          this.state.cycleSignalLamps();
           break;
       }
     });
@@ -491,9 +491,6 @@ class UIController {
       } else if (action === "gas-pedal") {
         event.preventDefault();
         this.state.setGasPedal(true);
-      } else if (action === "starter") {
-        event.preventDefault();
-        this.state.setStarterPressed(true);
       }
     });
 
@@ -501,12 +498,11 @@ class UIController {
       const el = event.target.closest?.(".hitbox, .overlay-control");
       const action = el?.dataset?.action;
 
-      if (action === "brake-pedal" || action === "gas-pedal" || action === "starter") {
+      if (action === "brake-pedal" || action === "gas-pedal") {
         event.preventDefault();
       }
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
-      this.state.setStarterPressed(false);
     };
 
     window.addEventListener("mouseup", releasePedals);
@@ -514,7 +510,6 @@ class UIController {
     this.rootEl.addEventListener("mouseleave", () => {
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
-      this.state.setStarterPressed(false);
     });
 
     this.rootEl.addEventListener(
@@ -541,10 +536,6 @@ class UIController {
           event.preventDefault();
           this._touchHeldAction = "gas-pedal";
           this.state.setGasPedal(true);
-        } else if (action === "starter") {
-          event.preventDefault();
-          this._touchHeldAction = "starter";
-          this.state.setStarterPressed(true);
         }
       },
       { passive: false }
@@ -556,7 +547,6 @@ class UIController {
         if (this._touchHeldAction) event.preventDefault();
         this.state.setBrakePressed(false);
         this.state.setGasPedal(false);
-        this.state.setStarterPressed(false);
         this._touchHeldAction = null;
       },
       { passive: false }
@@ -586,12 +576,14 @@ class UIController {
     });
 
     // Keyboard events
-    window.addEventListener("keydown", (event) => {
-      if (event.key === "h" || event.key === "H") {
-        event.preventDefault();
-        this._toggleHitboxVisibility();
-      }
-    });
+    if (this.isDebug) {
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "h" || event.key === "H") {
+          event.preventDefault();
+          this._toggleHitboxVisibility();
+        }
+      });
+    }
 
     const backButton = document.getElementById("instrumentPanelBack");
     if (backButton) {
@@ -608,6 +600,39 @@ class UIController {
     if (panelModal) {
       panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
       this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
+    }
+
+    if (!this.isDebug) {
+      const safeFixed = (value, digits) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "-";
+        return n.toFixed(digits);
+      };
+
+      const safeInt = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "-";
+        return String(Math.round(n));
+      };
+
+      const lines = [
+        "ПРИБОРЫ",
+        `Давление воздуха (лев.):  ${safeFixed(snapshot.air_left_cylinder, 1)} кгс/см²`,
+        `Давление воздуха (прав.): ${safeFixed(snapshot.air_right_cylinder, 1)} кгс/см²`,
+        `Давление пуска (воздух): ${safeFixed(snapshot.air_start_pressure, 1)} кгс/см²`,
+        `Обороты двигателя:        ${safeInt(snapshot.engine_rpm)} об/мин`,
+        `Давление масла (двиг.):   ${safeFixed(snapshot.oil_pressure_engine, 1)} кгс/см²`,
+        `Давление масла (КПП):     ${safeFixed(snapshot.oil_pressure_gearbox, 1)} кгс/см²`,
+        `Давление топлива:         ${safeFixed(snapshot.fuel_pressure, 1)} кгс/см²`,
+        `Температура ОЖ:           ${safeInt(snapshot.coolant_temp)} °C`,
+        `Температура масла:        ${safeInt(snapshot.oil_temp)} °C`,
+        `Напряжение бортсети:      ${safeFixed(snapshot.voltage, 1)} В`,
+        `Скорость:                ${safeFixed(snapshot.speed_kmh, 1)} км/ч`,
+        `Уровень топлива:          ${safeFixed(snapshot.fuel_level, 0)} %`,
+      ];
+
+      this.consoleEl.textContent = lines.join("\n");
+      return;
     }
 
     const lines = [
@@ -650,8 +675,7 @@ class UIController {
       `bca-tca: ${snapshot.bcaTca ? "ON" : "OFF"}`,
       `mzn-tow: ${snapshot.mznTow}`,
       `starter: ${snapshot.starter}`,
-      `signal-lamps-cover: ${snapshot.signalLampsCover ? "ON" : "OFF"}`,
-      `signal-lamps-control: ${snapshot.signalLampsControl ? "ON" : "OFF"}`,
+      `signal-lamps: ${snapshot.signalLamps}`,
       "",
       "Sensors:",
       `air L: ${snapshot.air_left_cylinder.toFixed(1)} kg/cm²`,
@@ -770,6 +794,8 @@ class UIController {
   }
 
   _toggleHitboxVisibility() {
+    if (!this.isDebug) return;
+
     this._hitboxVisible = !this._hitboxVisible;
 
     this._syncHitboxVisibility();
@@ -778,6 +804,8 @@ class UIController {
   }
 
   _syncHitboxVisibility() {
+    if (!this.isDebug) this._hitboxVisible = false;
+
     const hitboxes = this.rootEl.querySelectorAll(".hitbox");
     hitboxes.forEach((hitbox) => {
       hitbox.classList.toggle("transparent", !this._hitboxVisible);

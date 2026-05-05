@@ -50,8 +50,7 @@ class TankState {
     this.bcaTca = false;
     this.mznTow = 0; // 0=closed, 1=open idle, 2=open pressed
     this.starter = 0; // 0=closed, 1=open idle, 2=open pressed
-    this.signalLampsCover = false;
-    this.signalLampsControl = false;
+    this.signalLamps = 0; // 0=closed cover, 1=open, 2=on
 
     this.sensors = {
       air_left_cylinder: 80.0,
@@ -85,6 +84,8 @@ class TankState {
 
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
+
+    this._parkingBrakeHoldThresholdSec = 1.2;
 
     this._listeners = new Set();
   }
@@ -132,8 +133,7 @@ class TankState {
     this.bcaTca = false;
     this.mznTow = 0;
     this.starter = 0;
-    this.signalLampsCover = false;
-    this.signalLampsControl = false;
+    this.signalLamps = 0;
 
     this.sensors.air_left_cylinder = 80.0;
     this.sensors.air_right_cylinder = 80.0;
@@ -221,8 +221,7 @@ class TankState {
       bcaTca: this.bcaTca,
       mznTow: this.mznTow,
       starter: this.starter,
-      signalLampsCover: this.signalLampsCover,
-      signalLampsControl: this.signalLampsControl,
+      signalLamps: this.signalLamps,
 
       sensors: { ...this.sensors },
       lamps: { ...this.lamps },
@@ -328,7 +327,7 @@ class TankState {
 
     if (this.isBrakePressed) {
       this._brakeHoldTime += dt;
-      if (!this._brakeHoldTriggered && this._brakeHoldTime >= 1.0) {
+      if (!this._brakeHoldTriggered && this._brakeHoldTime >= this._parkingBrakeHoldThresholdSec) {
         this.parkingBrakeLatched = !this.parkingBrakeLatched;
         this._brakeHoldTriggered = true;
         changed = true;
@@ -488,7 +487,7 @@ class TankState {
       changed = this._setSensor("fuel_level", fuelLevel, { min: 0, max: 100 }) || changed;
     }
 
-    const lampTest = Boolean(this.signalLampsControl) && Boolean(this.signalLampsCover);
+    const lampTest = this.signalLamps === 2;
     changed = this._setLamp("battery_charge", lampTest || (isMassOn && !this._engineRunning)) || changed;
     changed = this._setLamp(
       "oil_pressure_alarm",
@@ -603,7 +602,13 @@ class TankState {
   }
 
   cycleAzr() {
-    this.azr = (this.azr + 1) % 3;
+    if (this.azr === 0) {
+      // First click - open cover
+      this.azr = 1;
+    } else {
+      // Subsequent clicks - toggle between open (1) and pressed (2)
+      this.azr = this.azr === 1 ? 2 : 1;
+    }
     this._emit();
   }
 
@@ -707,22 +712,35 @@ class TankState {
   }
 
   cycleMznTow() {
-    this.mznTow = (this.mznTow + 1) % 3;
+    if (this.mznTow === 0) {
+      // First click - open cover
+      this.mznTow = 1;
+    } else {
+      // Subsequent clicks - toggle between open (1) and pressed (2)
+      this.mznTow = this.mznTow === 1 ? 2 : 1;
+    }
     this._emit();
   }
 
   cycleStarter() {
-    this.starter = (this.starter + 1) % 3;
+    if (this.starter === 0) {
+      // First click - open cover
+      this.starter = 1;
+    } else {
+      // Subsequent clicks - toggle between open (1) and pressed (2)
+      this.starter = this.starter === 1 ? 2 : 1;
+    }
     this._emit();
   }
 
-  toggleSignalLampsCover() {
-    this.signalLampsCover = !this.signalLampsCover;
-    this._emit();
-  }
-
-  toggleSignalLampsControl() {
-    this.signalLampsControl = !this.signalLampsControl;
+  cycleSignalLamps() {
+    if (this.signalLamps === 0) {
+      // First click - open cover
+      this.signalLamps = 1;
+    } else {
+      // Subsequent clicks - toggle between open (1) and pressed (2)
+      this.signalLamps = this.signalLamps === 1 ? 2 : 1;
+    }
     this._emit();
   }
 }

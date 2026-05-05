@@ -68,13 +68,13 @@ const CONTROL_OVERLAY_DEFS = {
   },
   "brake-pedal": {
     kind: "boolean",
-    stateKey: "isBrakePressed",
+    stateKey: "brakeEffective",
     inflate: 1.8,
     offsetX: 0,
     offsetY: -60,
     z: 52,
-    off: "./img/6/6-1.png",
-    on: "./img/6/6-4.png",
+    on: "./img/6/6-1.png",
+    off: "./img/6/6-4.png",
   },
   "fuel-manual-feed": {
     kind: "range",
@@ -374,25 +374,18 @@ const CONTROL_OVERLAY_DEFS = {
       2: { src: "./img/12/13-3.png" },
     },
   },
-  "signal-lamps-cover": {
-    kind: "boolean",
-    stateKey: "signalLampsCover",
+  "signal-lamps": {
+    kind: "enum",
+    stateKey: "signalLamps",
     inflate: 1.0,
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
-  },
-  "signal-lamps-control": {
-    kind: "boolean",
-    stateKey: "signalLampsControl",
-    inflate: 1.0,
-    offsetX: 0,
-    offsetY: 0,
-    z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
+    frames: {
+      0: { src: "./img/12/13.png" },
+      1: { src: "./img/12/13-4.png" },
+      2: { src: "./img/12/13-3.png" },
+    },
   },
 };
 

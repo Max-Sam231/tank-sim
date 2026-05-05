@@ -5,6 +5,9 @@ import { StartMenu } from './js/StartMenu.js';
 import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
 
+const APP_MODE = "prod";
+const IS_DEBUG = APP_MODE === "debug";
+
 function bootstrap() {
   const sceneEl = document.getElementById("scene");
   const consoleEl = document.getElementById("debugConsole");
@@ -13,8 +16,11 @@ function bootstrap() {
 
   if (!sceneEl || !consoleEl || !startMenuContainerEl) return;
 
+  document.body.classList.toggle("app-debug", IS_DEBUG);
+  document.body.classList.toggle("app-prod", !IS_DEBUG);
+
   const state = new TankState();
-  const ui = new UIController({ rootEl: sceneEl, consoleEl, state });
+  const ui = new UIController({ rootEl: sceneEl, consoleEl, state, isDebug: IS_DEBUG });
 
   const training = new TrainingEngine({ state });
 

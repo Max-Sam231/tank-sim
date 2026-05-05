@@ -262,17 +262,11 @@
                   data-action="starter"
                   points="1350,480 1450,480 1450,580 1350,580"
                 ></polygon>
-                <!-- крышка контроль сигнальных ламп -->
-                <polygon
-                  class="hitbox"
-                  data-action="signal-lamps-cover"
-                  points="1080,685 1180,685 1180,805 1080,805"
-                ></polygon>
                 <!-- контроль сигнальных ламп -->
                 <polygon
                   class="hitbox"
-                  data-action="signal-lamps-control"
-                  points="1080,705 1180,705 1180,805 1080,805"
+                  data-action="signal-lamps"
+                  points="1080,685 1180,685 1180,805 1080,805"
                 ></polygon>
                 <!-- амперметр кнопка -->
                 <polygon
@@ -288,34 +282,34 @@
                 ></polygon>
               </svg>
 
-    <div class="overlay-layer" aria-hidden="true"></div>
-  </div>
-</div>
+              <div class="overlay-layer" aria-hidden="true"></div>
+            </div>
+          </div>
 
-<!-- Start Menu Container -->
-<div class="start-menu-container" id="startMenuContainer"></div>
+          <!-- Start Menu Container -->
+          <div class="start-menu-container" id="startMenuContainer"></div>
 
-<button class="sim-finish-button" id="simFinishButton" type="button">Закончить</button>
+          <button class="sim-finish-button" id="simFinishButton" type="button">Закончить</button>
 
-<div class="debug-console" id="debugConsole" aria-live="polite"></div>
+          <div class="debug-console" id="debugConsole" aria-live="polite"></div>
 
-<div
-  class="fullscreen-modal"
-  id="fullscreenModal"
-  role="dialog"
-  aria-labelledby="modalTitle"
-  aria-describedby="modalDesc"
->
-  <div class="fullscreen-modal-content">
-    <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
-    <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
-    <button class="fullscreen-modal-button" id="modalButton">
-      Перейти в полноэкранный режим
-    </button>
-  </div>
-</div>
-</div>
-</section>
-</main>
-</body>
+          <div
+            class="fullscreen-modal"
+            id="fullscreenModal"
+            role="dialog"
+            aria-labelledby="modalTitle"
+            aria-describedby="modalDesc"
+          >
+            <div class="fullscreen-modal-content">
+              <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
+              <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
+              <button class="fullscreen-modal-button" id="modalButton">
+                Перейти в полноэкранный режим
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
 </html>
