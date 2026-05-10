@@ -12,42 +12,68 @@
 
 <body>
   <main class="app">
-    <section class="sim" aria-label="Симулятор кабины">
-      <div class="scene" id="scene">
+
+    <div class="ui-layer-global">
+      <button class="sim-finish-button hidden" id="simFinishButton" type="button">Закончить</button>
+      <div class="debug-console" id="debugConsole" aria-live="polite"></div>
+
+      <div class="fullscreen-modal hidden" id="fullscreenModal" role="dialog" aria-labelledby="modalTitle"
+        aria-describedby="modalDesc">
+        <div class="fullscreen-modal-content">
+          <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
+          <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
+          <button class="fullscreen-modal-button" id="modalButton">
+            Перейти в полноэкранный режим
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Контейнер для Стартового Меню (генерируется JS) -->
+    <div class="start-menu-container" id="startMenuContainer"></div>
+
+
+    <!-- === СЦЕНА 1: АНГАР === -->
+    <section id="scene-hangar" class="game-scene hidden">
+      <div class="hangar-bg-wrapper">
+        <!-- фон ангара -->
+        <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Angar Background" />
+        <!-- танк -->
+        <img class="tank-layer" src="./img/hangar/tank.png" alt="Tank" />
+      </div>
+
+      <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
+        
+        <!-- Люк механика-водителя (Вход в кабину) -->
+        <polygon class="hitbox interactive" data-action="enter_driver_seat" 
+                 points="1050,670 1140,660 1200,700 1070,700" />
+        
+        <!-- Люк командира (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_commander_seat" 
+                 points="850,500 950,500 950,600 850,600" />
+                 
+        <!-- Люк наводчика (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_gunner_seat" 
+                 points="550,520 650,520 650,620 550,620" />
+      </svg>
+    </section>
+
+
+    <section id="scene-driver" class="game-scene hidden">
+      <div class="scene-content" id="scene">
+        <img class="cabin-bg" src="./img/фон.jpg" alt="Driver Cabin Background" />
+        <!-- Слой оверлеев (динамически заполняется UIController) -->
         <div class="overlay-layer" aria-hidden="true">
-          <!-- <img
-              class="overlay"
-              data-action="battery-toggle"
-              data-when="off"
-              src="./img/11/11_0000_Слой-289-копия.png"
-              style="--x: -2; --y: 6; --w: 10; --h: 10; --rot: 0; --z: 1;"
-              alt=""
-            />
-            <img
-              class="overlay"
-              data-action="battery-toggle"
-              data-when="on"
-              src="./img/11/11_0001_Слой-2.png"
-              style="--x: -2; --y: 6; --w: 10; --h: 10; --rot: 0; --z: 1;"
-              alt=""
-            /> -->
+         
         </div>
-        <div class="hangar-scene is-hidden" id="hangarScene">
 
-          <!-- фон ангара -->
-          <img class="hangar-bg" src="./img/hangar/background.jpg" />
-
-          <!-- танк -->
-          <img class="tank-layer" src="./img/hangar/tank.png" />
-
-          <!-- люки -->
-          <div class="hatch hatch-driver" data-hatch="driver"></div>
-          <div class="hatch hatch-commander" data-hatch="commander"></div>
-          <div class="hatch hatch-gunner" data-hatch="gunner"></div>
-
-        </div>
         <svg class="hitbox-layer cabin-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
           aria-hidden="true">
+          
+          <!-- Кнопка "Выход в ангар" (невидимая зона в правом верхнем углу) -->
+          <polygon class="hitbox interactive exit-btn" data-action="Вернуться в ангар" 
+                   points="1800,20 1900,20 1900,60 1800,60"></polygon>
+
           <!-- Battery toggle -->
           <polygon class="hitbox" data-action="battery-toggle" points="30,75 85,83 87,195 22,215"></polygon>
           <!-- Манометр -->
@@ -77,6 +103,7 @@
           <polygon class="hitbox" data-action="air-bleed-valve" points="248,933 272,935 274,988 243,987"></polygon>
         </svg>
 
+        <!-- Модалка приборной панели -->
         <div class="instrument-panel-modal hidden" id="instrumentPanelModal" role="dialog"
           aria-label="Приборная панель">
           <div class="instrument-panel-toolbar">
@@ -131,7 +158,6 @@
               <polygon class="hitbox" data-action="mzn-engine" points="1240,480 1340,480 1340,580 1240,580"></polygon>
               <!-- МЗН буксир -->
               <polygon class="hitbox" data-action="mzn-tow" points="1240,370 1340,370 1340,470 1240,470"></polygon>
-              <!-- крышка стартер -->
               <!-- стартер -->
               <polygon class="hitbox" data-action="starter" points="1350,480 1450,480 1450,580 1350,580"></polygon>
               <!-- контроль сигнальных ламп -->
@@ -145,26 +171,9 @@
             <div class="overlay-layer" aria-hidden="true"></div>
           </div>
         </div>
-
-        <!-- Start Menu Container -->
-        <div class="start-menu-container" id="startMenuContainer"></div>
-
-        <button class="sim-finish-button" id="simFinishButton" type="button">Закончить</button>
-
-        <div class="debug-console" id="debugConsole" aria-live="polite"></div>
-
-        <div class="fullscreen-modal" id="fullscreenModal" role="dialog" aria-labelledby="modalTitle"
-          aria-describedby="modalDesc">
-          <div class="fullscreen-modal-content">
-            <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
-            <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
-            <button class="fullscreen-modal-button" id="modalButton">
-              Перейти в полноэкранный режим
-            </button>
-          </div>
-        </div>
       </div>
     </section>
+
   </main>
 </body>
 

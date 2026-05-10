@@ -40,14 +40,15 @@ body {
   position: relative;
   width: 100%;
   height: 100%;
-  background-image: url("./img/фон.jpg");
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
+  /* background-image: url("./img/фон.jpg");  <-- УДАЛИТЬ ИЛИ ЗАКОММЕНТИРОВАТЬ */
+  /* background-size: contain; */
+  /* background-position: center; */
+  /* background-repeat: no-repeat; */
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   overflow: hidden;
 }
+
 
 .overlay-layer {
   position: absolute;
@@ -91,15 +92,14 @@ body {
   display: block;
 }
 
-.hitbox-layer {
+.hitbox-layer, .overlay-layer {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 10; /* Поверх фона (z-index: 0) */
   pointer-events: none;
-  z-index: 100;
 }
-
 .scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
   pointer-events: none;
   fill: transparent;
@@ -714,10 +714,85 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .finish-report-btn-secondary {
   background: rgba(0, 0, 0, 0.25);
 }
-.hangar-scene {
-  display: none;
+.hangar-bg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-.hangar-scene:not(.is-hidden) {
-  display: block;
+.hangar-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Или contain, если важно видеть всю картинку целиком */
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tank-layer {
+  position: absolute;
+  bottom: 7%; /* Подгоните под картинку */
+  left: 50%;
+  transform: translateX(-50%);
+  height: 55%; /* Размер танка */
+  pointer-events: none; /* Чтобы клики проходили сквозь картинку к SVG */
+}
+
+/* Интерактивные хитбоксы (подсветка при наведении) */
+.hitbox.interactive {
+  fill: transparent;
+  cursor: pointer;
+  transition: fill 0.2s, stroke 0.2s;
+}
+
+.hitbox.interactive:hover {
+  fill: rgba(255, 255, 255, 0.1);
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2px;
+}
+.game-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* По умолчанию сцена скрыта, если нет класса active/visible */
+}
+.hidden, .is-hidden {
+  display: none !important; /* Самое надежное скрытие */
+  /* Или, если хотите анимацию: */
+  /* opacity: 0; */
+  /* pointer-events: none; */
+  /* visibility: hidden; */
+}
+
+/* Убедитесь, что слои внутри сцены не вылезают за пределы */
+.hitbox-layer, .overlay-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Чтобы клики проходили сквозь пустые места */
+}
+
+/* Хитбоксы должны быть кликабельны */
+.hitbox {
+  z-index: 20;
+  pointer-events: auto;
+}
+.cabin-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Важно: как было в background-size: contain */
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
 }

@@ -1,64 +1,52 @@
-// HangarScene.js
-
 export class HangarScene {
-  constructor(app) {
-    this.app = app;
-    this.tank = null;
-
-    this.onHatchClick = this.onHatchClick.bind(this);
-  }
-
-  init() {
-    this.createEnvironment();
-    this.createTank();
-    this.enableInteractions();
-  }
-
-  createEnvironment() {
-    // фон ангара, свет и т.п.
-    this.app.scene.background = 0x222222;
-  }
-
-  createTank() {
-    // допустим у тебя уже есть модель
-    this.tank = this.app.assets.get("t72b"); // или gltf loader
-
-    this.tank.position.set(0, 0, 0);
-    this.app.scene.add(this.tank);
-
-    // ищем люки
-    this.driverHatch = this.tank.getObjectByName("driver_hatch");
-
-    if (this.driverHatch) {
-      this.driverHatch.userData.clickable = true;
+    constructor(app) {
+        this.app = app;
+        this.el = document.getElementById("scene-hangar");
+        
+        this.onHatchClick = this.onHatchClick.bind(this);
     }
-  }
 
-  enableInteractions() {
-    window.addEventListener("click", this.onHatchClick);
-  }
-
-  onHatchClick(event) {
-    const hit = this.app.raycastFromMouse(event);
-
-    if (!hit) return;
-
-    if (hit.object.userData.clickable) {
-      if (hit.object.name === "driver_hatch") {
-        this.enterDriverCabin();
-      }
+    init() {
+        console.log("HangarScene init");
+        this.enableInteractions();
     }
-  }
 
-  enterDriverCabin() {
-    this.app.changeScene("DriverScene");
-  }
+    enableInteractions() {
+        // Слушаем клики только внутри ангара
+        if (this.el) {
+            this.el.addEventListener("click", this.onHatchClick);
+        }
+    }
 
-  update(dt) {
-    // анимации, вращение камеры и т.д.
-  }
+    onHatchClick(event) {
+        const target = event.target.closest('[data-hatch], [data-action]');
+        if (!target) return;
 
-  dispose() {
-    window.removeEventListener("click", this.onHatchClick);
-  }
+        const hatch = target.dataset.hatch;
+        const action = target.dataset.action;
+
+        if (hatch === "driver" || action === "enter_driver_seat") {
+            this.enterDriverCabin();
+        } else if (hatch === "commander") {
+            console.log("Commander hatch clicked (not implemented)");
+        } else if (hatch === "gunner") {
+            console.log("Gunner hatch clicked (not implemented)");
+        }
+    }
+
+    enterDriverCabin() {
+        console.log("Entering driver cabin...");
+        this.app.changeScene("driver", "scene-driver");
+    }
+
+    update(dt) {
+        // Пока пусто
+    }
+
+    dispose() {
+        if (this.el) {
+            this.el.removeEventListener("click", this.onHatchClick);
+        }
+        console.log("HangarScene disposed");
+    }
 }
