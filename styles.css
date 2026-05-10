@@ -714,3 +714,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .finish-report-btn-secondary {
   background: rgba(0, 0, 0, 0.25);
 }
+.hangar-scene {
+  display: none;
+}
+
+.hangar-scene:not(.is-hidden) {
+  display: block;
+}
