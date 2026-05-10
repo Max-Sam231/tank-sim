@@ -1,315 +1,180 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Driver Sim</title>
-    <link rel="stylesheet" href="./styles.css" />
-    <script type="module" src="./main.js"></script>
-    <script src="./live-reload.js"></script>
-  </head>
 
-  <body>
-    <main class="app">
-      <section class="sim" aria-label="Симулятор кабины">
-        <div class="scene" id="scene">
-          <div class="overlay-layer" aria-hidden="true">
-            <!-- <img
-              class="overlay"
-              data-action="battery-toggle"
-              data-when="off"
-              src="./img/11/11_0000_Слой-289-копия.png"
-              style="--x: -2; --y: 6; --w: 10; --h: 10; --rot: 0; --z: 1;"
-              alt=""
-            />
-            <img
-              class="overlay"
-              data-action="battery-toggle"
-              data-when="on"
-              src="./img/11/11_0001_Слой-2.png"
-              style="--x: -2; --y: 6; --w: 10; --h: 10; --rot: 0; --z: 1;"
-              alt=""
-            /> -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver Sim</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="module" src="./main.js"></script>
+  <script src="./live-reload.js"></script>
+</head>
+
+<body>
+  <main class="app">
+
+    <div class="ui-layer-global">
+      <button class="sim-finish-button hidden" id="simFinishButton" type="button">Закончить</button>
+      <div class="debug-console" id="debugConsole" aria-live="polite"></div>
+
+      <div class="fullscreen-modal hidden" id="fullscreenModal" role="dialog" aria-labelledby="modalTitle"
+        aria-describedby="modalDesc">
+        <div class="fullscreen-modal-content">
+          <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
+          <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
+          <button class="fullscreen-modal-button" id="modalButton">
+            Перейти в полноэкранный режим
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Контейнер для Стартового Меню (генерируется JS) -->
+    <div class="start-menu-container" id="startMenuContainer"></div>
+
+
+    <!-- === СЦЕНА 1: АНГАР === -->
+    <section id="scene-hangar" class="game-scene hidden">
+      <div class="hangar-bg-wrapper">
+        <!-- фон ангара -->
+        <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Angar Background" />
+        <!-- танк -->
+        <img class="tank-layer" src="./img/hangar/tank.png" alt="Tank" />
+      </div>
+
+      <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
+        
+        <!-- Люк механика-водителя (Вход в кабину) -->
+        <polygon class="hitbox interactive" data-action="enter_driver_seat" 
+                 points="1050,670 1140,660 1200,700 1070,700" />
+        
+        <!-- Люк командира (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_commander_seat" 
+                 points="850,500 950,500 950,600 850,600" />
+                 
+        <!-- Люк наводчика (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_gunner_seat" 
+                 points="550,520 650,520 650,620 550,620" />
+      </svg>
+    </section>
+
+
+    <section id="scene-driver" class="game-scene hidden">
+      <div class="scene-content" id="scene">
+        <img class="cabin-bg" src="./img/фон.jpg" alt="Driver Cabin Background" />
+        <!-- Слой оверлеев (динамически заполняется UIController) -->
+        <div class="overlay-layer" aria-hidden="true">
+         
+        </div>
+
+        <svg class="hitbox-layer cabin-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true">
+          
+          <!-- Кнопка "Выход в ангар" (невидимая зона в правом верхнем углу) -->
+          <polygon class="hitbox interactive exit-btn" data-action="Вернуться в ангар" 
+                   points="1800,20 1900,20 1900,60 1800,60"></polygon>
+
+          <!-- Battery toggle -->
+          <polygon class="hitbox" data-action="battery-toggle" points="30,75 85,83 87,195 22,215"></polygon>
+          <!-- Манометр -->
+          <polygon class="hitbox" data-action="manometer" points="1446,336 1533,328 1540,416 1457,426"></polygon>
+          <!-- Приборная панель -->
+          <polygon class="hitbox" data-action="instrument-panel" points="95,83 166,86 476,373 510,741 98,994"></polygon>
+          <!-- Левый балон -->
+          <polygon class="hitbox" data-action="left-tank" points="625,391 673,391 673,426 625,428"></polygon>
+          <!-- БЦН -->
+          <polygon class="hitbox" data-action="bcn" points="328,870 415,820 410,940 333,982"></polygon>
+          <!-- Жалюзи -->
+          <polygon class="hitbox" data-action="shutters" points="1482,914 1536,797 1660,837 1615,1031 1570,1033">
+          </polygon>
+          <!-- Правый балон -->
+          <polygon class="hitbox" data-action="right-tank" points="1370,620 1405,620 1405,655 1370,655"></polygon>
+          <!-- Рычаг ручной подкачки топлива -->
+          <polygon class="hitbox" data-action="fuel-primer-lever" points="337,1029 460,976 460,1018 388,1068"></polygon>
+          <!-- Ручная подача топлива -->
+          <polygon class="hitbox" data-action="fuel-manual-feed" points="520,777 570,777 570,827 520,827"></polygon>
+          <!-- Рычаг переключения передач -->
+          <polygon class="hitbox" data-action="gear-lever" points="1327,699 1424,674 1560,760 1435,782"></polygon>
+          <!-- Педаль тормоза -->
+          <polygon class="hitbox" data-action="brake-pedal" points="972,550 1095,550 1095,826 969,826"></polygon>
+          <!-- Педаль газа -->
+          <polygon class="hitbox" data-action="gas-pedal" points="1122,600 1245,600 1245,826 1119,826"></polygon>
+          <!-- Клапан спуска воздуха -->
+          <polygon class="hitbox" data-action="air-bleed-valve" points="248,933 272,935 274,988 243,987"></polygon>
+        </svg>
+
+        <!-- Модалка приборной панели -->
+        <div class="instrument-panel-modal hidden" id="instrumentPanelModal" role="dialog"
+          aria-label="Приборная панель">
+          <div class="instrument-panel-toolbar">
+            <button class="instrument-panel-back" id="instrumentPanelBack" type="button">
+              Назад в кабину
+            </button>
           </div>
+          <div class="instrument-panel-stage">
+            <svg class="hitbox-layer instrument-panel-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+              aria-hidden="true">
+              <!-- обогрев -->
+              <polygon class="hitbox" data-action="heating" points="400,60 450,60 450,200 400,200"></polygon>
+              <!-- комбинированый  -->
+              <polygon class="hitbox" data-action="combined" points="470,60 520,60 520,200 470,200"></polygon>
+              <!-- фары левые -->
+              <polygon class="hitbox" data-action="left-lights" points="430,835 480,835 480,965 430,965"></polygon>
+              <polygon class="hitbox" data-action="right-lights" points="500,835 550,835 550,965 500,965"></polygon>
+              <!-- габаритные фонари свет Большой/малый -->
+              <polygon class="hitbox" data-action="gabrate-lights" points="720,835 770,835 770,965 720,965"></polygon>
+              <!-- габаритные фонари все/задние -->
+              <polygon class="hitbox" data-action="lights-all" points="815,835 865,835 865,965 815,965"></polygon>
+              <!-- вода/антифриз -->
+              <polygon class="hitbox" data-action="water-antifreeze" points="1050,835 1100,835 1100,965 1050,965">
+              </polygon>
+              <!-- ГПК -->
+              <polygon class="hitbox" data-action="gpk" points="1125,835 1175,835 1175,965 1125,965"></polygon>
+              <!-- БЦА/ТЦА -->
+              <polygon class="hitbox" data-action="bca-tca" points="1125,360 1175,360 1175,490 1125,490"></polygon>
+              <!-- левые правые баки -->
+              <polygon class="hitbox" data-action="left-right-tanks" points="450,760 590,760 590,810 450,810"></polygon>
+              <!-- свеча мотор -->
+              <polygon class="hitbox" data-action="spark-plug" points="715,1000 855,1000 855,1050 715,1050"></polygon>
+              <!-- пуск мотора -->
+              <polygon class="hitbox" data-action="engine-start" points="865,1000 1005,1000 1005,1050 865,1050">
+              </polygon>
+              <!-- вызов командира -->
+              <polygon class="hitbox" data-action="commander-call" points="1125,540 1175,540 1175,590 1125,590">
+              </polygon>
+              <!-- ВО -->
+              <polygon class="hitbox" data-action="air-intake" points="1125,600 1175,600 1175,650 1125,650"></polygon>
+              <!-- откачка масла из КП -->
+              <polygon class="hitbox" data-action="oil-pump-gearbox" points="1495,540 1545,540 1545,590 1495,590">
+              </polygon>
+              <!-- авариный поворот колпака -->
+              <polygon class="hitbox" data-action="emergency-hatch-rotation"
+                points="1495,450 1545,450 1545,500 1495,500"></polygon>
+              <!-- ЭПК -->
+              <polygon class="hitbox" data-action="epk" points="555,70 655,70 655,170 555,170"></polygon>
+              <!-- Звуковой сигнал -->
+              <polygon class="hitbox" data-action="horn" points="695,80 795,80 795,180 695,180"></polygon>
+              <!-- МЗН двигат -->
+              <polygon class="hitbox" data-action="mzn-engine" points="1240,480 1340,480 1340,580 1240,580"></polygon>
+              <!-- МЗН буксир -->
+              <polygon class="hitbox" data-action="mzn-tow" points="1240,370 1340,370 1340,470 1240,470"></polygon>
+              <!-- стартер -->
+              <polygon class="hitbox" data-action="starter" points="1350,480 1450,480 1450,580 1350,580"></polygon>
+              <!-- контроль сигнальных ламп -->
+              <polygon class="hitbox" data-action="signal-lamps" points="1080,685 1180,685 1180,805 1080,805"></polygon>
+              <!-- амперметр кнопка -->
+              <polygon class="hitbox" data-action="ammeter-button" points="840,340 870,340 870,370 840,370"></polygon>
+              <!-- АЗР -->
+              <polygon class="hitbox" data-action="azr" points="1240,660 1560,660 1560,1050 1240,1050"></polygon>
+            </svg>
 
-          <svg
-            class="hitbox-layer cabin-hitbox-layer"
-            viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <!-- Battery toggle -->
-            <polygon
-              class="hitbox"
-              data-action="battery-toggle"
-              points="30,75 85,83 87,195 22,215"
-            ></polygon>
-            <!-- Манометр -->
-            <polygon
-              class="hitbox"
-              data-action="manometer"
-              points="1446,336 1533,328 1540,416 1457,426"
-            ></polygon>
-            <!-- Приборная панель -->
-            <polygon
-              class="hitbox"
-              data-action="instrument-panel"
-              points="95,83 166,86 476,373 510,741 98,994"
-            ></polygon>
-            <!-- Левый балон -->
-            <polygon
-              class="hitbox"
-              data-action="left-tank"
-              points="625,391 673,391 673,426 625,428"
-            ></polygon>
-            <!-- БЦН -->
-            <polygon
-              class="hitbox"
-              data-action="bcn"
-              points="328,870 415,820 410,940 333,982"
-            ></polygon>
-            <!-- Жалюзи -->
-            <polygon
-              class="hitbox"
-              data-action="shutters"
-              points="1482,914 1536,797 1660,837 1615,1031 1570,1033"
-            ></polygon>
-            <!-- Правый балон -->
-            <polygon
-              class="hitbox"
-              data-action="right-tank"
-              points="1370,620 1405,620 1405,655 1370,655"
-            ></polygon>
-            <!-- Рычаг ручной подкачки топлива -->
-            <polygon
-              class="hitbox"
-              data-action="fuel-primer-lever"
-              points="337,1029 460,976 460,1018 388,1068"
-            ></polygon>
-            <!-- Ручная подача топлива -->
-            <polygon
-              class="hitbox"
-              data-action="fuel-manual-feed"
-              points="520,777 570,777 570,827 520,827"
-            ></polygon>
-            <!-- Рычаг переключения передач -->
-            <polygon
-              class="hitbox"
-              data-action="gear-lever"
-              points="1327,699 1424,674 1560,760 1435,782"
-            ></polygon>
-            <!-- Педаль тормоза -->
-            <polygon
-              class="hitbox"
-              data-action="brake-pedal"
-              points="972,550 1095,550 1095,826 969,826"
-            ></polygon>
-            <!-- Педаль газа -->
-            <polygon
-              class="hitbox"
-              data-action="gas-pedal"
-              points="1122,600 1245,600 1245,826 1119,826"
-            ></polygon>
-            <!-- Клапан спуска воздуха -->
-            <polygon
-              class="hitbox"
-              data-action="air-bleed-valve"
-              points="248,933 272,935 274,988 243,987"
-            ></polygon>
-          </svg>
-
-          <div
-            class="instrument-panel-modal hidden"
-            id="instrumentPanelModal"
-            role="dialog"
-            aria-label="Приборная панель"
-          >
-            <div class="instrument-panel-toolbar">
-              <button class="instrument-panel-back" id="instrumentPanelBack" type="button">
-                Назад в кабину
-              </button>
-            </div>
-            <div class="instrument-panel-stage">
-              <svg
-                class="hitbox-layer instrument-panel-hitbox-layer"
-                viewBox="0 0 1920 1080"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <!-- обогрев -->
-                <polygon
-                  class="hitbox"
-                  data-action="heating"
-                  points="400,60 450,60 450,200 400,200"
-                ></polygon>
-                <!-- комбинированый  -->
-                <polygon
-                  class="hitbox"
-                  data-action="combined"
-                  points="470,60 520,60 520,200 470,200"
-                ></polygon>
-                <!-- фары левые -->
-                <polygon
-                  class="hitbox"
-                  data-action="left-lights"
-                  points="430,835 480,835 480,965 430,965"
-                ></polygon>
-                <polygon
-                  class="hitbox"
-                  data-action="right-lights"
-                  points="500,835 550,835 550,965 500,965"
-                ></polygon>
-                <!-- габаритные фонари свет Большой/малый -->
-                <polygon
-                  class="hitbox"
-                  data-action="gabrate-lights"
-                  points="720,835 770,835 770,965 720,965"
-                ></polygon>
-                <!-- габаритные фонари все/задние -->
-                <polygon
-                  class="hitbox"
-                  data-action="lights-all"
-                  points="815,835 865,835 865,965 815,965"
-                ></polygon>
-                <!-- вода/антифриз -->
-                <polygon
-                  class="hitbox"
-                  data-action="water-antifreeze"
-                  points="1050,835 1100,835 1100,965 1050,965"
-                ></polygon>
-                <!-- ГПК -->
-                <polygon
-                  class="hitbox"
-                  data-action="gpk"
-                  points="1125,835 1175,835 1175,965 1125,965"
-                ></polygon>
-                <!-- БЦА/ТЦА -->
-                <polygon
-                  class="hitbox"
-                  data-action="bca-tca"
-                  points="1125,360 1175,360 1175,490 1125,490"
-                ></polygon>
-                <!-- левые правые баки -->
-                <polygon
-                  class="hitbox"
-                  data-action="left-right-tanks"
-                  points="450,760 590,760 590,810 450,810"
-                ></polygon>
-                <!-- свеча мотор -->
-                <polygon
-                  class="hitbox"
-                  data-action="spark-plug"
-                  points="715,1000 855,1000 855,1050 715,1050"
-                ></polygon>
-                <!-- пуск мотора -->
-                <polygon
-                  class="hitbox"
-                  data-action="engine-start"
-                  points="865,1000 1005,1000 1005,1050 865,1050"
-                ></polygon>
-                <!-- вызов командира -->
-                <polygon
-                  class="hitbox"
-                  data-action="commander-call"
-                  points="1125,540 1175,540 1175,590 1125,590"
-                ></polygon>
-                <!-- ВО -->
-                <polygon
-                  class="hitbox"
-                  data-action="air-intake"
-                  points="1125,600 1175,600 1175,650 1125,650"
-                ></polygon>
-                <!-- откачка масла из КП -->
-                <polygon
-                  class="hitbox"
-                  data-action="oil-pump-gearbox"
-                  points="1495,540 1545,540 1545,590 1495,590"
-                ></polygon>
-                <!-- авариный поворот колпака -->
-                <polygon
-                  class="hitbox"
-                  data-action="emergency-hatch-rotation"
-                  points="1495,450 1545,450 1545,500 1495,500"
-                ></polygon>
-                <!-- ЭПК -->
-                <polygon
-                  class="hitbox"
-                  data-action="epk"
-                  points="555,70 655,70 655,170 555,170"
-                ></polygon>
-                <!-- Звуковой сигнал -->
-                <polygon
-                  class="hitbox"
-                  data-action="horn"
-                  points="695,80 795,80 795,180 695,180"
-                ></polygon>
-                <!-- МЗН двигат -->
-                <polygon
-                  class="hitbox"
-                  data-action="mzn-engine"
-                  points="1240,480 1340,480 1340,580 1240,580"
-                ></polygon>
-                <!-- МЗН буксир -->
-                <polygon
-                  class="hitbox"
-                  data-action="mzn-tow"
-                  points="1240,370 1340,370 1340,470 1240,470"
-                ></polygon>
-                <!-- крышка стартер -->
-                <!-- стартер -->
-                <polygon
-                  class="hitbox"
-                  data-action="starter"
-                  points="1350,480 1450,480 1450,580 1350,580"
-                ></polygon>
-                <!-- контроль сигнальных ламп -->
-                <polygon
-                  class="hitbox"
-                  data-action="signal-lamps"
-                  points="1080,685 1180,685 1180,805 1080,805"
-                ></polygon>
-                <!-- амперметр кнопка -->
-                <polygon
-                  class="hitbox"
-                  data-action="ammeter-button"
-                  points="840,340 870,340 870,370 840,370"
-                ></polygon>
-                <!-- АЗР -->
-                <polygon
-                  class="hitbox"
-                  data-action="azr"
-                  points="1240,660 1560,660 1560,1050 1240,1050"
-                ></polygon>
-              </svg>
-
-              <div class="overlay-layer" aria-hidden="true"></div>
-            </div>
-          </div>
-
-          <!-- Start Menu Container -->
-          <div class="start-menu-container" id="startMenuContainer"></div>
-
-          <button class="sim-finish-button" id="simFinishButton" type="button">Закончить</button>
-
-          <div class="debug-console" id="debugConsole" aria-live="polite"></div>
-
-          <div
-            class="fullscreen-modal"
-            id="fullscreenModal"
-            role="dialog"
-            aria-labelledby="modalTitle"
-            aria-describedby="modalDesc"
-          >
-            <div class="fullscreen-modal-content">
-              <h2 id="modalTitle">Нажмите для синхронизации размеров экрана</h2>
-              <p id="modalDesc">Программа работает корректно только в полноэкранном режиме</p>
-              <button class="fullscreen-modal-button" id="modalButton">
-                Перейти в полноэкранный режим
-              </button>
-            </div>
+            <div class="overlay-layer" aria-hidden="true"></div>
           </div>
         </div>
-      </section>
-    </main>
-  </body>
+      </div>
+    </section>
+
+  </main>
+</body>
+
 </html>
