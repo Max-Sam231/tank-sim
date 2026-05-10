@@ -169,3 +169,6 @@ npm run serve
 2. В `js/TankState.js` добавить поле состояния + метод изменения.
 3. В `js/UIController.js` добавить обработку `case` для этого `data-action`.
 4. (Опционально) В `js/ControlOverlayDefs.js` добавить определение overlay, чтобы отображать разные кадры/положения.
+
+@mmshkurin 
+@MaxMaryutin
