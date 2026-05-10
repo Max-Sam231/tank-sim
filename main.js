@@ -5,8 +5,13 @@ import { StartMenu } from './js/StartMenu.js';
 import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
 
-const APP_MODE = "prod";
+import { SceneManager } from './js/SceneManager.js';
+import { HangarScene } from './js/HangarScene.js';
+import { DriverScene } from './js/DriverScene.js';
+
+const APP_MODE = "debug"; // или "production"
 const IS_DEBUG = APP_MODE === "debug";
+
 
 function bootstrap() {
   const sceneEl = document.getElementById("scene");
@@ -20,7 +25,13 @@ function bootstrap() {
   document.body.classList.toggle("app-prod", !IS_DEBUG);
 
   const state = new TankState();
-  const ui = new UIController({ rootEl: sceneEl, consoleEl, state, isDebug: IS_DEBUG });
+
+  const ui = new UIController({
+    rootEl: sceneEl,
+    consoleEl,
+    state,
+    isDebug: IS_DEBUG
+  });
 
   const training = new TrainingEngine({ state });
 
@@ -34,24 +45,67 @@ function bootstrap() {
     },
   });
 
+  const sceneManager = new SceneManager();
+
+  const app = {
+    state,
+    ui,
+    sceneManager,
+    sceneEl,
+
+    scene: null,     // заглушка (если позже подключишь Three.js)
+    assets: {
+      get: () => null
+    },
+
+    raycastFromMouse: () => null,
+
+    changeScene: (name) => changeScene(name),
+  };
+
+    const hangarScene = new HangarScene(app);
+  const driverScene = new DriverScene(app);
+
+  const changeScene = (name, sceneId) => {
+    switch (name) {
+      case "hangar":
+        // Если sceneId не передан, используем дефолтный
+        sceneManager.change(hangarScene, sceneId || "scene-hangar");
+        break;
+
+      case "driver":
+        sceneManager.change(driverScene, sceneId || "scene-driver");
+        break;
+    }
+  };
+
   let rafId = null;
   let isLoopRunning = false;
+
   const startLoop = () => {
     if (isLoopRunning) return;
     isLoopRunning = true;
+
     let lastTs = performance.now();
+
     const loop = (ts) => {
       if (!isLoopRunning) return;
+
       const dt = Math.max(0, (ts - lastTs) / 1000);
       lastTs = ts;
+
       state.tick(dt);
+      sceneManager.update(dt);
+
       rafId = requestAnimationFrame(loop);
     };
+
     rafId = requestAnimationFrame(loop);
   };
 
   const stopLoop = () => {
     isLoopRunning = false;
+
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -60,16 +114,30 @@ function bootstrap() {
 
   const startMenu = new StartMenu({
     rootEl: startMenuContainerEl,
+
     onTrainingStart: ({ startMethod, ambientTemp }) => {
       stopLoop();
-      state.setScenario({ startMethod, ambientTempC: ambientTemp });
+
+      state.setScenario({
+        startMethod,
+        ambientTempC: ambientTemp
+      });
+
       state.reset();
-      training.setGoal({ startMethod, ambientTempC: ambientTemp });
+      training.setGoal({
+        startMethod,
+        ambientTempC: ambientTemp
+      });
+
       startMenu.hide();
+
+      changeScene("hangar");
+
       startLoop();
     },
+
     onInstruction: () => {
-      // Placeholder for instruction logic
+      // позже тут будет обучение
     },
   });
 
@@ -80,8 +148,12 @@ function bootstrap() {
     });
   }
 
-  // Setup fullscreen and instrument panel
   FullscreenManager.setup();
+
+  startMenu.show();
+
+  // стартовая сцена
+  changeScene("hangar");
 }
 
 if (document.readyState === "loading") {
