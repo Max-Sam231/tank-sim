@@ -734,7 +734,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .tank-layer {
   position: absolute;
-  bottom: 7%; /* Подгоните под картинку */
+  bottom: 20%; /* Подгоните под картинку */
   left: 50%;
   transform: translateX(-50%);
   height: 55%; /* Размер танка */
@@ -785,17 +785,37 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   z-index: 20;
   pointer-events: auto;
 }
+/* Мехвод */
 .cabin-bg {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Важно: как было в background-size: contain */
-  object-position: center;
+  object-fit: contain; /* Или cover, как вам нравится */
   z-index: 0;
+  transition: opacity 0.5s ease; /* Плавное включение света */
   pointer-events: none;
 }
+
+/* По умолчанию показываем темный фон, скрываем светлый */
+.cabin-bg-dark {
+  opacity: 1;
+}
+
+.cabin-bg-light {
+  opacity: 0;
+}
+
+/* Класс, который мы будем добавлять через JS, когда свет включен */
+.cabin-lights-on .cabin-bg-dark {
+  opacity: 0;
+}
+
+.cabin-lights-on .cabin-bg-light {
+  opacity: 1;
+}
+
 /*Commander*/
 .cmd-bg {
   position: absolute;
