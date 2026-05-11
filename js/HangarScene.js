@@ -1,3 +1,4 @@
+// js/HangarScene.js
 export class HangarScene {
     constructor(app) {
         this.app = app;
@@ -12,7 +13,6 @@ export class HangarScene {
     }
 
     enableInteractions() {
-        // Слушаем клики только внутри ангара
         if (this.el) {
             this.el.addEventListener("click", this.onHatchClick);
         }
@@ -25,11 +25,15 @@ export class HangarScene {
         const hatch = target.dataset.hatch;
         const action = target.dataset.action;
 
+        // Вход в кабину водителя
         if (hatch === "driver" || action === "enter_driver_seat") {
             this.enterDriverCabin();
-        } else if (hatch === "commander") {
-            console.log("Commander hatch clicked (not implemented)");
-        } else if (hatch === "gunner") {
+        } 
+        // ВХОД В КАБИНУ КОМАНДИРА
+        else if (hatch === "commander" || action === "enter_commander_seat") {
+            this.enterCommanderCabin();
+        } 
+        else if (hatch === "gunner" || action === "enter_gunner_seat") {
             console.log("Gunner hatch clicked (not implemented)");
         }
     }
@@ -37,6 +41,12 @@ export class HangarScene {
     enterDriverCabin() {
         console.log("Entering driver cabin...");
         this.app.changeScene("driver", "scene-driver");
+    }
+
+    // Новый метод для перехода к командиру
+    enterCommanderCabin() {
+        console.log("Entering commander cabin...");
+        this.app.changeScene("commander", "scene-commander");
     }
 
     update(dt) {

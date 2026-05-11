@@ -8,8 +8,9 @@ import { FinishReportModal } from './js/FinishReportModal.js';
 import { SceneManager } from './js/SceneManager.js';
 import { HangarScene } from './js/HangarScene.js';
 import { DriverScene } from './js/DriverScene.js';
+import { CommanderScene } from './js/CommanderScene.js'; 
 
-const APP_MODE = "debug"; // или "production"
+const APP_MODE = "debug"; 
 const IS_DEBUG = APP_MODE === "debug";
 
 
@@ -53,28 +54,32 @@ function bootstrap() {
     sceneManager,
     sceneEl,
 
-    scene: null,     // заглушка (если позже подключишь Three.js)
+    scene: null,     
     assets: {
       get: () => null
     },
 
     raycastFromMouse: () => null,
 
-    changeScene: (name) => changeScene(name),
+    changeScene: (name, id) => changeScene(name, id), // Передаем ID сцены
   };
 
-    const hangarScene = new HangarScene(app);
+  const hangarScene = new HangarScene(app);
   const driverScene = new DriverScene(app);
+  const commanderScene = new CommanderScene(app); // <--- 2. СОЗДАНИЕ ЭКЗЕМПЛЯРА
 
   const changeScene = (name, sceneId) => {
     switch (name) {
       case "hangar":
-        // Если sceneId не передан, используем дефолтный
         sceneManager.change(hangarScene, sceneId || "scene-hangar");
         break;
 
       case "driver":
         sceneManager.change(driverScene, sceneId || "scene-driver");
+        break;
+        
+      case "commander": // <--- 3. НОВЫЙ КЕЙС ДЛЯ КОМАНДИРА
+        sceneManager.change(commanderScene, sceneId || "scene-commander");
         break;
     }
   };
