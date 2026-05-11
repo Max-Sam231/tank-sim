@@ -3,12 +3,12 @@ class TankState {
     this.isBatteryOn = false;
     this.isBrakePressed = false;
     this.parkingBrakeLatched = false;
-
+    this.commanderView = 'straight';
     this.scenario = {
       startMethod: "starter-generator",
       ambientTempC: 15,
     };
-    
+
     // Cabin controls state
     this.manometer = 0; // Pressure value
     this.instrumentPanel = false;
@@ -178,6 +178,7 @@ class TankState {
 
   getSnapshot() {
     return {
+      commanderView: this.commanderView,
       isBatteryOn: this.isBatteryOn,
       isBrakePressed: this.isBrakePressed,
       brakeEffective: this.isBrakePressed || this.parkingBrakeLatched,
@@ -743,6 +744,14 @@ class TankState {
     }
     this._emit();
   }
+  toggleCommanderView() {
+    if (this.commanderView === 'straight') {
+        this.commanderView = 'tilted';
+    } else {
+        this.commanderView = 'straight';
+    }
+    this._emit();
+}
 }
 
 export { TankState };
