@@ -45,20 +45,25 @@
 
         <!-- Люк механика-водителя (Вход в кабину) -->
         <polygon class="hitbox interactive" data-action="enter_driver_seat"
-          points="1050,670 1140,660 1200,700 1070,700" />
+          points="1150,500 1190,500 1190,600 1150,600"" />
 
         <!-- Люк командира (Заглушка) -->
-        <polygon class="hitbox" data-action="enter_commander_seat" points="720,460 840,460 840,560 720,560" />
+        <polygon class="hitbox" data-action="enter_commander_seat" points="740,580 800,580 800,680 740,680" />
 
         <!-- Люк наводчика (Заглушка) -->
-        <polygon class="hitbox" data-action="enter_gunner_seat" points="980,460 1050,460 1050,560 980,560" />
+        <polygon class="hitbox" data-action="enter_gunner_seat" points="860,410 820,410 820,520 760,520" />
       </svg>
     </section>
 
 
     <section id="scene-driver" class="game-scene hidden">
       <div class="scene-content" id="scene">
-        <img class="cabin-bg" src="./img/фон.jpg" alt="Driver Cabin Background" />
+
+        <!-- (Свет выключен) -->
+        <img class="cabin-bg cabin-bg-dark" src="./img/фон_темный.jpg" alt="Cabin Dark" />
+
+        <!-- (Свет включен) -->
+        <img class="cabin-bg cabin-bg-light" src="./img/фон_светлый.jpg" alt="Cabin Light" />
         <!-- Слой оверлеев (динамически заполняется UIController) -->
         <div class="overlay-layer" aria-hidden="true">
 
@@ -98,6 +103,7 @@
           <polygon class="hitbox" data-action="gas-pedal" points="1122,600 1245,600 1245,826 1119,826"></polygon>
           <!-- Клапан спуска воздуха -->
           <polygon class="hitbox" data-action="air-bleed-valve" points="248,933 272,935 274,988 243,987"></polygon>
+          <polygon class="hitbox" data-action="cabin-light" points="1460,60 1530,60 1530,180 1460,180"></polygon>
         </svg>
 
         <!-- Модалка приборной панели -->
