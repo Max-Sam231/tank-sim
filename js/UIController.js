@@ -37,7 +37,7 @@ class UIController {
   _ensureHitboxLabels() {
     // Process all SVG hitbox layers
     const svgLayers = this.rootEl.querySelectorAll("svg.hitbox-layer");
-    
+
     svgLayers.forEach(svgEl => {
       const existing = svgEl.querySelector("g.hitbox-labels");
       if (existing) existing.remove();
@@ -356,6 +356,7 @@ class UIController {
   }
 
   _wireEvents() {
+
     this.rootEl.addEventListener("click", (event) => {
       this._capturePointer(event);
     });
@@ -366,7 +367,7 @@ class UIController {
 
       const action = el.dataset.action;
       this._lastAction = action || null;
-      
+
       // Handle all cabin controls
       switch (action) {
         case "battery-toggle":
@@ -556,7 +557,7 @@ class UIController {
     this.rootEl.addEventListener("mouseover", (event) => {
       const hitbox = event.target.closest(".hitbox");
       if (!hitbox) return;
-      
+
       const action = hitbox.dataset.action;
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
@@ -567,7 +568,7 @@ class UIController {
     this.rootEl.addEventListener("mouseout", (event) => {
       const hitbox = event.target.closest(".hitbox");
       if (!hitbox) return;
-      
+
       const action = hitbox.dataset.action;
       if (action === "manometer") {
         // Reset pressure when not hovering
@@ -591,10 +592,23 @@ class UIController {
         this.state.setInstrumentPanelOpen(false);
       });
     }
+
   }
 
   _render(snapshot) {
     this._renderOverlays(snapshot);
+
+    // Для командира 
+    const commanderSection = document.getElementById('scene-commander');
+
+    // Проверяем, активна ли сейчас сцена командира (она не скрыта)
+    if (commanderSection && !commanderSection.classList.contains('hidden')) {
+      if (snapshot.commanderView === 'tilted') {
+        commanderSection.classList.add('commander-view-tilted');
+      } else {
+        commanderSection.classList.remove('commander-view-tilted');
+      }
+    }
 
     const panelModal = document.getElementById("instrumentPanelModal");
     if (panelModal) {
@@ -746,6 +760,24 @@ class UIController {
   }
 
   _renderOverlays(snapshot) {
+
+    // --- Для командира ---
+    const commanderSection = document.getElementById('scene-commander');
+
+    // Проверяем, активна ли сейчас сцена командира (она не скрыта)
+    if (commanderSection && !commanderSection.classList.contains('hidden')) {
+      if (snapshot.commanderView === 'tilted') {
+        commanderSection.classList.add('commander-view-tilted');
+      } else {
+        commanderSection.classList.remove('commander-view-tilted');
+      }
+    }
+
+    const panelModal = document.getElementById("instrumentPanelModal");
+    if (panelModal) {
+      panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
+      this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
+    }
     for (const el of this._overlayEls) {
       const action = el.dataset.action;
       const when = el.dataset.when;
