@@ -77,7 +77,7 @@ function getStarterGenerator15CScenario() {
         title: "БЦН ТЦА — включить (1.2–2.5 кгс/см²)",
         arm: [{ action: "bcn", phase: "click" }],
         gateKeys: ["bcn"],
-        completeWhen: (s) => Boolean(s.bcn) && s.fuel_pressure >= 1.2 && s.fuel_pressure <= 2.5,
+        completeWhen: (s) => (s.bcn === 'on' || s.bcn === 'pump') && s.fuel_pressure >= 1.2 && s.fuel_pressure <= 2.5,
       },
       {
         id: "mzn-to-oil",
@@ -102,7 +102,7 @@ function getStarterGenerator15CScenario() {
           { action: "bcn", phase: "click" },
         ],
         gateKeys: ["mznEngine", "bcn"],
-        completeWhen: (s) => Boolean(s.engineRunning) && !Boolean(s.mznEngine) && Number(s.starter) === 1 && !Boolean(s.bcn),
+        completeWhen: (s) => Boolean(s.engineRunning) && !Boolean(s.mznEngine) && Number(s.starter) === 1 && s.bcn === 'off',
       },
       {
         id: "manual-fuel-idle",

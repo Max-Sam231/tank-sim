@@ -91,14 +91,17 @@ const CONTROL_OVERLAY_DEFS = {
     ],
   },
   bcn: {
-    kind: "boolean",
+    kind: "enum",
     stateKey: "bcn",
     inflate: 1.4,
     offsetX: 0,
     offsetY: 0,
     z: 58,
-    off: "./img/8/8_0000_Слой-236-копия.png",
-    on: "./img/8/8_0003_Слой-2.png",
+    frames: {
+      off: "./img/8/8_0000_Слой-236-копия.png",
+      on: "./img/8/8_0003_Слой-2.png",
+      pump: "./img/8/8_0003_Слой-2.png", // TODO: заменить на картинку откачки когда будет
+    },
   },
   "air-bleed-valve": {
     kind: "boolean",
