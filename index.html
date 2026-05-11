@@ -32,8 +32,6 @@
     <!-- Контейнер для Стартового Меню (генерируется JS) -->
     <div class="start-menu-container" id="startMenuContainer"></div>
 
-
-    <!-- === СЦЕНА 1: АНГАР === -->
     <section id="scene-hangar" class="game-scene hidden">
       <div class="hangar-bg-wrapper">
         <!-- фон ангара -->
@@ -42,19 +40,18 @@
         <img class="tank-layer" src="./img/hangar/tank.png" alt="Tank" />
       </div>
 
-      <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
-        
+      <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+        aria-hidden="true">
+
         <!-- Люк механика-водителя (Вход в кабину) -->
-        <polygon class="hitbox interactive" data-action="enter_driver_seat" 
-                 points="1050,670 1140,660 1200,700 1070,700" />
-        
+        <polygon class="hitbox interactive" data-action="enter_driver_seat"
+          points="1050,670 1140,660 1200,700 1070,700" />
+
         <!-- Люк командира (Заглушка) -->
-        <polygon class="hitbox" data-action="enter_commander_seat" 
-                 points="850,500 950,500 950,600 850,600" />
-                 
+        <polygon class="hitbox" data-action="enter_commander_seat" points="720,460 840,460 840,560 720,560" />
+
         <!-- Люк наводчика (Заглушка) -->
-        <polygon class="hitbox" data-action="enter_gunner_seat" 
-                 points="550,520 650,520 650,620 550,620" />
+        <polygon class="hitbox" data-action="enter_gunner_seat" points="980,460 1050,460 1050,560 980,560" />
       </svg>
     </section>
 
@@ -64,15 +61,15 @@
         <img class="cabin-bg" src="./img/фон.jpg" alt="Driver Cabin Background" />
         <!-- Слой оверлеев (динамически заполняется UIController) -->
         <div class="overlay-layer" aria-hidden="true">
-         
+
         </div>
 
         <svg class="hitbox-layer cabin-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
           aria-hidden="true">
-          
+
           <!-- Кнопка "Выход в ангар" (невидимая зона в правом верхнем углу) -->
-          <polygon class="hitbox interactive exit-btn" data-action="Вернуться в ангар" 
-                   points="1800,20 1900,20 1900,60 1800,60"></polygon>
+          <polygon class="hitbox interactive exit-btn" data-action="Вернуться в ангар"
+            points="1800,20 1900,20 1900,60 1800,60"></polygon>
 
           <!-- Battery toggle -->
           <polygon class="hitbox" data-action="battery-toggle" points="30,75 85,83 87,195 22,215"></polygon>
@@ -173,7 +170,38 @@
         </div>
       </div>
     </section>
+    <section id="scene-commander" class="game-scene hidden">
+      <div class="scene-content" id="scene-commander-content">
 
+        <!-- Фон 1: Смотрит прямо -->
+        <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
+
+        <!-- Фон 2: Наклон влево-вниз -->
+        <img class="cmd-bg cmd-bg-tilted" src="./img/commander/tilted.png" alt="Commander View Tilted" />
+
+        <!-- Слой оверлеев для командира -->
+        <div class="overlay-layer" aria-hidden="true"></div>
+
+        <!-- SVG Hitboxes Командира -->
+        <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true">
+
+          <!-- Кнопка "Выход в ангар" -->
+          <polygon class="hitbox interactive exit-btn" data-action="exit_to_hangar"
+            points="1800,20 1900,20 1900,60 1800,60"></polygon>
+
+          <!-- Кнопка "Наклонить голову" (Переключатель вида) -->
+          <!-- Разместите этот полигон там, где должен быть клик для смены вида -->
+          <polygon class="hitbox interactive" data-action="toggle_commander_view"
+            points="700,700 800,700 800,800 700,800" />
+
+          <!-- Люк механика-водителя (чтобы вернуться к нему, если нужно) -->
+          <polygon class="hitbox interactive" data-action="enter_driver_seat"
+            points="900,900 1000,900 1000,1000 900,1000" />
+
+        </svg>
+      </div>
+    </section>
   </main>
 </body>
 
