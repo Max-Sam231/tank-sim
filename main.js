@@ -8,7 +8,7 @@ import { FinishReportModal } from './js/FinishReportModal.js';
 import { SceneManager } from './js/SceneManager.js';
 import { HangarScene } from './js/HangarScene.js';
 import { DriverScene } from './js/DriverScene.js';
-import { CommanderScene } from './js/CommanderScene.js'; // <--- 1. ИМПОРТ
+import { CommanderScene } from './js/CommanderScene.js'; 
 
 const APP_MODE = "debug"; 
 const IS_DEBUG = APP_MODE === "debug";
