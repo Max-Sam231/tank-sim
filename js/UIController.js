@@ -384,7 +384,7 @@ class UIController {
           this.state.toggleLeftTank();
           break;
         case "bcn":
-          this.state.toggleBcn();
+          this._showBcnModal();
           break;
         case "shutters":
           this.state.toggleShutters();
@@ -553,15 +553,25 @@ class UIController {
       { passive: false }
     );
 
-    // Mouse events for manometer
+    // Sync hover between hitboxes and overlay-controls
     this.rootEl.addEventListener("mouseover", (event) => {
       const hitbox = event.target.closest(".hitbox");
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      
+      // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
         this.state.setManometer(Math.round(Number(snapshot.air_start_pressure) || 0));
+      }
+
+      // Highlight corresponding overlay-control
+      if (action) {
+        const overlayControl = this._controlOverlayEls.get(action);
+        if (overlayControl) {
+          overlayControl.classList.add("hitbox-hovered");
+        }
       }
     });
 
@@ -570,9 +580,18 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      
+      // Manometer special handling
       if (action === "manometer") {
-        // Reset pressure when not hovering
         this.state.setManometer(0);
+      }
+
+      // Remove highlight from corresponding overlay-control
+      if (action) {
+        const overlayControl = this._controlOverlayEls.get(action);
+        if (overlayControl) {
+          overlayControl.classList.remove("hitbox-hovered");
+        }
       }
     });
 
@@ -590,6 +609,29 @@ class UIController {
     if (backButton) {
       backButton.addEventListener("click", () => {
         this.state.setInstrumentPanelOpen(false);
+      });
+    }
+
+    // BCN Modal events
+    this._bcnModalEl = document.getElementById("bcnModal");
+    this._bcnModalImageEl = document.getElementById("bcnModalImage");
+
+    const bcnCloseBtn = document.getElementById("bcnModalClose");
+    if (bcnCloseBtn) {
+      bcnCloseBtn.addEventListener("click", () => this._hideBcnModal());
+    }
+
+    if (this._bcnModalEl) {
+      this._bcnModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const mode = btn.dataset.bcnMode;
+          if (mode) {
+            this.state.setBcnMode(mode);
+            this._updateBcnModalButtons(mode);
+            this._updateBcnModalImage(mode);
+          }
+        }
       });
     }
 
@@ -660,7 +702,7 @@ class UIController {
       `manometer: ${snapshot.manometer > 0 ? snapshot.manometer + " kg/cm²" : "0 kg/cm²"}`,
       `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
-      `BCN: ${snapshot.bcn ? "ON" : "OFF"}`,
+      `BCN: ${snapshot.bcn.toUpperCase()}`,
       `shutters: ${snapshot.shutters ? "OPEN" : "CLOSED"}`,
       `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
@@ -857,6 +899,40 @@ class UIController {
       modal.classList.remove("hidden");
       this.rootEl.classList.add("instrument-panel-open");
     }
+  }
+
+  _showBcnModal() {
+    if (!this._bcnModalEl) return;
+    this._bcnModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateBcnModalButtons(snapshot.bcn);
+    this._updateBcnModalImage(snapshot.bcn);
+  }
+
+  _hideBcnModal() {
+    if (!this._bcnModalEl) return;
+    this._bcnModalEl.classList.add("hidden");
+  }
+
+  _updateBcnModalButtons(currentMode) {
+    if (!this._bcnModalEl) return;
+    const buttons = this._bcnModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const mode = btn.dataset.bcnMode;
+      btn.classList.toggle("is-active", mode === currentMode);
+    });
+  }
+
+  _updateBcnModalImage(mode) {
+    if (!this._bcnModalImageEl) return;
+    // Placeholder - здесь будут картинки для каждого режима
+    // Пока показываем текст состояния
+    const labels = {
+      off: "ВЫКЛЮЧЕНО",
+      on: "ВКЛЮЧЕНО",
+      pump: "ОТКАЧКА",
+    };
+    this._bcnModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[mode] || "—"}</span>`;
   }
 }
 
