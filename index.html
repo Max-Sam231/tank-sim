@@ -37,33 +37,17 @@
       <!-- Контейнер для Стартового Меню (генерируется JS) -->
       <div class="start-menu-container" id="startMenuContainer"></div>
 
-      <section id="scene-hangar" class="game-scene hidden">
-        <div class="hangar-bg-wrapper">
-          <!-- фон ангара -->
-          <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Angar Background" />
-          <!-- танк -->
-          <img class="tank-layer" src="./img/hangar/tank.png" alt="Tank" />
-        </div>
+        <!-- Люк механика-водителя (Вход в кабину) -->
+        <polygon class="hitbox interactive" data-action="enter_driver_seat"
+          points="1150,500 1190,500 1190,600 1150,600"" />
 
-        <svg
-          class="hitbox-layer scene-hitbox-layer"
-          viewBox="0 0 1920 1080"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <!-- Люк механика-водителя (Вход в кабину) -->
-          <polygon
-            class="hitbox interactive"
-            data-action="enter_driver_seat"
-            points="1050,670 1140,660 1200,700 1070,700"
-          />
+        <!-- Люк командира (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_commander_seat" points="740,580 800,580 800,680 740,680" />
 
-          <!-- Люк командира (Заглушка) -->
-          <polygon
-            class="hitbox"
-            data-action="enter_commander_seat"
-            points="720,460 840,460 840,560 720,560"
-          />
+        <!-- Люк наводчика (Заглушка) -->
+        <polygon class="hitbox" data-action="enter_gunner_seat" points="860,410 820,410 820,520 760,520" />
+      </svg>
+    </section>
 
           <!-- Люк наводчика (Заглушка) -->
           <polygon
@@ -74,11 +58,16 @@
         </svg>
       </section>
 
-      <section id="scene-driver" class="game-scene hidden">
-        <div class="scene-content" id="scene">
-          <img class="cabin-bg" src="./img/фон.jpg" alt="Driver Cabin Background" />
-          <!-- Слой оверлеев (динамически заполняется UIController) -->
-          <div class="overlay-layer" aria-hidden="true"></div>
+    <section id="scene-driver" class="game-scene hidden">
+      <div class="scene-content" id="scene">
+
+        <!-- (Свет выключен) -->
+        <img class="cabin-bg cabin-bg-dark" src="./img/фон_темный.jpg" alt="Cabin Dark" />
+
+        <!-- (Свет включен) -->
+        <img class="cabin-bg cabin-bg-light" src="./img/фон_светлый.jpg" alt="Cabin Light" />
+        <!-- Слой оверлеев (динамически заполняется UIController) -->
+        <div class="overlay-layer" aria-hidden="true">
 
           <svg
             class="hitbox-layer cabin-hitbox-layer"
@@ -93,85 +82,42 @@
               points="1800,20 1900,20 1900,60 1800,60"
             ></polygon>
 
-            <!-- Battery toggle -->
-            <polygon
-              class="hitbox"
-              data-action="battery-toggle"
-              points="30,75 85,83 87,195 22,215"
-            ></polygon>
-            <!-- Манометр -->
-            <polygon
-              class="hitbox"
-              data-action="manometer"
-              points="1446,336 1533,328 1540,416 1457,426"
-            ></polygon>
-            <!-- Приборная панель -->
-            <polygon
-              class="hitbox"
-              data-action="instrument-panel"
-              points="95,83 166,86 476,373 510,741 98,994"
-            ></polygon>
-            <!-- Левый балон -->
-            <polygon
-              class="hitbox"
-              data-action="left-tank"
-              points="625,391 673,391 673,426 625,428"
-            ></polygon>
-            <!-- БЦН -->
-            <polygon
-              class="hitbox"
-              data-action="bcn"
-              points="328,870 415,820 410,940 333,982"
-            ></polygon>
-            <!-- Жалюзи -->
-            <polygon
-              class="hitbox"
-              data-action="shutters"
-              points="1482,914 1536,797 1660,837 1615,1031 1570,1033"
-            ></polygon>
-            <!-- Правый балон -->
-            <polygon
-              class="hitbox"
-              data-action="right-tank"
-              points="1370,620 1405,620 1405,655 1370,655"
-            ></polygon>
-            <!-- Рычаг ручной подкачки топлива -->
-            <polygon
-              class="hitbox"
-              data-action="fuel-primer-lever"
-              points="337,1029 460,976 460,1018 388,1068"
-            ></polygon>
-            <!-- Ручная подача топлива -->
-            <polygon
-              class="hitbox"
-              data-action="fuel-manual-feed"
-              points="520,777 570,777 570,827 520,827"
-            ></polygon>
-            <!-- Рычаг переключения передач -->
-            <polygon
-              class="hitbox"
-              data-action="gear-lever"
-              points="1327,699 1424,674 1560,760 1435,782"
-            ></polygon>
-            <!-- Педаль тормоза -->
-            <polygon
-              class="hitbox"
-              data-action="brake-pedal"
-              points="972,550 1095,550 1095,826 969,826"
-            ></polygon>
-            <!-- Педаль газа -->
-            <polygon
-              class="hitbox"
-              data-action="gas-pedal"
-              points="1122,600 1245,600 1245,826 1119,826"
-            ></polygon>
-            <!-- Клапан спуска воздуха -->
-            <polygon
-              class="hitbox"
-              data-action="air-bleed-valve"
-              points="248,933 272,935 274,988 243,987"
-            ></polygon>
-          </svg>
+        <svg class="hitbox-layer cabin-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true">
+
+          <!-- Кнопка "Выход в ангар" (невидимая зона в правом верхнем углу) -->
+          <polygon class="hitbox interactive exit-btn" data-action="Вернуться в ангар"
+            points="1800,20 1900,20 1900,60 1800,60"></polygon>
+
+          <!-- Battery toggle -->
+          <polygon class="hitbox" data-action="battery-toggle" points="30,75 85,83 87,195 22,215"></polygon>
+          <!-- Манометр -->
+          <polygon class="hitbox" data-action="manometer" points="1446,336 1533,328 1540,416 1457,426"></polygon>
+          <!-- Приборная панель -->
+          <polygon class="hitbox" data-action="instrument-panel" points="95,83 166,86 476,373 510,741 98,994"></polygon>
+          <!-- Левый балон -->
+          <polygon class="hitbox" data-action="left-tank" points="625,391 673,391 673,426 625,428"></polygon>
+          <!-- БЦН -->
+          <polygon class="hitbox" data-action="bcn" points="328,870 415,820 410,940 333,982"></polygon>
+          <!-- Жалюзи -->
+          <polygon class="hitbox" data-action="shutters" points="1482,914 1536,797 1660,837 1615,1031 1570,1033">
+          </polygon>
+          <!-- Правый балон -->
+          <polygon class="hitbox" data-action="right-tank" points="1370,620 1405,620 1405,655 1370,655"></polygon>
+          <!-- Рычаг ручной подкачки топлива -->
+          <polygon class="hitbox" data-action="fuel-primer-lever" points="337,1029 460,976 460,1018 388,1068"></polygon>
+          <!-- Ручная подача топлива -->
+          <polygon class="hitbox" data-action="fuel-manual-feed" points="520,777 570,777 570,827 520,827"></polygon>
+          <!-- Рычаг переключения передач -->
+          <polygon class="hitbox" data-action="gear-lever" points="1327,699 1424,674 1560,760 1435,782"></polygon>
+          <!-- Педаль тормоза -->
+          <polygon class="hitbox" data-action="brake-pedal" points="972,550 1095,550 1095,826 969,826"></polygon>
+          <!-- Педаль газа -->
+          <polygon class="hitbox" data-action="gas-pedal" points="1122,600 1245,600 1245,826 1119,826"></polygon>
+          <!-- Клапан спуска воздуха -->
+          <polygon class="hitbox" data-action="air-bleed-valve" points="248,933 272,935 274,988 243,987"></polygon>
+          <polygon class="hitbox" data-action="cabin-light" points="1460,60 1530,60 1530,180 1460,180"></polygon>
+        </svg>
 
           <!-- Модалка БЦН -->
           <div class="bcn-modal hidden" id="bcnModal" role="dialog" aria-label="БЦН ТЦА">
