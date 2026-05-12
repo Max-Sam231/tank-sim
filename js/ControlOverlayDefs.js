@@ -98,9 +98,9 @@ const CONTROL_OVERLAY_DEFS = {
     offsetY: 0,
     z: 58,
     frames: {
-      off: "./img/8/8_0000_Слой-236-копия.png",
-      on: "./img/8/8_0003_Слой-2.png",
-      pump: "./img/8/8_0003_Слой-2.png", // TODO: заменить на картинку откачки когда будет
+      off: "./img/8/8_0003_Слой-2.png",
+      on: "./img/8/8_0001_Слой-4.png",
+      pump: "./img/8/8_0000_Слой-236-копия.png",
     },
   },
   "air-bleed-valve": {

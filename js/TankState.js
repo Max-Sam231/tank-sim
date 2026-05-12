@@ -576,6 +576,11 @@ class TankState {
     this._emit();
   }
 
+  setShutters(isOpen) {
+    this.shutters = Boolean(isOpen);
+    this._emit();
+  }
+
   toggleRightTank() {
     this.rightTank = !this.rightTank;
     this._emit();
@@ -600,6 +605,14 @@ class TankState {
     const currentIndex = gears.indexOf(this.gearLever);
     this.gearLever = gears[(currentIndex + 1) % gears.length];
     this._emit();
+  }
+
+  setGearLever(gear) {
+    const validGears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    if (validGears.includes(gear)) {
+      this.gearLever = gear;
+      this._emit();
+    }
   }
 
   setGasPedal(isPressed) {
