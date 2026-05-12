@@ -479,6 +479,9 @@ class UIController {
         case "signal-lamps":
           this.state.cycleSignalLamps();
           break;
+        case "cabin-light":
+          this.state.toggleCabinLight();
+          break;
       }
     });
 
@@ -704,7 +707,6 @@ class UIController {
 
   _render(snapshot) {
     this._renderOverlays(snapshot);
-
     // Для командира 
     const commanderSection = document.getElementById('scene-commander');
 
@@ -830,6 +832,18 @@ class UIController {
     }
 
     this.consoleEl.textContent = lines.join("\n");
+    const driverSection = document.getElementById('scene-driver'); 
+    
+    if (driverSection && !driverSection.classList.contains('hidden')) {
+        // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
+        const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
+        
+        if (isLightsOn) {
+            driverSection.classList.add('cabin-lights-on');
+        } else {
+            driverSection.classList.remove('cabin-lights-on');
+        }
+    }
   }
 
   _capturePointer(event) {
