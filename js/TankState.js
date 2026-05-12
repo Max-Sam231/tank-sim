@@ -39,6 +39,7 @@ class TankState {
     this.airIntake = false;
 
     // Instrument panel remaining toggles (tmb1/tmb2)
+    this.cabinLight = false;
     this.heating = false;
     this.combined = false;
     this.leftLights = false;
@@ -162,6 +163,7 @@ class TankState {
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
+    this.cabinLight = false; 
 
     this._emit();
   }
@@ -176,6 +178,7 @@ class TankState {
     for (const listener of this._listeners) listener(snapshot);
   }
 
+
   getSnapshot() {
     return {
       commanderView: this.commanderView,
@@ -184,6 +187,7 @@ class TankState {
       brakeEffective: this.isBrakePressed || this.parkingBrakeLatched,
       parkingBrakeLatched: this.parkingBrakeLatched,
       engineRunning: this._engineRunning,
+      cabinLight: this.cabinLight,
 
       scenario: { ...this.scenario },
       scenario_start_method: this.scenario.startMethod,
@@ -746,12 +750,16 @@ class TankState {
   }
   toggleCommanderView() {
     if (this.commanderView === 'straight') {
-        this.commanderView = 'tilted';
+      this.commanderView = 'tilted';
     } else {
-        this.commanderView = 'straight';
+      this.commanderView = 'straight';
     }
     this._emit();
-}
+  }
+  toggleCabinLight() {
+    this.cabinLight = !this.cabinLight;
+    this._emit();
+  }
 }
 
 export { TankState };
