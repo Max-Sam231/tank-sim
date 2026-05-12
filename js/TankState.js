@@ -13,7 +13,7 @@ class TankState {
     this.manometer = 0; // Pressure value
     this.instrumentPanel = false;
     this.leftTank = false;
-    this.bcn = false;
+    this.bcn = 'off'; // 'off', 'on', 'pump'
     this.shutters = false;
     this.rightTank = false;
     this.fuelPrimerLever = false;
@@ -99,7 +99,7 @@ class TankState {
     this.manometer = 0;
     this.instrumentPanel = false;
     this.leftTank = false;
-    this.bcn = false;
+    this.bcn = 'off';
     this.shutters = false;
     this.rightTank = false;
     this.fuelPrimerLever = false;
@@ -357,7 +357,7 @@ class TankState {
 
     const gearRatio = gearRatioMap[this.gearLever] ?? 0;
 
-    const isBcnActive = isMassOn && Boolean(this.bcn);
+    const isBcnActive = isMassOn && (this.bcn === 'on' || this.bcn === 'pump');
     const isMznActive = isMassOn && Boolean(this.mznEngine);
     changed = this._setSensorBool("is_bcn_active", isBcnActive) || changed;
     changed = this._setSensorBool("is_mzn_active", isMznActive) || changed;
@@ -558,13 +558,30 @@ class TankState {
     this._emit();
   }
 
+  setBcnMode(mode) {
+    if (mode === 'off' || mode === 'on' || mode === 'pump') {
+      if (this.bcn !== mode) {
+        this.bcn = mode;
+        this._emit();
+      }
+    }
+  }
+
   toggleBcn() {
-    this.bcn = !this.bcn;
+    // Legacy toggle for compatibility - cycles through modes
+    if (this.bcn === 'off') this.bcn = 'on';
+    else if (this.bcn === 'on') this.bcn = 'pump';
+    else this.bcn = 'off';
     this._emit();
   }
 
   toggleShutters() {
     this.shutters = !this.shutters;
+    this._emit();
+  }
+
+  setShutters(isOpen) {
+    this.shutters = Boolean(isOpen);
     this._emit();
   }
 
@@ -592,6 +609,14 @@ class TankState {
     const currentIndex = gears.indexOf(this.gearLever);
     this.gearLever = gears[(currentIndex + 1) % gears.length];
     this._emit();
+  }
+
+  setGearLever(gear) {
+    const validGears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    if (validGears.includes(gear)) {
+      this.gearLever = gear;
+      this._emit();
+    }
   }
 
   setGasPedal(isPressed) {

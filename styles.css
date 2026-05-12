@@ -49,7 +49,6 @@ body {
   overflow: hidden;
 }
 
-
 .overlay-layer {
   position: absolute;
   inset: 0;
@@ -76,11 +75,22 @@ body {
 .overlay.overlay-control {
   pointer-events: auto;
   cursor: pointer;
-  transition: filter 0.2s ease;
+  transition: filter 0.2s ease, outline 0.2s ease;
 }
 
-.overlay.overlay-control:hover {
+.overlay.overlay-control:hover,
+.overlay.overlay-control.hitbox-hovered {
   filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.6));
+}
+
+body.app-prod .overlay.overlay-control:hover,
+body.app-prod .overlay.overlay-control.hitbox-hovered {
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+}
+
+body.app-debug .overlay.overlay-control {
+  outline: 2px solid rgba(0, 170, 255, 0.85);
+  outline-offset: -2px;
 }
 
 .scene.overlays-debug .overlay.overlay-control {
@@ -92,7 +102,8 @@ body {
   display: block;
 }
 
-.hitbox-layer, .overlay-layer {
+.hitbox-layer,
+.overlay-layer {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -745,7 +756,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .hitbox.interactive {
   fill: transparent;
   cursor: pointer;
-  transition: fill 0.2s, stroke 0.2s;
+  transition:
+    fill 0.2s,
+    stroke 0.2s;
 }
 
 .hitbox.interactive:hover {
@@ -762,7 +775,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   overflow: hidden;
   /* По умолчанию сцена скрыта, если нет класса active/visible */
 }
-.hidden, .is-hidden {
+.hidden,
+.is-hidden {
   display: none !important; /* Самое надежное скрытие */
   /* Или, если хотите анимацию: */
   /* opacity: 0; */
@@ -771,7 +785,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /* Убедитесь, что слои внутри сцены не вылезают за пределы */
-.hitbox-layer, .overlay-layer {
+.hitbox-layer,
+.overlay-layer {
   position: absolute;
   top: 0;
   left: 0;
@@ -874,10 +889,122 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Фоны должны занимать всё пространство и не искажаться отдельно от контейнера */
 
-
 /* Остальные стили для переключения видимости фонов остаются теми же */
-.cmd-bg-straight { opacity: 1; }
-.cmd-bg-tilted { opacity: 0; }
+.cmd-bg-straight {
+  opacity: 1;
+}
+.cmd-bg-tilted {
+  opacity: 0;
+}
 
-.commander-view-tilted .cmd-bg-straight { opacity: 0; }
-.commander-view-tilted .cmd-bg-tilted { opacity: 1; }
+.commander-view-tilted .cmd-bg-straight {
+  opacity: 0;
+}
+.commander-view-tilted .cmd-bg-tilted {
+  opacity: 1;
+}
+
+/* BCN Modal */
+.bcn-modal {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 950;
+  pointer-events: auto;
+}
+
+.bcn-modal.hidden {
+  display: none;
+}
+
+.bcn-modal-content {
+  background: rgba(20, 25, 35, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 220px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.bcn-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.bcn-modal-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.bcn-modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.bcn-modal-close:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.bcn-modal-image-placeholder {
+  width: 100%;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bcn-modal-image-placeholder img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.bcn-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bcn-modal-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.bcn-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.bcn-modal-btn.is-active {
+  background: rgba(35, 134, 54, 0.6);
+  border-color: rgba(46, 160, 67, 0.8);
+  color: #fff;
+}
+
+.bcn-modal-btn:active {
+  transform: translateY(1px);
+}
