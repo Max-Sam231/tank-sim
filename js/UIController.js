@@ -20,6 +20,8 @@ class UIController {
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
 
+    this._handleDocumentPointerDown = null;
+
     this._wireEvents();
 
     this._ensureCabinControlOverlays();
@@ -387,7 +389,7 @@ class UIController {
           this._showBcnModal();
           break;
         case "shutters":
-          this.state.toggleShutters();
+          this._showShuttersModal();
           break;
         case "right-tank":
           this.state.toggleRightTank();
@@ -400,7 +402,7 @@ class UIController {
           this.state.adjustFuelManualFeed(event.shiftKey ? -10 : 10);
           break;
         case "gear-lever":
-          this.state.cycleGearLever();
+          this._showGearModal();
           break;
         case "air-bleed-valve":
           this.state.toggleAirBleedValve();
@@ -634,6 +636,69 @@ class UIController {
         }
       });
     }
+
+    // Shutters Modal events
+    this._shuttersModalEl = document.getElementById("shuttersModal");
+    this._shuttersModalImageEl = document.getElementById("shuttersModalImage");
+
+    const shuttersCloseBtn = document.getElementById("shuttersModalClose");
+    if (shuttersCloseBtn) {
+      shuttersCloseBtn.addEventListener("click", () => this._hideShuttersModal());
+    }
+
+    if (this._shuttersModalEl) {
+      this._shuttersModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const mode = btn.dataset.shuttersMode;
+          if (mode !== undefined) {
+            const isOpen = mode === "true";
+            this.state.setShutters(isOpen);
+            this._updateShuttersModalButtons(isOpen);
+            this._updateShuttersModalImage(isOpen);
+          }
+        }
+      });
+    }
+
+    // Gear Modal events
+    this._gearModalEl = document.getElementById("gearModal");
+    this._gearModalImageEl = document.getElementById("gearModalImage");
+
+    const gearCloseBtn = document.getElementById("gearModalClose");
+    if (gearCloseBtn) {
+      gearCloseBtn.addEventListener("click", () => this._hideGearModal());
+    }
+
+    if (this._gearModalEl) {
+      this._gearModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const gear = btn.dataset.gearMode;
+          if (gear) {
+            this.state.setGearLever(gear);
+            this._updateGearModalButtons(gear);
+            this._updateGearModalImage(gear);
+          }
+        }
+      });
+    }
+
+    this._handleDocumentPointerDown = (event) => {
+      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(Boolean);
+      const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
+      if (!isAnyOpen) return;
+
+      const target = event.target;
+      const insideContent = target && typeof target.closest === "function" && target.closest(".bcn-modal-content");
+      if (insideContent) return;
+
+      this._hideAllActionModals();
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    };
+    document.addEventListener("pointerdown", this._handleDocumentPointerDown, true);
 
   }
 
@@ -925,14 +990,83 @@ class UIController {
 
   _updateBcnModalImage(mode) {
     if (!this._bcnModalImageEl) return;
-    // Placeholder - здесь будут картинки для каждого режима
-    // Пока показываем текст состояния
     const labels = {
       off: "ВЫКЛЮЧЕНО",
       on: "ВКЛЮЧЕНО",
       pump: "ОТКАЧКА",
     };
     this._bcnModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[mode] || "—"}</span>`;
+  }
+
+  _hideAllActionModals() {
+    this._hideBcnModal();
+    this._hideShuttersModal();
+    this._hideGearModal();
+  }
+
+  _showShuttersModal() {
+    if (!this._shuttersModalEl) return;
+    this._shuttersModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateShuttersModalButtons(snapshot.shutters);
+    this._updateShuttersModalImage(snapshot.shutters);
+  }
+
+  _hideShuttersModal() {
+    if (!this._shuttersModalEl) return;
+    this._shuttersModalEl.classList.add("hidden");
+  }
+
+  _updateShuttersModalButtons(isOpen) {
+    if (!this._shuttersModalEl) return;
+    const buttons = this._shuttersModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const mode = btn.dataset.shuttersMode;
+      const btnIsOpen = mode === "true";
+      btn.classList.toggle("is-active", btnIsOpen === isOpen);
+    });
+  }
+
+  _updateShuttersModalImage(isOpen) {
+    if (!this._shuttersModalImageEl) return;
+    const label = isOpen ? "ОТКРЫТО" : "ЗАКРЫТО";
+    this._shuttersModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${label}</span>`;
+  }
+
+  _showGearModal() {
+    if (!this._gearModalEl) return;
+    this._gearModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateGearModalButtons(snapshot.gearLever);
+    this._updateGearModalImage(snapshot.gearLever);
+  }
+
+  _hideGearModal() {
+    if (!this._gearModalEl) return;
+    this._gearModalEl.classList.add("hidden");
+  }
+
+  _updateGearModalButtons(currentGear) {
+    if (!this._gearModalEl) return;
+    const buttons = this._gearModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const gear = btn.dataset.gearMode;
+      btn.classList.toggle("is-active", gear === currentGear);
+    });
+  }
+
+  _updateGearModalImage(gear) {
+    if (!this._gearModalImageEl) return;
+    const labels = {
+      neutral: "НЕЙТРАЛЬ",
+      "1": "1-Я ПЕРЕДАЧА",
+      "2": "2-Я ПЕРЕДАЧА",
+      "3": "3-Я ПЕРЕДАЧА",
+      "4": "4-Я ПЕРЕДАЧА",
+      "5": "5-Я ПЕРЕДАЧА",
+      R: "ЗАДНЯЯ (R)",
+    };
+    this._gearModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[gear] || "—"}</span>`;
   }
 }
 
