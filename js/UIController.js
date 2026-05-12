@@ -20,6 +20,8 @@ class UIController {
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
 
+    this._handleDocumentPointerDown = null;
+
     this._wireEvents();
 
     this._ensureCabinControlOverlays();
@@ -384,10 +386,10 @@ class UIController {
           this.state.toggleLeftTank();
           break;
         case "bcn":
-          this.state.toggleBcn();
+          this._showBcnModal();
           break;
         case "shutters":
-          this.state.toggleShutters();
+          this._showShuttersModal();
           break;
         case "right-tank":
           this.state.toggleRightTank();
@@ -400,7 +402,7 @@ class UIController {
           this.state.adjustFuelManualFeed(event.shiftKey ? -10 : 10);
           break;
         case "gear-lever":
-          this.state.cycleGearLever();
+          this._showGearModal();
           break;
         case "air-bleed-valve":
           this.state.toggleAirBleedValve();
@@ -556,15 +558,25 @@ class UIController {
       { passive: false }
     );
 
-    // Mouse events for manometer
+    // Sync hover between hitboxes and overlay-controls
     this.rootEl.addEventListener("mouseover", (event) => {
       const hitbox = event.target.closest(".hitbox");
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      
+      // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
         this.state.setManometer(Math.round(Number(snapshot.air_start_pressure) || 0));
+      }
+
+      // Highlight corresponding overlay-control
+      if (action) {
+        const overlayControl = this._controlOverlayEls.get(action);
+        if (overlayControl) {
+          overlayControl.classList.add("hitbox-hovered");
+        }
       }
     });
 
@@ -573,9 +585,18 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      
+      // Manometer special handling
       if (action === "manometer") {
-        // Reset pressure when not hovering
         this.state.setManometer(0);
+      }
+
+      // Remove highlight from corresponding overlay-control
+      if (action) {
+        const overlayControl = this._controlOverlayEls.get(action);
+        if (overlayControl) {
+          overlayControl.classList.remove("hitbox-hovered");
+        }
       }
     });
 
@@ -595,6 +616,92 @@ class UIController {
         this.state.setInstrumentPanelOpen(false);
       });
     }
+
+    // BCN Modal events
+    this._bcnModalEl = document.getElementById("bcnModal");
+    this._bcnModalImageEl = document.getElementById("bcnModalImage");
+
+    const bcnCloseBtn = document.getElementById("bcnModalClose");
+    if (bcnCloseBtn) {
+      bcnCloseBtn.addEventListener("click", () => this._hideBcnModal());
+    }
+
+    if (this._bcnModalEl) {
+      this._bcnModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const mode = btn.dataset.bcnMode;
+          if (mode) {
+            this.state.setBcnMode(mode);
+            this._updateBcnModalButtons(mode);
+            this._updateBcnModalImage(mode);
+          }
+        }
+      });
+    }
+
+    // Shutters Modal events
+    this._shuttersModalEl = document.getElementById("shuttersModal");
+    this._shuttersModalImageEl = document.getElementById("shuttersModalImage");
+
+    const shuttersCloseBtn = document.getElementById("shuttersModalClose");
+    if (shuttersCloseBtn) {
+      shuttersCloseBtn.addEventListener("click", () => this._hideShuttersModal());
+    }
+
+    if (this._shuttersModalEl) {
+      this._shuttersModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const mode = btn.dataset.shuttersMode;
+          if (mode !== undefined) {
+            const isOpen = mode === "true";
+            this.state.setShutters(isOpen);
+            this._updateShuttersModalButtons(isOpen);
+            this._updateShuttersModalImage(isOpen);
+          }
+        }
+      });
+    }
+
+    // Gear Modal events
+    this._gearModalEl = document.getElementById("gearModal");
+    this._gearModalImageEl = document.getElementById("gearModalImage");
+
+    const gearCloseBtn = document.getElementById("gearModalClose");
+    if (gearCloseBtn) {
+      gearCloseBtn.addEventListener("click", () => this._hideGearModal());
+    }
+
+    if (this._gearModalEl) {
+      this._gearModalEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".bcn-modal-btn");
+        if (btn) {
+          const gear = btn.dataset.gearMode;
+          if (gear) {
+            this.state.setGearLever(gear);
+            this._updateGearModalButtons(gear);
+            this._updateGearModalImage(gear);
+          }
+        }
+      });
+    }
+
+    this._handleDocumentPointerDown = (event) => {
+      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(Boolean);
+      const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
+      if (!isAnyOpen) return;
+
+      const target = event.target;
+      const insideContent = target && typeof target.closest === "function" && target.closest(".bcn-modal-content");
+      if (insideContent) return;
+
+      this._hideAllActionModals();
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+    };
+    document.addEventListener("pointerdown", this._handleDocumentPointerDown, true);
 
   }
 
@@ -662,7 +769,7 @@ class UIController {
       `manometer: ${snapshot.manometer > 0 ? snapshot.manometer + " kg/cm²" : "0 kg/cm²"}`,
       `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
-      `BCN: ${snapshot.bcn ? "ON" : "OFF"}`,
+      `BCN: ${snapshot.bcn.toUpperCase()}`,
       `shutters: ${snapshot.shutters ? "OPEN" : "CLOSED"}`,
       `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
@@ -871,6 +978,109 @@ class UIController {
       modal.classList.remove("hidden");
       this.rootEl.classList.add("instrument-panel-open");
     }
+  }
+
+  _showBcnModal() {
+    if (!this._bcnModalEl) return;
+    this._bcnModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateBcnModalButtons(snapshot.bcn);
+    this._updateBcnModalImage(snapshot.bcn);
+  }
+
+  _hideBcnModal() {
+    if (!this._bcnModalEl) return;
+    this._bcnModalEl.classList.add("hidden");
+  }
+
+  _updateBcnModalButtons(currentMode) {
+    if (!this._bcnModalEl) return;
+    const buttons = this._bcnModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const mode = btn.dataset.bcnMode;
+      btn.classList.toggle("is-active", mode === currentMode);
+    });
+  }
+
+  _updateBcnModalImage(mode) {
+    if (!this._bcnModalImageEl) return;
+    const labels = {
+      off: "ВЫКЛЮЧЕНО",
+      on: "ВКЛЮЧЕНО",
+      pump: "ОТКАЧКА",
+    };
+    this._bcnModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[mode] || "—"}</span>`;
+  }
+
+  _hideAllActionModals() {
+    this._hideBcnModal();
+    this._hideShuttersModal();
+    this._hideGearModal();
+  }
+
+  _showShuttersModal() {
+    if (!this._shuttersModalEl) return;
+    this._shuttersModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateShuttersModalButtons(snapshot.shutters);
+    this._updateShuttersModalImage(snapshot.shutters);
+  }
+
+  _hideShuttersModal() {
+    if (!this._shuttersModalEl) return;
+    this._shuttersModalEl.classList.add("hidden");
+  }
+
+  _updateShuttersModalButtons(isOpen) {
+    if (!this._shuttersModalEl) return;
+    const buttons = this._shuttersModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const mode = btn.dataset.shuttersMode;
+      const btnIsOpen = mode === "true";
+      btn.classList.toggle("is-active", btnIsOpen === isOpen);
+    });
+  }
+
+  _updateShuttersModalImage(isOpen) {
+    if (!this._shuttersModalImageEl) return;
+    const label = isOpen ? "ОТКРЫТО" : "ЗАКРЫТО";
+    this._shuttersModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${label}</span>`;
+  }
+
+  _showGearModal() {
+    if (!this._gearModalEl) return;
+    this._gearModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateGearModalButtons(snapshot.gearLever);
+    this._updateGearModalImage(snapshot.gearLever);
+  }
+
+  _hideGearModal() {
+    if (!this._gearModalEl) return;
+    this._gearModalEl.classList.add("hidden");
+  }
+
+  _updateGearModalButtons(currentGear) {
+    if (!this._gearModalEl) return;
+    const buttons = this._gearModalEl.querySelectorAll(".bcn-modal-btn");
+    buttons.forEach((btn) => {
+      const gear = btn.dataset.gearMode;
+      btn.classList.toggle("is-active", gear === currentGear);
+    });
+  }
+
+  _updateGearModalImage(gear) {
+    if (!this._gearModalImageEl) return;
+    const labels = {
+      neutral: "НЕЙТРАЛЬ",
+      "1": "1-Я ПЕРЕДАЧА",
+      "2": "2-Я ПЕРЕДАЧА",
+      "3": "3-Я ПЕРЕДАЧА",
+      "4": "4-Я ПЕРЕДАЧА",
+      "5": "5-Я ПЕРЕДАЧА",
+      R: "ЗАДНЯЯ (R)",
+    };
+    this._gearModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[gear] || "—"}</span>`;
   }
 }
 
