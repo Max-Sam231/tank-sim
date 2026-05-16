@@ -1005,11 +1005,11 @@ class UIController {
   _updateBcnModalImage(mode) {
     if (!this._bcnModalImageEl) return;
     const labels = {
-      off: "ВЫКЛЮЧЕНО",
-      on: "ВКЛЮЧЕНО",
-      pump: "ОТКАЧКА",
+      off: "./img/8/кран-выкл.png",
+      on: "./img/8/кран-вкл.png",
+      pump: "./img/8/кран-откач.png",
     };
-    this._bcnModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[mode] || "—"}</span>`;
+    this._bcnModalImageEl.innerHTML = `<img src="${labels[mode] || ""}" alt="БЦН" />`;
   }
 
   _hideAllActionModals() {
