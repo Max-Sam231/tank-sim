@@ -27,14 +27,17 @@ const CONTROL_OVERLAY_DEFS = {
     },
   },
   shutters: {
-    kind: "boolean",
+    kind: "enum",
     stateKey: "shutters",
     inflate: 1.0,
     offsetX: -5,
     offsetY: 15,
     z: 55,
-    off: "./img/2/2_0000s_0000_Слой-251-копия-2.png",
-    on: "./img/2/2_0000s_0002_Слой-251.png",
+    frames: {
+      false: "./img/2/2_0000s_0000_Слой-251-копия-2.png",
+      partial: "./img/2/2_0000s_0001_Слой-251-копия.png",
+      true: "./img/2/2_0000s_0002_Слой-251.png",
+    },
   },
   "right-tank": {
     kind: "boolean",

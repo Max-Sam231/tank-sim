@@ -35,28 +35,31 @@
       </div>
 
       <!-- Контейнер для Стартового Меню (генерируется JS) -->
-      <div class="start-menu-container" id="startMenuContainer"></div>
+    <div class="start-menu-container" id="startMenuContainer"></div>
+
+    <section id="scene-hangar" class="game-scene hidden">
+      <div class="hangar-bg-wrapper">
+        <!-- фон ангара -->
+        <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Angar Background" />
+        <!-- танк -->
+        <img class="tank-layer" src="./img/hangar/tank.png" alt="Tank" />
+      </div>
+
+      <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+        aria-hidden="true">
 
         <!-- Люк механика-водителя (Вход в кабину) -->
         <polygon class="hitbox interactive" data-action="enter_driver_seat"
           points="1150,500 1190,500 1190,600 1150,600"" />
 
-        <!-- Люк командира (Заглушка) -->
-        <polygon class="hitbox" data-action="enter_commander_seat" points="740,580 800,580 800,680 740,680" />
-
-        <!-- Люк наводчика (Заглушка) -->
+        <!-- Люк командира -->
         <polygon class="hitbox" data-action="enter_gunner_seat" points="860,410 820,410 820,520 860,520" />
+        
+        <!-- Люк наводчика -->
+        <polygon class="hitbox" data-action="enter_commander_seat" points="790,580 870,580 870,680 790,680" />
       </svg>
     </section>
 
-          <!-- Люк наводчика (Заглушка) -->
-          <polygon
-            class="hitbox"
-            data-action="enter_gunner_seat"
-            points="980,460 1050,460 1050,560 980,560"
-          />
-        </svg>
-      </section>
 
     <section id="scene-driver" class="game-scene hidden">
       <div class="scene-content" id="scene">
@@ -149,6 +152,9 @@
               </div>
               <div class="bcn-modal-buttons">
                 <button class="bcn-modal-btn" data-shutters-mode="false">Закрыто</button>
+                <button class="bcn-modal-btn" data-shutters-mode="partial">Полузакрыто</button>
+                <button class="bcn-modal-btn" data-shutters-mode="partial">Частично</button>
+                <button class="bcn-modal-btn" data-shutters-mode="partial">Полуоткрыто</button>
                 <button class="bcn-modal-btn" data-shutters-mode="true">Открыто</button>
               </div>
             </div>
