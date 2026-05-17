@@ -6,15 +6,16 @@ import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
 
 import { SceneManager } from './js/SceneManager.js';
-import { HangarScene } from './js/HangarScene.js';
-import { DriverScene } from './js/DriverScene.js';
-import { CommanderScene } from './js/CommanderScene.js'; 
+import { HangarScene } from './js/scenes/HangarScene.js';
+import { DriverScene } from './js/scenes/DriverScene.js';
+import { CommanderScene } from './js/scenes/CommanderScene.js';
 
-const APP_MODE = "debug"; 
+const APP_MODE = "debug";
 const IS_DEBUG = APP_MODE === "debug";
 
 
 function bootstrap() {
+
   const sceneEl = document.getElementById("scene");
   const consoleEl = document.getElementById("debugConsole");
   const startMenuContainerEl = document.getElementById("startMenuContainer");
@@ -54,7 +55,7 @@ function bootstrap() {
     sceneManager,
     sceneEl,
 
-    scene: null,     
+    scene: null,
     assets: {
       get: () => null
     },
@@ -72,12 +73,13 @@ function bootstrap() {
     switch (name) {
       case "hangar":
         sceneManager.change(hangarScene, sceneId || "scene-hangar");
+        app.getScene = () => sceneManager.currentScene;
         break;
-
+        
       case "driver":
         sceneManager.change(driverScene, sceneId || "scene-driver");
         break;
-        
+
       case "commander": // <--- 3. НОВЫЙ КЕЙС ДЛЯ КОМАНДИРА
         sceneManager.change(commanderScene, sceneId || "scene-commander");
         break;

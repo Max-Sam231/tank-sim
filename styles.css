@@ -1010,3 +1010,95 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .bcn-modal-btn:active {
   transform: translateY(1px);
 }
+#scene-hangar {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+.tank-layer {
+  position: absolute;
+  pointer-events: none; /* клики проходят к SVG */
+  z-index: 5;
+  will-change: transform; /* оптимизация анимаций */
+}
+
+/* ========== ТОП-ВЬЮ: танк сверху ========== */
+.tank-layer-top {
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 55%;
+}
+
+/* ========== САЙД-ВЬЮ: танк сбоку ========== */
+/* Временные значения — подбери под tank_side.png */
+.tank-layer-side {
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 70%;
+}
+/**/
+.hangar-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ========== КОНТЕЙНЕРЫ ВИДОВ ========== */
+.tank-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.hangar-bg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/**/
+.view-switch-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  
+  /* Поднимаем кнопку НАД всеми слоями сцены */
+  z-index: 9999 !important;
+  
+  /* Гарантируем, что кнопка кликабельна и видима */
+  pointer-events: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  
+  /* Тень для визуального отделения от фона */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s, transform 0.1s;
+}
+
+.view-switch-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.view-switch-btn:active {
+  transform: translateY(1px);
+}
