@@ -87,6 +87,9 @@ class TankState {
     this._brakeHoldTriggered = false;
 
     this._parkingBrakeHoldThresholdSec = 1.2;
+    this.exhaustBolt1 = false;
+    this.exhaustBolt2 = false;
+    this.exhaustCoverRemoved = false;
 
     this._listeners = new Set();
   }
@@ -169,7 +172,9 @@ class TankState {
     this.hingeLatch2 = false;
     this.hingeLatch3 = false;
     this.sidePanelOpen = false;
-
+    this.exhaustBolt1 = false;
+    this.exhaustBolt2 = false;
+    this.exhaustCoverRemoved = false;
     this._emit();
   }
 
@@ -260,6 +265,9 @@ class TankState {
       hingeLatch2: this.hingeLatch2,
       hingeLatch3: this.hingeLatch3,
       sidePanelOpen: this.sidePanelOpen,
+      exhaustBolt1: this.exhaustBolt1,
+      exhaustBolt2: this.exhaustBolt2,
+      exhaustCoverRemoved: this.exhaustCoverRemoved,
     };
   }
 
@@ -809,6 +817,23 @@ class TankState {
   openSidePanel() {
     if (this.canOpenSidePanel()) {
       this.sidePanelOpen = true;
+      this._emit();
+    }
+  }
+  toggleExhaustBolt(boltId) {
+    if (boltId === "1") this.exhaustBolt1 = !this.exhaustBolt1;
+    else if (boltId === "2") this.exhaustBolt2 = !this.exhaustBolt2;
+    else return;
+    this._emit();
+  }
+
+  canRemoveExhaustCover() {
+    return this.exhaustBolt1 && this.exhaustBolt2;
+  }
+
+  removeExhaustCover() {
+    if (this.canRemoveExhaustCover()) {
+      this.exhaustCoverRemoved = true;
       this._emit();
     }
   }
