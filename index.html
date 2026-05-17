@@ -71,8 +71,10 @@
         <img src="./img/heater/rear_left_heater.jpg" alt="Обогреватель - задняя левая часть"
           style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;" />
 
-        <svg class="hitbox-layer heater-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
-          aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+        <!-- Хитбоксы для ЗАКРЫТОГО борта -->
+        <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-closed" viewBox="0 0 1920 1080"
+          preserveAspectRatio="none" aria-hidden="true"
+          style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
 
           <polygon class="hitbox interactive" data-zone="hinge-latch-1" points="200,600 280,600 280,680 200,680"
             title="Шпингалет 1" style="pointer-events:auto;" />
@@ -86,13 +88,33 @@
 
         </svg>
 
+        <!-- Хитбоксы для ОТКРЫТОГО борта (скрыты по умолчанию) -->
+        <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-opened hidden" viewBox="0 0 1920 1080"
+          preserveAspectRatio="none" aria-hidden="true"
+          style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+
+          <!-- Хитбокс на выхлоп обогревателя (для перехода к крупному плану) -->
+          <polygon class="hitbox interactive" data-zone="heater-exhaust-closeup"
+            points="1100,600 1200,600 1200,700 1100,700" title="Выхлоп обогревателя (крупно)"
+            style="pointer-events:auto;fill:rgba(255,170,0,0.15);stroke:rgba(255,170,0,0.7);" />
+          <!-- Хитбокс для закрытия борта -->
+          <polygon class="hitbox interactive" data-zone="side-panel-close" points="100,100 300,100 300,200 100,200"
+            title="Закрыть борт" style="pointer-events:auto;fill:rgba(255,100,0,0.1);stroke:rgba(255,100,0,0.6);" />
+
+          <!-- Хитбокс "Назад" из крупного плана (скрыт по умолчанию) -->
+          <polygon class="hitbox interactive hidden" data-zone="heater-exhaust-back"
+            points="100,100 250,100 250,180 100,180" title="Назад"
+            style="pointer-events:auto;fill:rgba(255,50,50,0.2);stroke:rgba(255,50,50,0.7);" />
+
+        </svg>
+
         <button id="heaterBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">
           ← Назад
         </button>
 
         <div
           style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:8px;font-size:14px;z-index:100;">
-        <p>Откройте борт</p>
+          <p>Откройте борт</p>
         </div>
 
       </div>

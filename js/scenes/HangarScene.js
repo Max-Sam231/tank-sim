@@ -15,72 +15,38 @@ export class HangarScene {
     }
 
     bindUI() {
-    const btn = document.getElementById("switchViewBtn");
-    if (btn && btn.dataset.bound !== "1") {
-        btn.dataset.bound = "1";
-        btn.addEventListener("click", () => this.toggleView());
-    }
-
-    //Хитбокс-люки
-    const topHitboxes = document.querySelector("#tank-top-view .scene-hitbox-layer");
-    if (topHitboxes && topHitboxes.dataset.bound !== "1") {
-        topHitboxes.dataset.bound = "1";
-        topHitboxes.addEventListener("click", (e) => this._onHatchClick(e));
-    }
-
-    //Хитбокс-люки
-    const sideHitboxes = document.querySelector("#tank-side-view .side-hitbox-layer");
-    if (sideHitboxes && sideHitboxes.dataset.bound !== "1") {
-        sideHitboxes.dataset.bound = "1";
-        sideHitboxes.addEventListener("click", (e) => this._onZoneClick(e));
-    }
-
-    // Обработчик для сцены обогревателя (шпингалеты + открытие борта)
-    const heaterHitboxes = document.querySelector("#scene-heater .heater-hitbox-layer");
-    if (heaterHitboxes && heaterHitboxes.dataset.bound !== "1") {
-        heaterHitboxes.dataset.bound = "1";
-        heaterHitboxes.addEventListener("click", (e) => this._onHeaterZoneClick(e));
-    }
-}
-
-_onHeaterZoneClick(e) {
-    const hit = e.target.closest(".hitbox.interactive");
-    if (!hit) return;
-
-    const zone = hit.dataset.zone;
-    if (!zone) return;
-
-    console.log(`Зона обогревателя: ${zone}`);
-
-    // Обработка шпингалетов
-    if (zone.startsWith("hinge-latch")) {
-        const latchId = zone.split("-")[2]; // "1", "2" или "3"
-        this.app.state?.toggleHingeLatch?.(latchId);
-        
-        // Визуальная обратная связь: меняем стиль снятого шпингалета
-        if (this.app.state?.[`hingeLatch${latchId}`]) {
-            hit.style.fill = "rgba(0,255,0,0.3)";
-            hit.style.stroke = "rgba(0,255,0,0.8)";
-        } else {
-            hit.style.fill = "rgba(255,0,0,0.2)";
-            hit.style.stroke = "rgba(255,0,0,0.6)";
+        const btn = document.getElementById("switchViewBtn");
+        if (btn && btn.dataset.bound !== "1") {
+            btn.dataset.bound = "1";
+            btn.addEventListener("click", () => this.toggleView());
         }
-        return;
-    }
 
-    // Обработка открытия борта
-    if (zone === "side-panel-open") {
-        if (this.app.state?.canOpenSidePanel?.()) {
-            this.app.state?.openSidePanel?.();
-            this.app.changeScene?.("side-panel-open");
-        } else {
-            console.log("Сначала снимите все шпингалеты");
-            // Визуальная подсказка: мигание зоны
-            hit.style.animation = "pulse 0.3s ease 3";
+        const topHitboxes = document.querySelector("#tank-top-view .scene-hitbox-layer");
+        if (topHitboxes && topHitboxes.dataset.bound !== "1") {
+            topHitboxes.dataset.bound = "1";
+            topHitboxes.addEventListener("click", (e) => this._onHatchClick(e));
         }
-        return;
+
+        const sideHitboxes = document.querySelector("#tank-side-view .side-hitbox-layer");
+        if (sideHitboxes && sideHitboxes.dataset.bound !== "1") {
+            sideHitboxes.dataset.bound = "1";
+            sideHitboxes.addEventListener("click", (e) => this._onZoneClick(e));
+        }
+
+        // Обработчик для ОБЕИХ слоёв хитбоксов обогревателя
+        const heaterHitboxesClosed = document.querySelector("#scene-heater .heater-hitbox-closed");
+        const heaterHitboxesOpened = document.querySelector("#scene-heater .heater-hitbox-opened");
+
+        if (heaterHitboxesClosed && heaterHitboxesClosed.dataset.bound !== "1") {
+            heaterHitboxesClosed.dataset.bound = "1";
+            heaterHitboxesClosed.addEventListener("click", (e) => this._onHeaterZoneClick(e));
+        }
+
+        if (heaterHitboxesOpened && heaterHitboxesOpened.dataset.bound !== "1") {
+            heaterHitboxesOpened.dataset.bound = "1";
+            heaterHitboxesOpened.addEventListener("click", (e) => this._onHeaterZoneClick(e));
+        }
     }
-}
 
     _onHatchClick(e) {
         const hit = e.target.closest(".hitbox.interactive");
@@ -122,6 +88,117 @@ _onHeaterZoneClick(e) {
         }
     }
 
+    _onHeaterZoneClick(e) {
+        const hit = e.target.closest(".hitbox.interactive");
+        if (!hit) return;
+
+        const zone = hit.dataset.zone;
+        if (!zone) return;
+
+        console.log(`Зона обогревателя: ${zone}`);
+
+        if (zone.startsWith("hinge-latch")) {
+            const latchId = zone.split("-")[2];
+            this.app.state?.toggleHingeLatch?.(latchId);
+
+            if (this.app.state?.[`hingeLatch${latchId}`]) {
+                hit.style.fill = "rgba(0,255,0,0.3)";
+                hit.style.stroke = "rgba(0,255,0,0.8)";
+            } else {
+                hit.style.fill = "rgba(255,0,0,0.2)";
+                hit.style.stroke = "rgba(255,0,0,0.6)";
+            }
+            return;
+        }
+
+        if (zone === "side-panel-open") {
+            this._toggleHeaterPanel(true);
+            return;
+        }
+
+        if (zone === "side-panel-close") {
+            this._toggleHeaterPanel(false);
+            return;
+        }
+
+        if (zone === "heater-exhaust-closeup") {
+            console.log("Переключаем на крупный план выхлопа");
+            this._showHeaterExhaustCloseup(true);
+            return;
+        }
+
+        if (zone === "heater-exhaust-back") {
+            console.log("Возврат из крупного плана");
+            this._showHeaterExhaustCloseup(false);
+            return;
+        }
+
+        if (zone === "heater-valve") {
+            console.log("Клик по клапану");
+            return;
+        }
+
+        if (zone === "heater-rear-left") {
+            this.app.changeScene("heater");
+        }
+    }
+
+    _toggleHeaterPanel(isOpen) {
+        const heaterSection = document.getElementById("scene-heater");
+        if (!heaterSection) return;
+
+        const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+        const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
+        const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
+        const hint = heaterSection.querySelector("p");
+
+        if (img) {
+            img.src = isOpen
+                ? "./img/heater/rear_left_heater_opened.jpg"
+                : "./img/heater/rear_left_heater.jpg";
+        }
+
+        if (closedLayer && openedLayer) {
+            closedLayer.classList.toggle("hidden", isOpen);
+            openedLayer.classList.toggle("hidden", !isOpen);
+        }
+
+        if (hint) {
+            hint.textContent = isOpen ? "Борт открыт" : "Откройте борт";
+        }
+    }
+
+    _showHeaterExhaustCloseup(isCloseup) {
+        const heaterSection = document.getElementById("scene-heater");
+        if (!heaterSection) return;
+
+        const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+        const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
+        const hint = heaterSection.querySelector("p");
+
+        if (img) {
+            img.src = isCloseup
+                ? "./img/heater/exhaust_closeup.jpg"
+                : "./img/heater/rear_left_heater_opened.jpg";
+        }
+
+        if (openedLayer) {
+            const exhaustHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-closeup"]');
+            const valveHitbox = openedLayer.querySelector('[data-zone="heater-valve"]');
+            const closeHitbox = openedLayer.querySelector('[data-zone="side-panel-close"]');
+            const backHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-back"]');
+
+            if (exhaustHitbox) exhaustHitbox.classList.toggle("hidden", isCloseup);
+            if (valveHitbox) valveHitbox.classList.toggle("hidden", isCloseup);
+            if (closeHitbox) closeHitbox.classList.toggle("hidden", isCloseup);
+            if (backHitbox) backHitbox.classList.toggle("hidden", !isCloseup);
+        }
+
+        if (hint) {
+            hint.textContent = isCloseup ? "Выхлоп обогревателя" : "Борт открыт";
+        }
+    }
+
     toggleView() {
         if (this.currentMode === "top") {
             this.showSideView();
@@ -152,6 +229,22 @@ _onHeaterZoneClick(e) {
         this.currentView.init();
 
         this.currentMode = "side";
+
+        const heaterSection = document.getElementById("scene-heater");
+        if (heaterSection) {
+            const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+            const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
+            const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
+            const hint = heaterSection.querySelector("p");
+
+            if (img) img.src = "./img/heater/rear_left_heater.jpg";
+            if (closedLayer) closedLayer.classList.remove("hidden");
+            if (openedLayer) {
+                openedLayer.classList.add("hidden");
+                openedLayer.querySelectorAll(".hitbox").forEach(hb => hb.classList.remove("hidden"));
+            }
+            if (hint) hint.textContent = "Откройте борт";
+        }
     }
 
     dispose() {
