@@ -269,7 +269,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   z-index: 1100;
   min-width: 280px;
   max-width: calc(100% - 24px);
-  max-height: 70vh;
+  max-height: 50vh;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1150,4 +1150,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 #heaterBackBtn:hover {
   background: rgba(0, 0, 0, 0.9);
+}
+
+/**/
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
