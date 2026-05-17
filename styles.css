@@ -1102,3 +1102,52 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .view-switch-btn:active {
   transform: translateY(1px);
 }
+
+/**/
+#scene-heater {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 100;
+  overflow: hidden;
+}
+
+#scene-heater .scene-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#scene-heater img[src*="heater"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  z-index: 1;
+}
+
+#heaterBackBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+#heaterBackBtn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}

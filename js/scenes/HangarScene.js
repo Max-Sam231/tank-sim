@@ -4,54 +4,75 @@ import { TankSideView } from "../views/TankSideView.js";
 export class HangarScene {
     constructor(app) {
         this.app = app;
-
         this.currentView = null;
         this.currentMode = "top";
     }
 
     init() {
         console.log("HangarScene init");
-
         this.bindUI();
         this.showTopView();
     }
 
     bindUI() {
-        // === 1. Кнопка переключения вида (топ/сайд) ===
         const btn = document.getElementById("switchViewBtn");
         if (btn && btn.dataset.bound !== "1") {
             btn.dataset.bound = "1";
             btn.addEventListener("click", () => this.toggleView());
         }
 
-        // === 2. КЛИКИ ПО ЛЮКАМ (хитбоксы) ===
-        const hitboxLayer = document.querySelector("#scene-hangar .scene-hitbox-layer");
-        if (hitboxLayer && hitboxLayer.dataset.bound !== "1") {
-            hitboxLayer.dataset.bound = "1";
+        //Хитбокс-люки
+        const topHitboxes = document.querySelector("#tank-top-view .scene-hitbox-layer");
+        if (topHitboxes && topHitboxes.dataset.bound !== "1") {
+            topHitboxes.dataset.bound = "1";
+            topHitboxes.addEventListener("click", (e) => this._onHatchClick(e));
+        }
 
-            // Используем делегирование: один слушатель на весь SVG
-            hitboxLayer.addEventListener("click", (e) => {
-                // Ищем ближайший интерактивный полигон
-                const hit = e.target.closest(".hitbox.interactive");
-                if (!hit) return;
+        //Хитбокс-люки
+        const sideHitboxes = document.querySelector("#tank-side-view .side-hitbox-layer");
+        if (sideHitboxes && sideHitboxes.dataset.bound !== "1") {
+            sideHitboxes.dataset.bound = "1";
+            sideHitboxes.addEventListener("click", (e) => this._onZoneClick(e));
+        }
+    }
 
-                const hatch = hit.dataset.hatch; // "driver" | "commander" | "gunner"
-                if (!hatch) return;
+    _onHatchClick(e) {
+        const hit = e.target.closest(".hitbox.interactive");
+        if (!hit) return;
 
+        const hatch = hit.dataset.hatch;
+        if (!hatch) return;
 
-                // Маппинг: атрибут data-hatch -> имя сцены в main.js
-                const sceneMap = {
-                    "driver": "driver",
-                    "commander": "commander",
-                    "gunner": "gunner"
-                };
+        console.log(`Люк: ${hatch}`);
 
-                const sceneName = sceneMap[hatch];
+        const sceneMap = {
+            "driver": "driver",
+            "commander": "commander",
+            "gunner": "gunner"
+        };
 
-                if (sceneName && typeof this.app?.changeScene === "function") {
-                    this.app.changeScene(sceneName);
-                }
-            });
+        const sceneName = sceneMap[hatch];
+        if (sceneName && typeof this.app?.changeScene === "function") {
+            this.app.changeScene(sceneName);
+        }
+    }
+
+    _onZoneClick(e) {
+        const hit = e.target.closest(".hitbox.interactive");
+        if (!hit) return;
+
+        const zone = hit.dataset.zone;
+        if (!zone) return;
+
+        console.log(`Зона: ${zone}`);
+
+        const zoneMap = {
+            "heater-rear-left": "heater"
+        };
+
+        const sceneName = zoneMap[zone];
+        if (sceneName && typeof this.app?.changeScene === "function") {
+            this.app.changeScene(sceneName);
         }
     }
 
