@@ -13,7 +13,6 @@ import { CommanderScene } from './js/scenes/CommanderScene.js';
 const APP_MODE = "debug";
 const IS_DEBUG = APP_MODE === "debug";
 
-
 function bootstrap() {
 
   const sceneEl = document.getElementById("scene");
@@ -54,20 +53,17 @@ function bootstrap() {
     ui,
     sceneManager,
     sceneEl,
-
     scene: null,
     assets: {
       get: () => null
     },
-
     raycastFromMouse: () => null,
-
-    changeScene: (name, id) => changeScene(name, id), // Передаем ID сцены
+    changeScene: (name, id) => changeScene(name, id),
   };
 
   const hangarScene = new HangarScene(app);
   const driverScene = new DriverScene(app);
-  const commanderScene = new CommanderScene(app); // <--- 2. СОЗДАНИЕ ЭКЗЕМПЛЯРА
+  const commanderScene = new CommanderScene(app);
 
   const changeScene = (name, sceneId) => {
     switch (name) {
@@ -80,8 +76,12 @@ function bootstrap() {
         sceneManager.change(driverScene, sceneId || "scene-driver");
         break;
 
-      case "commander": // <--- 3. НОВЫЙ КЕЙС ДЛЯ КОМАНДИРА
+      case "commander":
         sceneManager.change(commanderScene, sceneId || "scene-commander");
+        break;
+
+      case "heater":
+        sceneManager.change(null, sceneId || "scene-heater");
         break;
     }
   };
@@ -144,7 +144,6 @@ function bootstrap() {
     },
 
     onInstruction: () => {
-      // позже тут будет обучение
     },
   });
 
@@ -155,11 +154,20 @@ function bootstrap() {
     });
   }
 
+  const heaterBackBtn = document.getElementById("heaterBackBtn");
+  if (heaterBackBtn) {
+    heaterBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
+      setTimeout(() => {
+        hangarScene?.showSideView?.();
+      }, 50);
+    });
+  }
+
   FullscreenManager.setup();
 
   startMenu.show();
 
-  // стартовая сцена
   changeScene("hangar");
 }
 
