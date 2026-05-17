@@ -482,6 +482,9 @@ class UIController {
         case "cabin-light":
           this.state.toggleCabinLight();
           break;
+        case "side-panel-open":
+          sceneManager.change(null, sceneId || "scene-side-panel-open");
+          break;
       }
     });
 
@@ -564,7 +567,7 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
-      
+
       // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
@@ -585,7 +588,7 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
-      
+
       // Manometer special handling
       if (action === "manometer") {
         this.state.setManometer(0);
@@ -832,17 +835,17 @@ class UIController {
     }
 
     this.consoleEl.textContent = lines.join("\n");
-    const driverSection = document.getElementById('scene-driver'); 
-    
+    const driverSection = document.getElementById('scene-driver');
+
     if (driverSection && !driverSection.classList.contains('hidden')) {
-        // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
-        const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
-        
-        if (isLightsOn) {
-            driverSection.classList.add('cabin-lights-on');
-        } else {
-            driverSection.classList.remove('cabin-lights-on');
-        }
+      // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
+      const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
+
+      if (isLightsOn) {
+        driverSection.classList.add('cabin-lights-on');
+      } else {
+        driverSection.classList.remove('cabin-lights-on');
+      }
     }
   }
 
