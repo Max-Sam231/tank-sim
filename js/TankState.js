@@ -163,7 +163,12 @@ class TankState {
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
-    this.cabinLight = false; 
+    this.cabinLight = false;
+
+    this.hingeLatch1 = false;
+    this.hingeLatch2 = false;
+    this.hingeLatch3 = false;
+    this.sidePanelOpen = false;
 
     this._emit();
   }
@@ -251,6 +256,10 @@ class TankState {
       lamp_overheat: this.lamps.overheat,
       lamp_fuel_reserve: this.lamps.fuel_reserve,
       lamp_gear_engaged: this.lamps.gear_engaged,
+      hingeLatch1: this.hingeLatch1,
+      hingeLatch2: this.hingeLatch2,
+      hingeLatch3: this.hingeLatch3,
+      sidePanelOpen: this.sidePanelOpen,
     };
   }
 
@@ -784,6 +793,24 @@ class TankState {
   toggleCabinLight() {
     this.cabinLight = !this.cabinLight;
     this._emit();
+  }
+  toggleHingeLatch(latchId) {
+    if (latchId === "latch1") this.hingeLatch1 = !this.hingeLatch1;
+    else if (latchId === "latch2") this.hingeLatch2 = !this.hingeLatch2;
+    else if (latchId === "latch3") this.hingeLatch3 = !this.hingeLatch3;
+    else return;
+    this._emit();
+  }
+
+  canOpenSidePanel() {
+    return this.hingeLatch1 && this.hingeLatch2 && this.hingeLatch3;
+  }
+
+  openSidePanel() {
+    if (this.canOpenSidePanel()) {
+      this.sidePanelOpen = true;
+      this._emit();
+    }
   }
 }
 

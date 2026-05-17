@@ -37,66 +37,67 @@
       <button id="switchViewBtn" class="view-switch-btn">
         Вид сбоку
       </button>
-      <!-- TOP VIEW -->
+
       <div id="tank-top-view" class="tank-view">
-  <div class="hangar-bg-wrapper">
-    <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Hangar Background" />
-    <!-- Добавлен класс tank-layer-top -->
-    <img class="tank-layer tank-layer-top" src="./img/hangar/tank.png" alt="Tank" />
-  </div>
+        <div class="hangar-bg-wrapper">
+          <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Hangar Background" />
+          <img class="tank-layer tank-layer-top" src="./img/hangar/tank.png" alt="Tank" />
+        </div>
 
         <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
           aria-hidden="true">
-
           <polygon class="hitbox interactive" data-hatch="driver" points="1150,500 1190,500 1190,600 1150,600" />
-
           <polygon class="hitbox interactive" data-hatch="gunner" points="860,410 820,410 820,520 860,520" />
-
           <polygon class="hitbox interactive" data-hatch="commander" points="790,580 870,580 870,680 790,680" />
-
         </svg>
       </div>
 
-      <!-- SIDE VIEW -->
       <div id="tank-side-view" class="tank-view hidden">
-  <div class="hangar-bg-wrapper">
-    <img class="hangar-bg" src="./img/hangar/background_side.jpg" alt="Hangar Side Background" />
-    <!-- Добавлен класс tank-layer-side -->
-    <img class="tank-layer tank-layer-side" src="./img/hangar/tank_side.png" alt="Tank Side" />
-  </div>
-  <svg class="hitbox-layer side-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
-    
-    <polygon class="hitbox interactive" data-zone="heater-rear-left" 
-             points="350,700 700,700 700,900 350,900" 
-             title="Обогреватель" />
-    
-  </svg>
-</div>
-
+        <div class="hangar-bg-wrapper">
+          <img class="hangar-bg" src="./img/hangar/background_side.jpg" alt="Hangar Side Background" />
+          <img class="tank-layer tank-layer-side" src="./img/hangar/tank_side.png" alt="Tank Side" />
+        </div>
+        <svg class="hitbox-layer side-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true">
+          <polygon class="hitbox interactive" data-zone="heater-rear-left" points="350,700 700,700 700,900 350,900"
+            title="Обогреватель" />
+        </svg>
+      </div>
     </section>
-<section id="scene-heater" class="game-scene hidden">
-  <div class="scene-content" style="position:relative;width:100%;height:100%;">
-    
-    <!-- Фон: фото задней левой части танка -->
-    <img src="./img/heater/rear_left_heater.jpg" 
-         alt="Обогреватель - задняя левая часть"
-         style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;" />
-    
-    <!-- Кнопка "Назад в ангар" -->
-    <button id="heaterBackBtn" class="view-switch-btn" 
-            style="top:20px;left:20px;right:auto;">
-      ← Назад
-    </button>
-    
-    <!-- Подсказка -->
-    <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
-                background:rgba(0,0,0,0.7);color:white;padding:10px 20px;
-                border-radius:8px;font-size:14px;z-index:100;">
-     
-    </div>
-    
-  </div>
-</section>
+
+    <section id="scene-heater" class="game-scene hidden">
+      <div class="scene-content" style="position:relative;width:100%;height:100%;">
+
+        <img src="./img/heater/rear_left_heater.jpg" alt="Обогреватель - задняя левая часть"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;" />
+
+        <svg class="hitbox-layer heater-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+
+          <polygon class="hitbox interactive" data-zone="hinge-latch-1" points="200,600 280,600 280,680 200,680"
+            title="Шпингалет 1" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="hinge-latch-2" points="1500,400 1580,400 1580,480 1500,480"
+            title="Шпингалет 2" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="hinge-latch-3" points="1500,650 1580,650 1580,730 1500,730"
+            title="Шпингалет 3" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="side-panel-open" points="300,300 1400,300 1400,900 300,900"
+            title="Открыть борт"
+            style="pointer-events:auto;fill:rgba(0,255,0,0.1);stroke:rgba(0,255,0,0.5);stroke-width:2;" />
+
+        </svg>
+
+        <button id="heaterBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">
+          ← Назад
+        </button>
+
+        <div
+          style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:8px;font-size:14px;z-index:100;">
+        <p>Откройте борт</p>
+        </div>
+
+      </div>
+    </section>
+
 
     <section id="scene-driver" class="game-scene hidden">
       <div class="scene-content" id="scene">
