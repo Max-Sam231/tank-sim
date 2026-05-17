@@ -122,14 +122,37 @@ export class HangarScene {
         }
 
         if (zone === "heater-exhaust-closeup") {
-            console.log("Переключаем на крупный план выхлопа");
             this._showHeaterExhaustCloseup(true);
             return;
         }
 
         if (zone === "heater-exhaust-back") {
-            console.log("Возврат из крупного плана");
             this._showHeaterExhaustCloseup(false);
+            return;
+        }
+
+        if (zone === "exhaust-bolt-1" || zone === "exhaust-bolt-2") {
+            const boltId = zone.split("-")[2];
+            this.app.state?.toggleExhaustBolt?.(boltId);
+
+            if (this.app.state?.[`exhaustBolt${boltId}`]) {
+                hit.style.fill = "rgba(0,255,0,0.4)";
+                hit.style.stroke = "rgba(0,255,0,0.9)";
+            } else {
+                hit.style.fill = "rgba(255,200,50,0.2)";
+                hit.style.stroke = "rgba(255,200,50,0.7)";
+            }
+            return;
+        }
+
+        if (zone === "exhaust-cover") {
+            if (this.app.state?.canRemoveExhaustCover?.()) {
+                this.app.state?.removeExhaustCover?.();
+                this._showExhaustCoverRemoved(true);
+            } else {
+                console.log("Сначала открутите оба болта");
+                hit.style.animation = "pulse 0.3s ease 3";
+            }
             return;
         }
 
@@ -143,18 +166,18 @@ export class HangarScene {
         }
     }
 
-    _toggleHeaterPanel(isOpen) {
+     _toggleHeaterPanel(isOpen) {
         const heaterSection = document.getElementById("scene-heater");
         if (!heaterSection) return;
 
-        const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+const img = heaterSection.querySelector(".scene-content > img");
         const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
         const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
         const hint = heaterSection.querySelector("p");
 
         if (img) {
-            img.src = isOpen
-                ? "./img/heater/rear_left_heater_opened.jpg"
+            img.src = isOpen 
+                ? "./img/heater/rear_left_heater_opened.jpg" 
                 : "./img/heater/rear_left_heater.jpg";
         }
 
@@ -163,8 +186,56 @@ export class HangarScene {
             openedLayer.classList.toggle("hidden", !isOpen);
         }
 
+        // Гарантированно сбрасываем вид крупного плана при смене панели
+        if (openedLayer) {
+            this._setCloseupState(openedLayer, false);
+        }
+
         if (hint) {
             hint.textContent = isOpen ? "Борт открыт" : "Откройте борт";
+        }
+    }
+
+_setCloseupState(openedLayer, isCloseup) {
+        const coverRemoved = this.app.state?.exhaustCoverRemoved || false;
+
+        const exhaustHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-closeup"]');
+        const closeHitbox = openedLayer.querySelector('[data-zone="side-panel-close"]');
+        const backHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-back"]');
+        const bolt1 = openedLayer.querySelector('[data-zone="exhaust-bolt-1"]');
+        const bolt2 = openedLayer.querySelector('[data-zone="exhaust-bolt-2"]');
+        const cover = openedLayer.querySelector('[data-zone="exhaust-cover"]');
+
+        if (exhaustHitbox) exhaustHitbox.classList.toggle("hidden", isCloseup || coverRemoved);
+        if (closeHitbox) closeHitbox.classList.toggle("hidden", isCloseup);
+        if (backHitbox) backHitbox.classList.toggle("hidden", !isCloseup);
+        
+        // Болты и крышка видны ТОЛЬКО в крупном плане и пока крышка не снята
+        if (bolt1) bolt1.classList.toggle("hidden", !isCloseup || coverRemoved);
+        if (bolt2) bolt2.classList.toggle("hidden", !isCloseup || coverRemoved);
+        if (cover) cover.classList.toggle("hidden", !isCloseup || coverRemoved);
+    }
+    _showExhaustCoverRemoved(isRemoved) {
+        const heaterSection = document.getElementById("scene-heater");
+        if (!heaterSection) return;
+
+        const img = heaterSection.querySelector(".scene-content > img");
+        const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
+        const hint = heaterSection.querySelector("p");
+
+        if (img) {
+            img.src = isRemoved 
+                ? "./img/heater/exhaust_cover_removed.jpg" 
+                : "./img/heater/exhaust_closeup.jpg";
+        }
+
+        if (openedLayer) {
+            // Скрываем всё, оставляем только кнопку "Назад"
+            this._setCloseupState(openedLayer, isRemoved ? false : true);
+        }
+
+        if (hint) {
+            hint.textContent = isRemoved ? "Крышка снята" : "Открутите болты";
         }
     }
 
@@ -172,7 +243,7 @@ export class HangarScene {
         const heaterSection = document.getElementById("scene-heater");
         if (!heaterSection) return;
 
-        const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+        const img = heaterSection.querySelector(".scene-content > img");
         const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
         const hint = heaterSection.querySelector("p");
 
@@ -187,15 +258,24 @@ export class HangarScene {
             const valveHitbox = openedLayer.querySelector('[data-zone="heater-valve"]');
             const closeHitbox = openedLayer.querySelector('[data-zone="side-panel-close"]');
             const backHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-back"]');
+            const bolt1 = openedLayer.querySelector('[data-zone="exhaust-bolt-1"]');
+            const bolt2 = openedLayer.querySelector('[data-zone="exhaust-bolt-2"]');
+            const cover = openedLayer.querySelector('[data-zone="exhaust-cover"]');
 
             if (exhaustHitbox) exhaustHitbox.classList.toggle("hidden", isCloseup);
             if (valveHitbox) valveHitbox.classList.toggle("hidden", isCloseup);
             if (closeHitbox) closeHitbox.classList.toggle("hidden", isCloseup);
             if (backHitbox) backHitbox.classList.toggle("hidden", !isCloseup);
+
+            // Показываем болты и крышку только при крупном плане и если крышка ещё не снята
+            const coverRemoved = this.app.state?.exhaustCoverRemoved || false;
+            if (bolt1) bolt1.classList.toggle("hidden", !isCloseup || coverRemoved);
+            if (bolt2) bolt2.classList.toggle("hidden", !isCloseup || coverRemoved);
+            if (cover) cover.classList.toggle("hidden", !isCloseup || coverRemoved);
         }
 
         if (hint) {
-            hint.textContent = isCloseup ? "Выхлоп обогревателя" : "Борт открыт";
+            hint.textContent = isCloseup ? "Открутите болты" : "Борт открыт";
         }
     }
 
@@ -230,9 +310,10 @@ export class HangarScene {
 
         this.currentMode = "side";
 
+
         const heaterSection = document.getElementById("scene-heater");
         if (heaterSection) {
-            const img = heaterSection.querySelector("img[src*='rear_left_heater']");
+           const img = heaterSection.querySelector(".scene-content > img");
             const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
             const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
             const hint = heaterSection.querySelector("p");
@@ -241,9 +322,22 @@ export class HangarScene {
             if (closedLayer) closedLayer.classList.remove("hidden");
             if (openedLayer) {
                 openedLayer.classList.add("hidden");
-                openedLayer.querySelectorAll(".hitbox").forEach(hb => hb.classList.remove("hidden"));
+                openedLayer.querySelectorAll(".hitbox").forEach(hb => {
+                    hb.classList.remove("hidden");
+                    if (hb.dataset.zone?.startsWith("exhaust-bolt")) {
+                        hb.style.fill = "rgba(255,200,50,0.2)";
+                        hb.style.stroke = "rgba(255,200,50,0.7)";
+                    }
+                });
             }
             if (hint) hint.textContent = "Откройте борт";
+
+            // Сброс состояния в TankState
+            if (this.app.state) {
+                this.app.state.exhaustBolt1 = false;
+                this.app.state.exhaustBolt2 = false;
+                this.app.state.exhaustCoverRemoved = false;
+            }
         }
     }
 
