@@ -71,7 +71,7 @@ function bootstrap() {
         sceneManager.change(hangarScene, sceneId || "scene-hangar");
         app.getScene = () => sceneManager.currentScene;
         break;
-        
+
       case "driver":
         sceneManager.change(driverScene, sceneId || "scene-driver");
         break;
@@ -82,6 +82,9 @@ function bootstrap() {
 
       case "heater":
         sceneManager.change(null, sceneId || "scene-heater");
+        break;
+      case "zip-box":
+        sceneManager.change(null, sceneId || "scene-zip-box");
         break;
     }
   };
@@ -161,6 +164,12 @@ function bootstrap() {
       setTimeout(() => {
         hangarScene?.showSideView?.();
       }, 50);
+    });
+  }
+  const zipBackBtn = document.getElementById("zipBackBtn");
+  if (zipBackBtn) {
+    zipBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
     });
   }
 

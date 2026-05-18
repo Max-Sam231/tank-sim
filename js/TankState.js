@@ -91,6 +91,8 @@ class TankState {
     this.exhaustBolt2 = false;
     this.exhaustCoverRemoved = false;
 
+    this.hasZipKey = false;
+    this.exhaustBoltsUnscrewed = false;
     this._listeners = new Set();
   }
 
@@ -175,6 +177,9 @@ class TankState {
     this.exhaustBolt1 = false;
     this.exhaustBolt2 = false;
     this.exhaustCoverRemoved = false;
+
+    this.hasZipKey = false;
+    this.exhaustBoltsUnscrewed = false;
     this._emit();
   }
 
@@ -268,6 +273,9 @@ class TankState {
       exhaustBolt1: this.exhaustBolt1,
       exhaustBolt2: this.exhaustBolt2,
       exhaustCoverRemoved: this.exhaustCoverRemoved,
+
+      hasZipKey: this.hasZipKey,
+      exhaustBoltsUnscrewed: this.exhaustBoltsUnscrewed,
     };
   }
 
@@ -831,9 +839,27 @@ class TankState {
     return this.exhaustBolt1 && this.exhaustBolt2;
   }
 
+
   removeExhaustCover() {
     if (this.canRemoveExhaustCover()) {
       this.exhaustCoverRemoved = true;
+      this._emit();
+    }
+  }
+
+  // Новые методы:
+  takeZipKey() {
+    this.hasZipKey = true;
+    this._emit();
+  }
+
+  canUnscrewExhaustBolts() {
+    return this.hasZipKey;
+  }
+
+  unscrewExhaustBolts() {
+    if (this.canUnscrewExhaustBolts()) {
+      this.exhaustBoltsUnscrewed = true;
       this._emit();
     }
   }
