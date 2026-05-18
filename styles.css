@@ -1203,6 +1203,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /**/
+/* === Кнопка рентгена === */
 .xray-btn {
   position: absolute;
   top: 20px;
@@ -1217,23 +1218,37 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-family: inherit;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .xray-btn:hover {
   background: rgba(0, 0, 0, 0.9);
   border-color: #0ff;
+  box-shadow: 0 6px 16px rgba(0, 255, 255, 0.3);
 }
 
 .xray-btn.is-active {
   background: rgba(0, 255, 255, 0.2);
   border-color: #0ff;
   color: #fff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
-/**/
-#tank-top-view .tank-layer.xray-active {
-  /* Те же позиционирование и размер, что у .tank-layer-top */
+/* === Базовое позиционирование танка (верхний вид) === */
+#tank-top-view .tank-layer-top {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 55%;
+  pointer-events: none;
+  z-index: 5;
+  will-change: transform, opacity, filter;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* === Состояние рентгена (подгонка под фото) === */
+#tank-top-view .tank-layer-top.xray-active {
   bottom: 22% !important;
   left: 52% !important;
   transform: translateX(-50%) !important;
@@ -1242,10 +1257,133 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   max-width: none !important;
   object-fit: contain !important;
   object-position: center !important;
-  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.155));
-  transition: filter 0.2s ease
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
 }
 
-#tank-top-view .tank-layer.xray-active:hover {
+#tank-top-view .tank-layer-top.xray-active:hover {
   filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.6));
+  transition: filter 0.2s ease;
+}
+
+/* === Анимации перехода === */
+
+
+@keyframes xrayFade {
+  0% {
+    opacity: 0.7;
+    filter: brightness(0.8) contrast(1.2);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
+}
+
+
+
+@keyframes normalFade {
+  0% {
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
+  100% {
+    filter: none;
+  }
+}
+
+/**/
+#tank-side-right-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.tank-layer-side-right {
+      bottom: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 70%;
+}
+
+
+/***/
+/*#tank-side-right-view {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 60%;
+  pointer-events: none;
+  z-index: 5;
+  will-change: transform, opacity, filter;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}*/
+
+/* === Рентген-режим для вида справа (подгонка под фото) === */
+#tank-side-right-view .tank-layer-side-right.xray-active {
+  bottom: 11% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    height: 52% !important;
+    width: auto !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
+
+}
+
+#tank-side-right-view .tank-layer-side-right.xray-active:hover {
+  filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.6));
+  
+}
+
+/* === Анимации перехода для вида справа === */
+
+
+@keyframes xrayFade {
+  0% { opacity: 0.7; filter: brightness(0.8) contrast(1.2); }
+  50% { opacity: 1; filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4)); }
+  100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
+}
+
+@keyframes normalFade {
+  0% { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
+  100% { filter: none; }
+}
+
+/* === Кнопка рентгена (универсальная) === */
+#tank-side-right-view .xray-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  color: #0ff;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#tank-side-right-view .xray-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: #0ff;
+  box-shadow: 0 6px 16px rgba(0, 255, 255, 0.3);
+}
+
+#tank-side-right-view .xray-btn.is-active {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #0ff;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
