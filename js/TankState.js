@@ -64,8 +64,10 @@ class TankState {
       coolant_temp: 20.0,
       oil_temp: 20.0,
       voltage: 0.0,
+      amperage: 0.0,
       speed_kmh: 0.0,
-      fuel_level: 100.0,
+      fuel_level_internal: 100.0,
+      fuel_level_external: 100.0,
       is_bcn_active: false,
       is_mzn_active: false,
     };
@@ -146,8 +148,10 @@ class TankState {
     this.sensors.coolant_temp = Number.isFinite(this.scenario?.ambientTempC) ? this.scenario.ambientTempC : 20.0;
     this.sensors.oil_temp = Number.isFinite(this.scenario?.ambientTempC) ? this.scenario.ambientTempC : 20.0;
     this.sensors.voltage = 0.0;
+    this.sensors.amperage = 0.0;
     this.sensors.speed_kmh = 0.0;
-    this.sensors.fuel_level = 100.0;
+    this.sensors.fuel_level_internal = 190.0;
+    this.sensors.fuel_level_external = 400.0;
     this.sensors.is_bcn_active = false;
     this.sensors.is_mzn_active = false;
 
@@ -241,8 +245,10 @@ class TankState {
       coolant_temp: this.sensors.coolant_temp,
       oil_temp: this.sensors.oil_temp,
       voltage: this.sensors.voltage,
+      amperage: this.sensors.amperage,
       speed_kmh: this.sensors.speed_kmh,
-      fuel_level: this.sensors.fuel_level,
+      fuel_level_internal: this.sensors.fuel_level_internal,
+      fuel_level_external: this.sensors.fuel_level_external,
       is_bcn_active: this.sensors.is_bcn_active,
       is_mzn_active: this.sensors.is_mzn_active,
 
@@ -380,8 +386,8 @@ class TankState {
 
     const canCrank = isMassOn && baseVoltage >= 18.0;
     const starterSag = starterPressed && canCrank ? 5.0 : 0.0;
-    const voltage = this._clamp(baseVoltage - starterSag, 0.0, 28.5);
-    changed = this._setSensor("voltage", voltage, { min: 0, max: 28.5 }) || changed;
+    const voltage = this._clamp(baseVoltage - starterSag, 0.0, 30.0);
+    changed = this._setSensor("voltage", voltage, { min: 0, max: 30 }) || changed;
 
     const leftAirOpen = Boolean(this.leftTank);
     const rightAirOpen = Boolean(this.rightTank);
@@ -440,18 +446,18 @@ class TankState {
 
     const rpmRate = this._engineRunning ? 2500 : 700;
     const rpm = Math.round(this._approach(this.sensors.engine_rpm, targetRpm, rpmRate, dt));
-    changed = this._setSensor("engine_rpm", rpm, { min: 0, max: 3000, epsilon: 0 }) || changed;
+    changed = this._setSensor("engine_rpm", rpm, { min: 0, max: 4000, epsilon: 0 }) || changed;
 
     let targetOilEngine = 0.0;
     if (this._engineRunning) targetOilEngine = 5.5;
     else if (isMznActive && voltage >= 20.0) targetOilEngine = 3.5;
     const oilEngineRate = this._engineRunning ? 6.0 : 1.2;
     const oilEngine = this._approach(this.sensors.oil_pressure_engine, targetOilEngine, oilEngineRate, dt);
-    changed = this._setSensor("oil_pressure_engine", oilEngine, { min: 0, max: 10 }) || changed;
+    changed = this._setSensor("oil_pressure_engine", oilEngine, { min: 0, max: 15 }) || changed;
 
     const targetOilGearbox = this._engineRunning ? 2.5 : 0.0;
     const oilGearbox = this._approach(this.sensors.oil_pressure_gearbox, targetOilGearbox, 4.0, dt);
-    changed = this._setSensor("oil_pressure_gearbox", oilGearbox, { min: 0, max: 5 }) || changed;
+    changed = this._setSensor("oil_pressure_gearbox", oilGearbox, { min: 0, max: 15 }) || changed;
 
     const ambient = Number.isFinite(this.scenario.ambientTempC) ? this.scenario.ambientTempC : 20.0;
     const rpmFactor = this._engineRunning ? this._clamp((rpm - 900) / 1700, 0.0, 1.0) : 0.0;
@@ -483,13 +489,32 @@ class TankState {
     let speed = this.sensors.speed_kmh;
     if (Math.abs(speedTarget) > Math.abs(speed)) speed = this._approach(speed, speedTarget, accel, dt);
     else speed = this._approach(speed, speedTarget, decel, dt);
-    changed = this._setSensor("speed_kmh", speed, { min: -20, max: 80 }) || changed;
+    changed = this._setSensor("speed_kmh", speed, { min: 0, max: 100 }) || changed;
 
-    let fuelLevel = this.sensors.fuel_level;
+    // Amperage: depends on ammeterButton state
+    let targetAmperage = 0.0;
+    if (isMassOn && this.ammeterButton) {
+      if (this._engineRunning) {
+        targetAmperage = 50.0; // Charging when engine running
+      } else {
+        targetAmperage = -200.0; // Discharging when engine off
+      }
+    }
+    const amperage = this._approach(this.sensors.amperage, targetAmperage, 100.0, dt);
+    changed = this._setSensor("amperage", amperage, { min: 0, max: 500 }) || changed;
+
+    // Fuel levels: internal (0-190L) and external (100-400L) based on leftRightTanks
+    let fuelLevelInternal = this.sensors.fuel_level_internal;
+    let fuelLevelExternal = this.sensors.fuel_level_external;
     if (this._engineRunning) {
       const burnRate = 0.0012 + throttle * 0.002;
-      fuelLevel = this._clamp(fuelLevel - burnRate * dt * 100, 0.0, 100.0);
-      changed = this._setSensor("fuel_level", fuelLevel, { min: 0, max: 100 }) || changed;
+      // Burn from both tanks proportionally
+      const burnInternal = burnRate * dt * 190;
+      const burnExternal = burnRate * dt * 400;
+      fuelLevelInternal = this._clamp(fuelLevelInternal - burnInternal, 0.0, 190.0);
+      fuelLevelExternal = this._clamp(fuelLevelExternal - burnExternal, 100.0, 400.0);
+      changed = this._setSensor("fuel_level_internal", fuelLevelInternal, { min: 0, max: 190 }) || changed;
+      changed = this._setSensor("fuel_level_external", fuelLevelExternal, { min: 100, max: 400 }) || changed;
     }
 
     const lampTest = this.signalLamps === 2;
@@ -499,7 +524,7 @@ class TankState {
       lampTest || (rpm > 0 && oilEngine < 2.0) || (this._engineRunning && oilEngine < 3.0)
     ) || changed;
     changed = this._setLamp("overheat", lampTest || coolantTemp >= 112.0 || oilTemp >= 112.0) || changed;
-    changed = this._setLamp("fuel_reserve", lampTest || fuelLevel <= 15.0) || changed;
+    changed = this._setLamp("fuel_reserve", lampTest || fuelLevelInternal <= 15.0) || changed;
     changed = this._setLamp("gear_engaged", lampTest || this.gearLever !== "neutral") || changed;
 
     this._timeSinceLastEmit += dt;

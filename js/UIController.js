@@ -12,6 +12,7 @@ class UIController {
     this._overlayEls = Array.from(this.rootEl.querySelectorAll(".overlay[data-action][data-when]"));
     this._controlOverlayEls = new Map();
     this._controlOverlayMeta = new Map();
+    this._gaugeArrowEls = new Map();
     this._svgEl = this.rootEl.querySelector("svg.hitbox-layer");
     this._lastClick = null;
     this._lastAction = null;
@@ -198,6 +199,12 @@ class UIController {
       if (el.closest(".instrument-panel-stage")) el.remove();
     }
 
+    // Clean old gauge arrows
+    for (const [action, el] of this._gaugeArrowEls || []) {
+      el.remove();
+    }
+    this._gaugeArrowEls = new Map();
+
     const vb = panelSvg.viewBox.baseVal;
     const vbW = vb?.width || 1920;
     const vbH = vb?.height || 1080;
@@ -208,6 +215,8 @@ class UIController {
       if (!action) continue;
       const def = this._controlOverlayDefs[action];
       if (!def) continue;
+
+      if (def.kind === "gauge") continue;
 
       const pointsAttr = hitbox.getAttribute("points") || "";
       const points = this._parsePolygonPoints(pointsAttr);
@@ -257,6 +266,87 @@ class UIController {
         bboxH,
       });
     }
+
+    // Create gauge arrows from defs (they have no hitbox polygons)
+    for (const [action, def] of Object.entries(this._controlOverlayDefs)) {
+      if (def.kind !== "gauge") continue;
+      this._ensureGaugeArrow(action, def, overlayLayerEl, vbW, vbH);
+    }
+  }
+
+  _ensureGaugeArrow(action, def, overlayLayerEl, vbW, vbH) {
+    if (!this._gaugeArrowEls) this._gaugeArrowEls = new Map();
+
+    const img = document.createElement("img");
+    img.className = "overlay gauge-arrow is-visible";
+    img.setAttribute("data-action", action);
+    img.setAttribute("alt", "");
+    img.setAttribute("draggable", "false");
+    img.src = def.arrowImage || "./img/12/14_0003_Фигура-1.png";
+
+    const aw = def.arrowW || 70;
+    const ah = def.arrowH || 70;
+
+    // Center the arrow image on (cx, cy)
+    const left = def.cx - aw / 2;
+    const top  = def.cy - ah / 2;
+
+    const x = (left / vbW) * 100;
+    const y = (top  / vbH) * 100;
+    const w = (aw   / vbW) * 100;
+    const h = (ah   / vbH) * 100;
+
+    img.style.setProperty("--x", String(x));
+    img.style.setProperty("--y", String(y));
+    img.style.setProperty("--w", String(w));
+    img.style.setProperty("--h", String(h));
+    img.style.setProperty("--rot", String(def.startAngle));
+    img.style.setProperty("--z", String(def.z ?? 75));
+
+    overlayLayerEl.appendChild(img);
+    this._gaugeArrowEls.set(action, img);
+  }
+
+  _updateGaugeArrows(snapshot) {
+    if (!this._gaugeArrowEls || this._gaugeArrowEls.size === 0) return;
+
+    for (const [action, img] of this._gaugeArrowEls) {
+      const def = this._controlOverlayDefs[action];
+      if (!def || def.kind !== "gauge") continue;
+
+      // Read sensor value from snapshot.sensors
+      let value = Number(snapshot.sensors?.[def.sensorKey] ?? snapshot[def.sensorKey]) || 0;
+      let min = def.min;
+      let max = def.max;
+
+      // Dual gauges: voltammeter (amperage / voltage), fuel (internal / external)
+      if (def.switchKey && def.secondarySensorKey) {
+        const sw = snapshot[def.switchKey];
+        if (this._shouldUseSecondaryGauge(action, sw)) {
+          value = Number(snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey]) || 0;
+          min = def.secondaryMin;
+          max = def.secondaryMax;
+        }
+      }
+
+      // Normalize value → angle
+      const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      const angleRange = def.endAngle - def.startAngle;
+      const angle = def.startAngle + normalized * angleRange;
+
+      img.style.setProperty("--rot", String(angle));
+    }
+  }
+
+  _shouldUseSecondaryGauge(action, switchValue) {
+    if (action === "gauge-voltammeter") {
+      return Boolean(switchValue); // ammeterButton pressed → show voltage
+    }
+    if (action === "gauge-fuel") {
+      // leftRightTanks: 0 = right/external, 2 = left/internal
+      return switchValue === 0;
+    }
+    return false;
   }
 
   _getControlOverlayFrame(action, snapshot) {
@@ -612,8 +702,27 @@ class UIController {
 
     const backButton = document.getElementById("instrumentPanelBack");
     if (backButton) {
-      backButton.addEventListener("click", () => {
+      backButton.addEventListener("click", (e) => {
+        e.preventDefault();
         this.state.setInstrumentPanelOpen(false);
+      });
+    }
+
+    // Test sensors button
+    const testSensorsBtn = document.getElementById("testSensorsButton");
+    if (testSensorsBtn) {
+      testSensorsBtn.addEventListener("click", () => {
+        this.state.sensors.coolant_temp = 120;
+        this.state.sensors.oil_temp = 120;
+        this.state.sensors.amperage = 500;
+        this.state.sensors.voltage = 30;
+        this.state.sensors.oil_pressure_engine = 15;
+        this.state.sensors.oil_pressure_gearbox = 15;
+        this.state.sensors.fuel_level_internal = 190;
+        this.state.sensors.fuel_level_external = 400;
+        this.state.sensors.speed_kmh = 100;
+        this.state.sensors.engine_rpm = 4000;
+        this.state._emit();
       });
     }
 
@@ -707,7 +816,9 @@ class UIController {
 
   _render(snapshot) {
     this._renderOverlays(snapshot);
-    // Для командира 
+    this._updateGaugeArrows(snapshot);
+
+    // Для командира
     const commanderSection = document.getElementById('scene-commander');
 
     // Проверяем, активна ли сейчас сцена командира (она не скрыта)
@@ -751,7 +862,8 @@ class UIController {
         `Температура масла:        ${safeInt(snapshot.oil_temp)} °C`,
         `Напряжение бортсети:      ${safeFixed(snapshot.voltage, 1)} В`,
         `Скорость:                ${safeFixed(snapshot.speed_kmh, 1)} км/ч`,
-        `Уровень топлива:          ${safeFixed(snapshot.fuel_level, 0)} %`,
+        `Топливо (внутр.):         ${safeFixed(snapshot.fuel_level_internal, 0)} л`,
+        `Топливо (наруж.):         ${safeFixed(snapshot.fuel_level_external, 0)} л`,
       ];
 
       this.consoleEl.textContent = lines.join("\n");
