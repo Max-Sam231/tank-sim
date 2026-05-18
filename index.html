@@ -43,7 +43,7 @@
           <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Hangar Background" />
           <img class="tank-layer tank-layer-top" src="./img/hangar/tank.png" alt="Tank" />
         </div>
-
+        <button id="xrayBtn" class="xray-btn">Рентген</button>
         <svg class="hitbox-layer scene-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
           aria-hidden="true">
           <polygon class="hitbox interactive" data-hatch="driver" points="1150,500 1190,500 1190,600 1150,600" />
@@ -65,69 +65,68 @@
       </div>
     </section>
 
-<section id="scene-heater" class="game-scene hidden">
-  <div class="scene-content" style="position:relative;width:100%;height:100%;">
+    <section id="scene-heater" class="game-scene hidden">
+      <div class="scene-content" style="position:relative;width:100%;height:100%;">
 
-    <img src="./img/heater/rear_left_heater.jpg" alt="Обогреватель - задняя левая часть"
-      style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;" />
+        <img src="./img/heater/rear_left_heater.jpg" alt="Обогреватель - задняя левая часть"
+          style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;" />
 
-    <!-- Хитбоксы для ЗАКРЫТОГО борта -->
-    <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-closed" viewBox="0 0 1920 1080"
-      preserveAspectRatio="none" aria-hidden="true"
-      style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+        <!-- Хитбоксы для ЗАКРЫТОГО борта -->
+        <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-closed" viewBox="0 0 1920 1080"
+          preserveAspectRatio="none" aria-hidden="true"
+          style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
 
-      <polygon class="hitbox interactive" data-zone="hinge-latch-1" points="200,600 280,600 280,680 200,680"
-        title="Шпингалет 1" style="pointer-events:auto;" />
-      <polygon class="hitbox interactive" data-zone="hinge-latch-2" points="1500,400 1580,400 1580,480 1500,480"
-        title="Шпингалет 2" style="pointer-events:auto;" />
-      <polygon class="hitbox interactive" data-zone="hinge-latch-3" points="1500,650 1580,650 1580,730 1500,730"
-        title="Шпингалет 3" style="pointer-events:auto;" />
-      <polygon class="hitbox interactive" data-zone="side-panel-open" points="300,300 1400,300 1400,900 300,900"
-        title="Открыть борт"
-        style="pointer-events:auto;fill:rgba(0,255,0,0.1);stroke:rgba(0,255,0,0.5);stroke-width:2;" />
+          <polygon class="hitbox interactive" data-zone="hinge-latch-1" points="200,600 280,600 280,680 200,680"
+            title="Шпингалет 1" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="hinge-latch-2" points="1500,400 1580,400 1580,480 1500,480"
+            title="Шпингалет 2" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="hinge-latch-3" points="1500,650 1580,650 1580,730 1500,730"
+            title="Шпингалет 3" style="pointer-events:auto;" />
+          <polygon class="hitbox interactive" data-zone="side-panel-open" points="300,300 1400,300 1400,900 300,900"
+            title="Открыть борт"
+            style="pointer-events:auto;fill:rgba(0,255,0,0.1);stroke:rgba(0,255,0,0.5);stroke-width:2;" />
 
-    </svg>
+        </svg>
 
-    <!-- Хитбоксы для ОТКРЫТОГО борта (скрыты по умолчанию) -->
-    <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-opened hidden" viewBox="0 0 1920 1080"
-      preserveAspectRatio="none" aria-hidden="true"
-      style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
+        <!-- Хитбоксы для ОТКРЫТОГО борта (скрыты по умолчанию) -->
+        <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-opened hidden" viewBox="0 0 1920 1080"
+          preserveAspectRatio="none" aria-hidden="true"
+          style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
 
-      <polygon class="hitbox interactive" data-zone="heater-exhaust-closeup"
-        points="1100,600 1200,600 1200,700 1100,700" title="Выхлоп обогревателя (крупно)"
-        style="pointer-events:auto;fill:rgba(255,170,0,0.15);stroke:rgba(255,170,0,0.7);" />
-      
-      <polygon class="hitbox interactive" data-zone="side-panel-close" points="100,100 300,100 300,200 100,200"
-        title="Закрыть борт" style="pointer-events:auto;fill:rgba(255,100,0,0.1);stroke:rgba(255,100,0,0.6);" />
+          <polygon class="hitbox interactive" data-zone="heater-exhaust-closeup"
+            points="1100,600 1200,600 1200,700 1100,700" title="Выхлоп обогревателя (крупно)"
+            style="pointer-events:auto;fill:rgba(255,170,0,0.15);stroke:rgba(255,170,0,0.7);" />
 
-      <!-- Скрыты по умолчанию, покажем только в крупном плане -->
-      <polygon class="hitbox interactive hidden" data-zone="heater-exhaust-back"
-        points="100,100 250,100 250,180 100,180" title="Назад"
-        style="pointer-events:auto;fill:rgba(255,50,50,0.2);stroke:rgba(255,50,50,0.7);" />
-        
-      <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-1" points="980,250 950,250 950,300 980,300"
-        title="Болт 1" style="pointer-events:auto;fill:rgba(255,200,50,0.2);stroke:rgba(255,200,50,0.7);" />
-        
-      <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-2"
-        points="980,550 950,550 950,500 980,500" title="Болт 2"
-        style="pointer-events:auto;fill:rgba(255,200,50,0.2);stroke:rgba(255,200,50,0.7);" />
-        
-      <polygon class="hitbox interactive hidden" data-zone="exhaust-cover"
-        points="900,340 1000,340 1000,450 900,450" title="Крышка выхлопа"
-        style="pointer-events:auto;fill:rgba(100,200,255,0.15);stroke:rgba(100,200,255,0.6);" />
-    </svg>
+          <polygon class="hitbox interactive" data-zone="side-panel-close" points="100,100 300,100 300,200 100,200"
+            title="Закрыть борт" style="pointer-events:auto;fill:rgba(255,100,0,0.1);stroke:rgba(255,100,0,0.6);" />
 
-    <button id="heaterBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">
-      ← Назад
-    </button>
+          <!-- Скрыты по умолчанию, покажем только в крупном плане -->
+          <polygon class="hitbox interactive hidden" data-zone="heater-exhaust-back"
+            points="100,100 250,100 250,180 100,180" title="Назад"
+            style="pointer-events:auto;fill:rgba(255,50,50,0.2);stroke:rgba(255,50,50,0.7);" />
 
-    <div
-      style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:8px;font-size:14px;z-index:100;">
-      <p>Откройте борт</p>
-    </div>
+          <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-1" points="980,250 950,250 950,300 980,300"
+            title="Болт 1" style="pointer-events:auto;fill:rgba(255,200,50,0.2);stroke:rgba(255,200,50,0.7);" />
 
-  </div>
-</section>
+          <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-2" points="980,550 950,550 950,500 980,500"
+            title="Болт 2" style="pointer-events:auto;fill:rgba(255,200,50,0.2);stroke:rgba(255,200,50,0.7);" />
+
+          <polygon class="hitbox interactive hidden" data-zone="exhaust-cover"
+            points="900,340 1000,340 1000,450 900,450" title="Крышка выхлопа"
+            style="pointer-events:auto;fill:rgba(100,200,255,0.15);stroke:rgba(100,200,255,0.6);" />
+        </svg>
+
+        <button id="heaterBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">
+          ← Назад
+        </button>
+
+        <div
+          style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:5px 10px;border-radius:8px;font-size:14px;z-index:100;">
+          <p>Откройте борт</p>
+        </div>
+
+      </div>
+    </section>
 
 
     <section id="scene-driver" class="game-scene hidden">
