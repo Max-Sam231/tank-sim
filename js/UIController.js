@@ -1162,14 +1162,12 @@ class UIController {
       "4": "ОТКРЫТО",
     };
     const imagePath = "./img/2/жалюзи.png";
-    const positionValue = parseInt(position, 10);
     const topPercent = {
-      // !!!
-      "0": 90, 
-      "1": 70,
-      "2": 50,
-      "3": 30,
-      "4": 20,
+      "0": 72, 
+      "1": 60,
+      "2": 48,
+      "3": 36,
+      "4": 24,
     }[String(position)] || 50;
     this._shuttersModalImageEl.innerHTML = `
       <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
