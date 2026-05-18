@@ -108,16 +108,18 @@ body.app-debug .overlay.overlay-control {
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 10; /* Поверх фона (z-index: 0) */
+  z-index: 10;
+  /* Поверх фона (z-index: 0) */
   pointer-events: none;
 }
+
 .scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
   pointer-events: none;
   fill: transparent;
   stroke: transparent;
 }
 
-.scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
+.scene.instrument-panel-open>.overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -727,6 +729,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .finish-report-btn-secondary {
   background: rgba(0, 0, 0, 0.25);
 }
+
 .hangar-bg-wrapper {
   position: relative;
   width: 100%;
@@ -739,7 +742,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Или contain, если важно видеть всю картинку целиком */
+  object-fit: cover;
+  /* Или contain, если важно видеть всю картинку целиком */
   object-position: center;
   z-index: 0;
   pointer-events: none;
@@ -747,11 +751,14 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .tank-layer {
   position: absolute;
-  bottom: 20%; /* Подгоните под картинку */
+  bottom: 20%;
+  /* Подгоните под картинку */
   left: 50%;
   transform: translateX(-50%);
-  height: 55%; /* Размер танка */
-  pointer-events: none; /* Чтобы клики проходили сквозь картинку к SVG */
+  height: 55%;
+  /* Размер танка */
+  pointer-events: none;
+  /* Чтобы клики проходили сквозь картинку к SVG */
 }
 
 /* Интерактивные хитбоксы (подсветка при наведении) */
@@ -768,6 +775,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   stroke: rgba(255, 255, 255, 0.5);
   stroke-width: 2px;
 }
+
 .game-scene {
   position: absolute;
   top: 0;
@@ -777,9 +785,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   overflow: hidden;
   /* По умолчанию сцена скрыта, если нет класса active/visible */
 }
+
 .hidden,
 .is-hidden {
-  display: none !important; /* Самое надежное скрытие */
+  display: none !important;
+  /* Самое надежное скрытие */
   /* Или, если хотите анимацию: */
   /* opacity: 0; */
   /* pointer-events: none; */
@@ -794,7 +804,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* Чтобы клики проходили сквозь пустые места */
+  pointer-events: none;
+  /* Чтобы клики проходили сквозь пустые места */
 }
 
 /* Хитбоксы должны быть кликабельны */
@@ -802,6 +813,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   z-index: 20;
   pointer-events: auto;
 }
+
 /* Мехвод */
 .cabin-bg {
   position: absolute;
@@ -809,9 +821,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Или cover, как вам нравится */
+  object-fit: contain;
+  /* Или cover, как вам нравится */
   z-index: 0;
-  transition: opacity 0.5s ease; /* Плавное включение света */
+  transition: opacity 0.5s ease;
+  /* Плавное включение света */
   pointer-events: none;
 }
 
@@ -840,9 +854,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Или cover, как вам удобнее */
+  object-fit: contain;
+  /* Или cover, как вам удобнее */
   z-index: 0;
-  transition: opacity 0.3s ease; /* Плавный переход между видами */
+  transition: opacity 0.3s ease;
+  /* Плавный переход между видами */
 }
 
 /* По умолчанию показываем прямой вид, скрываем наклоненный */
@@ -866,7 +882,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 #scene-commander {
-  perspective: 1000px; /* Глубина сцены */
+  perspective: 1000px;
+  /* Глубина сцены */
   overflow: hidden;
 }
 
@@ -876,7 +893,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Плавный наклон */
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* Плавный наклон */
 }
 
 /* Состояние наклона: опускаем контент вниз и наклоняем камеру "вверх" (rotateX положительный) */
@@ -895,6 +913,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .cmd-bg-straight {
   opacity: 1;
 }
+
 .cmd-bg-tilted {
   opacity: 0;
 }
@@ -902,6 +921,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .commander-view-tilted .cmd-bg-straight {
   opacity: 0;
 }
+
 .commander-view-tilted .cmd-bg-tilted {
   opacity: 1;
 }
@@ -1010,16 +1030,20 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .bcn-modal-btn:active {
   transform: translateY(1px);
 }
+
 #scene-hangar {
   position: relative;
   width: 100vw;
   height: 100vh;
 }
+
 .tank-layer {
   position: absolute;
-  pointer-events: none; /* клики проходят к SVG */
+  pointer-events: none;
+  /* клики проходят к SVG */
   z-index: 5;
-  will-change: transform; /* оптимизация анимаций */
+  will-change: transform;
+  /* оптимизация анимаций */
 }
 
 /* ========== ТОП-ВЬЮ: танк сверху ========== */
@@ -1038,6 +1062,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   transform: translateX(-50%);
   height: 70%;
 }
+
 /**/
 .hangar-bg {
   position: absolute;
@@ -1071,16 +1096,16 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   position: absolute;
   top: 20px;
   right: 20px;
-  
+
   /* Поднимаем кнопку НАД всеми слоями сцены */
   z-index: 9999 !important;
-  
+
   /* Гарантируем, что кнопка кликабельна и видима */
   pointer-events: auto !important;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  
+
   padding: 10px 14px;
   background: rgba(0, 0, 0, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -1089,7 +1114,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   border-radius: 8px;
   font-family: inherit;
   font-size: 14px;
-  
+
   /* Тень для визуального отделения от фона */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: background 0.2s, transform 0.1s;
@@ -1154,10 +1179,73 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /**/
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
+
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/**/
+.xray-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  color: #0ff;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.xray-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: #0ff;
+}
+
+.xray-btn.is-active {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #0ff;
+  color: #fff;
+}
+
+/**/
+#tank-top-view .tank-layer.xray-active {
+  /* Те же позиционирование и размер, что у .tank-layer-top */
+  bottom: 22% !important;
+  left: 52% !important;
+  transform: translateX(-50%) !important;
+  height: 48% !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.155));
+  transition: filter 0.2s ease
+}
+
+#tank-top-view .tank-layer.xray-active:hover {
+  filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.6));
 }

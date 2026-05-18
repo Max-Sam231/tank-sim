@@ -166,18 +166,18 @@ export class HangarScene {
         }
     }
 
-     _toggleHeaterPanel(isOpen) {
+    _toggleHeaterPanel(isOpen) {
         const heaterSection = document.getElementById("scene-heater");
         if (!heaterSection) return;
 
-const img = heaterSection.querySelector(".scene-content > img");
+        const img = heaterSection.querySelector(".scene-content > img");
         const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
         const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
         const hint = heaterSection.querySelector("p");
 
         if (img) {
-            img.src = isOpen 
-                ? "./img/heater/rear_left_heater_opened.jpg" 
+            img.src = isOpen
+                ? "./img/heater/rear_left_heater_opened.jpg"
                 : "./img/heater/rear_left_heater.jpg";
         }
 
@@ -196,7 +196,7 @@ const img = heaterSection.querySelector(".scene-content > img");
         }
     }
 
-_setCloseupState(openedLayer, isCloseup) {
+    _setCloseupState(openedLayer, isCloseup) {
         const coverRemoved = this.app.state?.exhaustCoverRemoved || false;
 
         const exhaustHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-closeup"]');
@@ -209,7 +209,7 @@ _setCloseupState(openedLayer, isCloseup) {
         if (exhaustHitbox) exhaustHitbox.classList.toggle("hidden", isCloseup || coverRemoved);
         if (closeHitbox) closeHitbox.classList.toggle("hidden", isCloseup);
         if (backHitbox) backHitbox.classList.toggle("hidden", !isCloseup);
-        
+
         // Болты и крышка видны ТОЛЬКО в крупном плане и пока крышка не снята
         if (bolt1) bolt1.classList.toggle("hidden", !isCloseup || coverRemoved);
         if (bolt2) bolt2.classList.toggle("hidden", !isCloseup || coverRemoved);
@@ -224,8 +224,8 @@ _setCloseupState(openedLayer, isCloseup) {
         const hint = heaterSection.querySelector("p");
 
         if (img) {
-            img.src = isRemoved 
-                ? "./img/heater/exhaust_cover_removed.jpg" 
+            img.src = isRemoved
+                ? "./img/heater/exhaust_cover_removed.jpg"
                 : "./img/heater/exhaust_closeup.jpg";
         }
 
@@ -297,6 +297,29 @@ _setCloseupState(openedLayer, isCloseup) {
         this.currentView.init();
 
         this.currentMode = "top";
+        const xrayBtn = document.getElementById("xrayBtn");
+        const tankImg = document.querySelector("#tank-top-view .tank-layer-top");
+        if (xrayBtn && tankImg) {
+            xrayBtn.classList.remove("hidden");
+
+            xrayBtn.onclick = () => {
+                const isXray = tankImg.classList.contains("xray-active");
+
+                // Переключаем класс вместо (или вместе с) src
+                tankImg.classList.toggle("xray-active", !isXray);
+
+                // Меняем src для загрузки другого изображения
+                tankImg.src = isXray
+                    ? "./img/hangar/tank.png"
+                    : "./img/hangar/tank_xray.png";
+
+                // Обновляем кнопку
+                xrayBtn.classList.toggle("is-active", !isXray);
+                xrayBtn.textContent = isXray ? "Рентген" : "Обычный вид";
+
+                console.log("X-ray:", !isXray ? "ON" : "OFF");
+            };
+        }
     }
 
     showSideView() {
@@ -309,11 +332,12 @@ _setCloseupState(openedLayer, isCloseup) {
         this.currentView.init();
 
         this.currentMode = "side";
-
+        const xrayBtn = document.getElementById("xrayBtn");
+        if (xrayBtn) xrayBtn.classList.add("hidden");
 
         const heaterSection = document.getElementById("scene-heater");
         if (heaterSection) {
-           const img = heaterSection.querySelector(".scene-content > img");
+            const img = heaterSection.querySelector(".scene-content > img");
             const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
             const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
             const hint = heaterSection.querySelector("p");
