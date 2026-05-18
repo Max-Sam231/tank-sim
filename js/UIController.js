@@ -762,12 +762,11 @@ class UIController {
       this._shuttersModalEl.addEventListener("click", (event) => {
         const btn = event.target.closest(".bcn-modal-btn");
         if (btn) {
-          const mode = btn.dataset.shuttersMode;
-          if (mode !== undefined) {
-            const isOpen = mode === "true";
-            this.state.setShutters(isOpen);
-            this._updateShuttersModalButtons(isOpen);
-            this._updateShuttersModalImage(isOpen);
+          const position = btn.dataset.shuttersPosition;
+          if (position !== undefined) {
+            this.state.setShutters(position);
+            this._updateShuttersModalButtons(position);
+            this._updateShuttersModalImage(position);
           }
         }
       });
@@ -882,7 +881,7 @@ class UIController {
       `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
       `BCN: ${snapshot.bcn.toUpperCase()}`,
-      `shutters: ${snapshot.shutters ? "OPEN" : "CLOSED"}`,
+      `shutters: ${snapshot.shutters}/4`,
       `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
       `gear: ${snapshot.gearLever}`,
@@ -1134,8 +1133,9 @@ class UIController {
     if (!this._shuttersModalEl) return;
     this._shuttersModalEl.classList.remove("hidden");
     const snapshot = this.state.getSnapshot();
-    this._updateShuttersModalButtons(snapshot.shutters);
-    this._updateShuttersModalImage(snapshot.shutters);
+    const position = String(snapshot.shutters);
+    this._updateShuttersModalButtons(position);
+    this._updateShuttersModalImage(position);
   }
 
   _hideShuttersModal() {
@@ -1143,20 +1143,43 @@ class UIController {
     this._shuttersModalEl.classList.add("hidden");
   }
 
-  _updateShuttersModalButtons(isOpen) {
+  _updateShuttersModalButtons(position) {
     if (!this._shuttersModalEl) return;
     const buttons = this._shuttersModalEl.querySelectorAll(".bcn-modal-btn");
     buttons.forEach((btn) => {
-      const mode = btn.dataset.shuttersMode;
-      const btnIsOpen = mode === "true";
-      btn.classList.toggle("is-active", btnIsOpen === isOpen);
+      const btnPosition = btn.dataset.shuttersPosition;
+      btn.classList.toggle("is-active", btnPosition === position);
     });
   }
 
-  _updateShuttersModalImage(isOpen) {
+  _updateShuttersModalImage(position) {
     if (!this._shuttersModalImageEl) return;
-    const label = isOpen ? "ОТКРЫТО" : "ЗАКРЫТО";
-    this._shuttersModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${label}</span>`;
+    const labels = {
+      "0": "ЗАКРЫТО",
+      "1": "ПОЛУЗАКРЫТО",
+      "2": "ПОСЕРЕДИНЕ",
+      "3": "ПОЛУОТКРЫТО",
+      "4": "ОТКРЫТО",
+    };
+    const imagePath = "./img/2/жалюзи.png";
+    const positionValue = parseInt(position, 10);
+    const topPercent = {
+      // !!!
+      "0": 90, 
+      "1": 70,
+      "2": 50,
+      "3": 30,
+      "4": 20,
+    }[String(position)] || 50;
+    this._shuttersModalImageEl.innerHTML = `
+      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <img src="${imagePath}" alt="Жалюзи" style="width: 100%; height: 100%; object-fit: contain;" />
+        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 14px);; width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
+        <div style="position: absolute; top: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ОТКРЫТО</div>
+        <div style="position: absolute; bottom: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ЗАКРЫТО</div>
+      </div>
+      <div style="position: absolute; left: -9999px;">${labels[position] || "—"}</div>
+    `;
   }
 
   _showGearModal() {

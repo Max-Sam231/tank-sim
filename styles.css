@@ -1007,7 +1007,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .bcn-modal-image-placeholder {
   width: 100%;
-  height: 120px;
+  height: 260px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;
