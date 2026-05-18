@@ -46,15 +46,33 @@ export class HangarScene {
             heaterHitboxesOpened.dataset.bound = "1";
             heaterHitboxesOpened.addEventListener("click", (e) => this._onHeaterZoneClick(e));
         }
+        const zipHitboxes = document.querySelector("#scene-zip-box .zip-hitbox-layer");
+        if (zipHitboxes && zipHitboxes.dataset.bound !== "1") {
+            zipHitboxes.dataset.bound = "1";
+            zipHitboxes.addEventListener("click", (e) => this._onZipZoneClick(e));
+        }
     }
 
     _onHatchClick(e) {
         const hit = e.target.closest(".hitbox.interactive");
         if (!hit) return;
+
+        if (hit.dataset.zone) {
+            this._onZoneClick(e);
+            return;
+        }
+
         const hatch = hit.dataset.hatch;
         if (!hatch) return;
+
         console.log(`Люк: ${hatch}`);
-        const sceneMap = { "driver": "driver", "commander": "commander", "gunner": "gunner" };
+
+        const sceneMap = {
+            "driver": "driver",
+            "commander": "commander",
+            "gunner": "gunner"
+        };
+
         const sceneName = sceneMap[hatch];
         if (sceneName && typeof this.app?.changeScene === "function") {
             this.app.changeScene(sceneName);
@@ -64,26 +82,41 @@ export class HangarScene {
     _onZoneClick(e) {
         const hit = e.target.closest(".hitbox.interactive");
         if (!hit) return;
+
         const zone = hit.dataset.zone;
         if (!zone) return;
+
         console.log(`Зона: ${zone}`);
-        const zoneMap = { "heater-rear-left": "heater" };
+
+        if (zone === "zip-box") {
+            this.app.changeScene("zip-box");
+            return;
+        }
+
+        const zoneMap = {
+            "heater-rear-left": "heater"
+        };
+
         const sceneName = zoneMap[zone];
         if (sceneName && typeof this.app?.changeScene === "function") {
             this.app.changeScene(sceneName);
         }
     }
 
+    // HangarScene.js - обнови _onHeaterZoneClick:
     _onHeaterZoneClick(e) {
         const hit = e.target.closest(".hitbox.interactive");
         if (!hit) return;
+
         const zone = hit.dataset.zone;
         if (!zone) return;
+
         console.log(`Зона обогревателя: ${zone}`);
 
         if (zone.startsWith("hinge-latch")) {
             const latchId = zone.split("-")[2];
             this.app.state?.toggleHingeLatch?.(latchId);
+
             if (this.app.state?.[`hingeLatch${latchId}`]) {
                 hit.style.fill = "rgba(0,255,0,0.3)";
                 hit.style.stroke = "rgba(0,255,0,0.8)";
@@ -94,14 +127,36 @@ export class HangarScene {
             return;
         }
 
-        if (zone === "side-panel-open") { this._toggleHeaterPanel(true); return; }
-        if (zone === "side-panel-close") { this._toggleHeaterPanel(false); return; }
-        if (zone === "heater-exhaust-closeup") { this._showHeaterExhaustCloseup(true); return; }
-        if (zone === "heater-exhaust-back") { this._showHeaterExhaustCloseup(false); return; }
+        if (zone === "side-panel-open") {
+            this._toggleHeaterPanel(true);
+            return;
+        }
+
+        if (zone === "side-panel-close") {
+            this._toggleHeaterPanel(false);
+            return;
+        }
+
+        if (zone === "heater-exhaust-closeup") {
+            this._showHeaterExhaustCloseup(true);
+            return;
+        }
+
+        if (zone === "heater-exhaust-back") {
+            this._showHeaterExhaustCloseup(false);
+            return;
+        }
 
         if (zone === "exhaust-bolt-1" || zone === "exhaust-bolt-2") {
+            if (!this.app.state?.canUnscrewExhaustBolts?.()) {
+                console.log("Нужен ключ из ящика ЗИП");
+                hit.style.animation = "pulse 0.3s ease 3";
+                return;
+            }
+
             const boltId = zone.split("-")[2];
             this.app.state?.toggleExhaustBolt?.(boltId);
+
             if (this.app.state?.[`exhaustBolt${boltId}`]) {
                 hit.style.fill = "rgba(0,255,0,0.4)";
                 hit.style.stroke = "rgba(0,255,0,0.9)";
@@ -123,8 +178,14 @@ export class HangarScene {
             return;
         }
 
-        if (zone === "heater-valve") { console.log("Клик по клапану"); return; }
-        if (zone === "heater-rear-left") { this.app.changeScene("heater"); }
+        if (zone === "heater-valve") {
+            console.log("Клик по клапану");
+            return;
+        }
+
+        if (zone === "heater-rear-left") {
+            this.app.changeScene("heater");
+        }
     }
 
     _toggleHeaterPanel(isOpen) {
@@ -147,17 +208,29 @@ export class HangarScene {
 
     _setCloseupState(openedLayer, isCloseup) {
         const coverRemoved = this.app.state?.exhaustCoverRemoved || false;
+        const hasKey = this.app.state?.hasZipKey || false;
+
         const exhaustHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-closeup"]');
         const closeHitbox = openedLayer.querySelector('[data-zone="side-panel-close"]');
         const backHitbox = openedLayer.querySelector('[data-zone="heater-exhaust-back"]');
         const bolt1 = openedLayer.querySelector('[data-zone="exhaust-bolt-1"]');
         const bolt2 = openedLayer.querySelector('[data-zone="exhaust-bolt-2"]');
         const cover = openedLayer.querySelector('[data-zone="exhaust-cover"]');
+
         if (exhaustHitbox) exhaustHitbox.classList.toggle("hidden", isCloseup || coverRemoved);
         if (closeHitbox) closeHitbox.classList.toggle("hidden", isCloseup);
         if (backHitbox) backHitbox.classList.toggle("hidden", !isCloseup);
-        if (bolt1) bolt1.classList.toggle("hidden", !isCloseup || coverRemoved);
-        if (bolt2) bolt2.classList.toggle("hidden", !isCloseup || coverRemoved);
+
+        if (bolt1) {
+            bolt1.classList.toggle("hidden", !isCloseup || coverRemoved);
+            bolt1.classList.toggle("has-key", hasKey);
+            bolt1.title = hasKey ? "Болт 1" : "Болт 1 (нужен ключ)";
+        }
+        if (bolt2) {
+            bolt2.classList.toggle("hidden", !isCloseup || coverRemoved);
+            bolt2.classList.toggle("has-key", hasKey);
+            bolt2.title = hasKey ? "Болт 2" : "Болт 2 (нужен ключ)";
+        }
         if (cover) cover.classList.toggle("hidden", !isCloseup || coverRemoved);
     }
 
@@ -239,6 +312,22 @@ export class HangarScene {
                 xrayBtn.textContent = isXray ? "Рентген" : "Обычный вид";
             };
         }
+        const zipSection = document.getElementById("scene-zip-box");
+        if (zipSection) {
+            const keyHitbox = zipSection.querySelector('[data-zone="zip-key"]');
+            const hint = zipSection.querySelector("#zipHint");
+
+            if (keyHitbox) {
+                // Если ключ ещё не взят — показываем хитбокс
+                if (!this.app.state?.hasZipKey) {
+                    keyHitbox.classList.remove("hidden");
+                }
+                // Если ключ уже взят — оставляем скрытым
+            }
+            if (hint && !this.app.state?.hasZipKey) {
+                hint.textContent = "Ящик ЗИП";
+            }
+        }
     }
 
     showSideView() {
@@ -274,32 +363,40 @@ export class HangarScene {
     }
 
     _resetHeaterState() {
-        const heaterSection = document.getElementById("scene-heater");
-        if (heaterSection) {
-            const img = heaterSection.querySelector(".scene-content > img");
-            const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
-            const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
-            const hint = heaterSection.querySelector("p");
-            if (img) img.src = "./img/heater/rear_left_heater.jpg";
-            if (closedLayer) closedLayer.classList.remove("hidden");
-            if (openedLayer) {
-                openedLayer.classList.add("hidden");
-                openedLayer.querySelectorAll(".hitbox").forEach(hb => {
-                    hb.classList.remove("hidden");
-                    if (hb.dataset.zone?.startsWith("exhaust-bolt")) {
-                        hb.style.fill = "rgba(255,200,50,0.2)";
-                        hb.style.stroke = "rgba(255,200,50,0.7)";
-                    }
-                });
-            }
-            if (hint) hint.textContent = "Откройте борт";
-            if (this.app.state) {
-                this.app.state.exhaustBolt1 = false;
-                this.app.state.exhaustBolt2 = false;
-                this.app.state.exhaustCoverRemoved = false;
-            }
+    const heaterSection = document.getElementById("scene-heater");
+    if (heaterSection) {
+        const img = heaterSection.querySelector(".scene-content > img");
+        const closedLayer = heaterSection.querySelector(".heater-hitbox-closed");
+        const openedLayer = heaterSection.querySelector(".heater-hitbox-opened");
+        const hint = heaterSection.querySelector("p");
+
+        if (img) img.src = "./img/heater/rear_left_heater.jpg";
+        if (closedLayer) closedLayer.classList.remove("hidden");
+        if (openedLayer) {
+            openedLayer.classList.add("hidden");
+            openedLayer.querySelectorAll(".hitbox").forEach(hb => {
+                hb.classList.remove("hidden", "has-key");
+                if (hb.dataset.zone?.startsWith("exhaust-bolt")) {
+                    hb.style.fill = "rgba(255,200,50,0.2)";
+                    hb.style.stroke = "rgba(255,200,50,0.7)";
+                    hb.title = "Болт (нужен ключ)";
+                    hb.style.animation = "";
+                }
+            });
+        }
+        if (hint) hint.textContent = "Откройте борт";
+
+        // 🔥 Сброс ТОЛЬКО сцен-специфичных состояний
+        // hasZipKey НЕ сбрасываем — это инвентарь!
+        if (this.app.state) {
+            this.app.state.exhaustBolt1 = false;
+            this.app.state.exhaustBolt2 = false;
+            this.app.state.exhaustCoverRemoved = false;
+            // this.app.state.hasZipKey = false;  <-- УДАЛИТЬ ЭТУ СТРОКУ!
+            this.app.state.exhaustBoltsUnscrewed = false;
         }
     }
+}
 
     dispose() {
         this.destroyCurrentView();
@@ -308,5 +405,29 @@ export class HangarScene {
     destroyCurrentView() {
         this.currentView?.dispose?.();
         this.currentView = null;
+    }
+    _onZipZoneClick(e) {
+        const hit = e.target.closest(".hitbox.interactive");
+        if (!hit) return;
+
+        const zone = hit.dataset.zone;
+        if (!zone) return;
+
+        console.log(`Зона ЗИП: ${zone}`);
+
+        if (zone === "zip-key") {
+            if (!this.app.state?.hasZipKey) {
+                this.app.state?.takeZipKey?.();
+                console.log(" Ключ взят");
+
+                // Визуальная обратная связь: скрываем хитбокс ключа
+                hit.classList.add("hidden");
+
+                // Обновляем подсказку
+                const hint = document.getElementById("zipHint");
+                if (hint) hint.textContent = "Ключ у вас";
+            }
+            return;
+        }
     }
 }
