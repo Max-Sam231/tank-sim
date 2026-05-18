@@ -14,7 +14,7 @@ class TankState {
     this.instrumentPanel = false;
     this.leftTank = false;
     this.bcn = 'off'; // 'off', 'on', 'pump'
-    this.shutters = false;
+    this.shutters = 0; // 0-4: 0=closed, 1=half-closed, 2=middle, 3=half-open, 4=open
     this.rightTank = false;
     this.fuelPrimerLever = false;
     this.fuelManualFeed = 0; // 0-100
@@ -102,7 +102,7 @@ class TankState {
     this.instrumentPanel = false;
     this.leftTank = false;
     this.bcn = 'off';
-    this.shutters = false;
+    this.shutters = 0;
     this.rightTank = false;
     this.fuelPrimerLever = false;
     this.fuelManualFeed = 0;
@@ -601,13 +601,16 @@ class TankState {
   }
 
   toggleShutters() {
-    this.shutters = !this.shutters;
+    this.shutters = (this.shutters + 1) % 5;
     this._emit();
   }
 
-  setShutters(isOpen) {
-    this.shutters = Boolean(isOpen);
-    this._emit();
+  setShutters(position) {
+    const pos = parseInt(position, 10);
+    if (pos >= 0 && pos <= 4) {
+      this.shutters = pos;
+      this._emit();
+    }
   }
 
   toggleRightTank() {
