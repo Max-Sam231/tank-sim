@@ -93,6 +93,8 @@ class TankState {
 
     this.hasZipKey = false;
     this.exhaustBoltsUnscrewed = false;
+
+    this.heaterFuelValve = false;
     this._listeners = new Set();
   }
 
@@ -180,6 +182,8 @@ class TankState {
 
     this.hasZipKey = false;
     this.exhaustBoltsUnscrewed = false;
+
+    this.heaterFuelValve = false;
     this._emit();
   }
 
@@ -276,6 +280,8 @@ class TankState {
 
       hasZipKey: this.hasZipKey,
       exhaustBoltsUnscrewed: this.exhaustBoltsUnscrewed,
+
+      heaterFuelValve: this.heaterFuelValve,
     };
   }
 
@@ -862,6 +868,15 @@ class TankState {
       this.exhaustBoltsUnscrewed = true;
       this._emit();
     }
+  }
+
+  toggleHeaterFuelValve() {
+    this.heaterFuelValve = !this.heaterFuelValve;
+    this._emit();
+  }
+
+  isHeaterFuelFlowing() {
+    return this.heaterFuelValve;
   }
 }
 

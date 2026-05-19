@@ -848,18 +848,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /*Commander*/
-.cmd-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  /* Или cover, как вам удобнее */
-  z-index: 0;
-  transition: opacity 0.3s ease;
-  /* Плавный переход между видами */
-}
+
 
 /* По умолчанию показываем прямой вид, скрываем наклоненный */
 .cmd-bg-straight {
@@ -904,7 +893,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
      rotateX(15deg): Наклоняем плоскость экрана, создавая эффект взгляда снизу вверх или сверху вниз.
      scale(1.1): Немного приближаем, чтобы компенсировать удаленность при наклоне.
   */
-  transform: translateY(60px) rotateX(10deg) scale(1.05);
+  
 }
 
 /* Фоны должны занимать всё пространство и не искажаться отдельно от контейнера */
@@ -1468,3 +1457,42 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   fill: transparent !important;
   stroke: transparent !important;
 }
+
+
+/* Состояния по умолчанию */
+.cmd-bg-straight { opacity: 1; }
+.cmd-bg-tilted-down { opacity: 0; }
+.cmd-bg-tilted-up { opacity: 0; }
+
+/* При наклоне головы */
+.commander-view-tilted .cmd-bg-straight { opacity: 0; }
+.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+
+/* При поднятом рычаге (скрываем опущенный, показываем поднятый) */
+.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
+.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+
+/**//* === Фоны сцены командира === */
+#scene-commander .cmd-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Состояния по умолчанию */
+#scene-commander .cmd-bg-straight { opacity: 1; }
+#scene-commander .cmd-bg-tilted-down { opacity: 0; }
+#scene-commander .cmd-bg-tilted-up { opacity: 0; }
+
+/* Наклон головы: показываем tilted-down */
+#scene-commander.commander-view-tilted .cmd-bg-straight { opacity: 0; }
+#scene-commander.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+
+/* Наклон + рычаг поднят: показываем tilted-up вместо tilted-down */
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
