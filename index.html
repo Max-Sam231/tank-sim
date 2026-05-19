@@ -116,8 +116,8 @@
             points="100,100 250,100 250,180 100,180" title="Назад"
             style="pointer-events:auto;fill:rgba(255,50,50,0.2);stroke:rgba(255,50,50,0.7);" />
 
-          <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-1" points="980,250 950,250 950,300 980,300"
-            title="Болт 1 (нужен ключ)"
+          <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-1"
+            points="1000,200 950,200 950,250 1000,250" title="Болт 1 (нужен ключ)"
             style="pointer-events:auto;fill:rgba(255,200,50,0.2);stroke:rgba(255,200,50,0.7);" />
 
           <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-2" points="980,550 950,550 950,500 980,500"
@@ -363,35 +363,32 @@
             </div>
         </div>
     </section>
-    <section id="scene-commander" class="game-scene hidden">
-      <div class="scene-content" id="scene-commander-content">
-        <!-- Фон 1: Смотрит прямо -->
-        <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
+<section id="scene-commander" class="game-scene hidden">
+  <div class="scene-content" id="scene-commander-content">
+    
+    <!-- Фон: прямой вид -->
+    <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
+    
+    <!-- Фон: наклоненный вид, рычаг ОПУЩЕН -->
+    <img class="cmd-bg cmd-bg-tilted-down" src="./img/commander/tilted.png" alt="Commander Tilted Down" />
+    
+    <!-- Фон: наклоненный вид, рычаг ПОДНЯТ (полный экран) -->
+    <img class="cmd-bg cmd-bg-tilted-up" src="./img/commander/fuel_valve_up.png" alt="Commander Tilted Up" />
+    
+    <div class="overlay-layer" aria-hidden="true"></div>
 
-        <!-- Фон 2: Наклон влево-вниз -->
-        <img class="cmd-bg cmd-bg-tilted" src="./img/commander/tilted.png" alt="Commander View Tilted" />
-
-        <!-- Слой оверлеев для командира -->
-        <div class="overlay-layer" aria-hidden="true"></div>
-
-        <!-- SVG Hitboxes Командира -->
-        <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
-          aria-hidden="true">
-          <!-- Кнопка "Выход в ангар" -->
-          <polygon class="hitbox interactive exit-btn" data-action="exit_to_hangar"
-            points="1800,20 1900,20 1900,60 1800,60"></polygon>
-
-          <!-- Кнопка "Наклонить голову" (Переключатель вида) -->
-          <!-- Разместите этот полигон там, где должен быть клик для смены вида -->
-          <polygon class="hitbox interactive" data-action="toggle_commander_view"
-            points="700,700 800,700 800,800 700,800" />
-
-          <!-- Люк механика-водителя (чтобы вернуться к нему, если нужно) -->
-          <polygon class="hitbox interactive" data-action="enter_driver_seat"
-            points="900,900 1000,900 1000,1000 900,1000" />
-        </svg>
-      </div>
-    </section>
+    <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="hitbox interactive exit-btn" data-action="exit_to_hangar" points="1800,20 1900,20 1900,60 1800,60"></polygon>
+      <polygon class="hitbox interactive" data-action="toggle_commander_view" points="700,700 800,700 800,800 700,800" />
+      <polygon class="hitbox interactive" data-action="enter_driver_seat" points="900,900 1000,900 1000,1000 900,1000" />
+      
+      <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
+      <polygon class="hitbox interactive" data-action="toggle_heater_fuel_valve"
+        points="1050,500 1250,500 1250,700 1050,700" 
+        title="Переключить подачу топлива" />
+    </svg>
+  </div>
+</section>
   </main>
 </body>
 
