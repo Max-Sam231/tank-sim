@@ -95,7 +95,10 @@ class TankState {
     this.exhaustBoltsUnscrewed = false;
 
     this.heaterFuelValve = false;
+    this.hasExhaustCap = false;        // Взял ли игрок козырёк из ЗИП
+    this.exhaustCapInstalled = false;
     this._listeners = new Set();
+
   }
 
   reset() {
@@ -184,6 +187,9 @@ class TankState {
     this.exhaustBoltsUnscrewed = false;
 
     this.heaterFuelValve = false;
+
+    this.hasExhaustCap = false;
+    this.exhaustCapInstalled = false;
     this._emit();
   }
 
@@ -282,6 +288,10 @@ class TankState {
       exhaustBoltsUnscrewed: this.exhaustBoltsUnscrewed,
 
       heaterFuelValve: this.heaterFuelValve,
+
+      hasExhaustCap: this.hasExhaustCap,
+      exhaustCapInstalled: this.exhaustCapInstalled,
+
     };
   }
 
@@ -877,6 +887,29 @@ class TankState {
 
   isHeaterFuelFlowing() {
     return this.heaterFuelValve;
+  }
+  takeExhaustCap() {
+    if (!this.hasExhaustCap) {
+      this.hasExhaustCap = true;
+      this._emit();
+    }
+  }
+
+  installExhaustCap() {
+    if (this.hasExhaustCap && !this.exhaustCapInstalled) {
+      this.exhaustCapInstalled = true;
+      this._emit();
+    }
+  }
+
+  canTakeExhaustCap() {
+    // Козырёк доступен только после снятия крышки выхлопа
+    return this.exhaustCoverRemoved && !this.hasExhaustCap;
+  }
+
+  canInstallExhaustCap() {
+    // Установить можно, если козырёк в инвентаре и ещё не установлен
+    return this.hasExhaustCap && !this.exhaustCapInstalled && this.exhaustCoverRemoved;
   }
 }
 
