@@ -103,7 +103,10 @@
         <svg class="hitbox-layer heater-hitbox-layer heater-hitbox-opened hidden" viewBox="0 0 1920 1080"
           preserveAspectRatio="none" aria-hidden="true"
           style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
-
+          <!-- 🔥 Хитбокс установки козырька (скрыт по умолчанию) -->
+          <polygon class="hitbox interactive hidden" data-zone="install-exhaust-cap"
+            points="1350,620 1550,620 1550,720 1350,720" title="Установить козырёк"
+            style="pointer-events:auto;fill:rgba(0,255,100,0.2);stroke:rgba(0,255,100,0.7);" />
           <polygon class="hitbox interactive" data-zone="heater-exhaust-closeup"
             points="1400,600 1500,600 1500,700 1400,700" title="Выхлоп обогревателя (крупно)"
             style="pointer-events:auto;fill:rgba(255,170,0,0.15);stroke:rgba(255,170,0,0.7);" />
@@ -150,15 +153,18 @@
         <svg class="hitbox-layer zip-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"
           style="position:absolute;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;">
 
+          <!-- Хитбокс ключа -->
           <polygon class="hitbox interactive" data-zone="zip-key" points="400,200 750,200 750,850 400,850"
-            title="Взять ключ"
-            style="pointer-events:auto;fill:rgba(255,215,0,0.2);stroke:rgba(255,215,0,0.7);stroke-width:2;" />
+            title="Взять ключ" style="pointer-events:auto;fill:rgba(255,215,0,0.2);stroke:rgba(255,215,0,0.7);" />
+
+          <!-- 🔥 НОВЫЙ: Хитбокс козырька выхлопа (скрыт по умолчанию) -->
+          <polygon class="hitbox interactive hidden" data-zone="zip-exhaust-cap"
+            points="1200,300 1400,300 1400,500 1200,500" title="Взять козырёк выхлопа"
+            style="pointer-events:auto;fill:rgba(100,200,255,0.25);stroke:rgba(100,200,255,0.8);" />
 
         </svg>
 
-        <button id="zipBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">
-          ← Назад
-        </button>
+        <button id="zipBackBtn" class="view-switch-btn" style="top:20px;left:20px;right:auto;">← Назад</button>
 
         <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
                 background:rgba(0,0,0,0.7);color:white;padding:10px 20px;
@@ -363,32 +369,35 @@
             </div>
         </div>
     </section>
-<section id="scene-commander" class="game-scene hidden">
-  <div class="scene-content" id="scene-commander-content">
-    
-    <!-- Фон: прямой вид -->
-    <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
-    
-    <!-- Фон: наклоненный вид, рычаг ОПУЩЕН -->
-    <img class="cmd-bg cmd-bg-tilted-down" src="./img/commander/tilted.png" alt="Commander Tilted Down" />
-    
-    <!-- Фон: наклоненный вид, рычаг ПОДНЯТ (полный экран) -->
-    <img class="cmd-bg cmd-bg-tilted-up" src="./img/commander/fuel_valve_up.png" alt="Commander Tilted Up" />
-    
-    <div class="overlay-layer" aria-hidden="true"></div>
+    <section id="scene-commander" class="game-scene hidden">
+      <div class="scene-content" id="scene-commander-content">
 
-    <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true">
-      <polygon class="hitbox interactive exit-btn" data-action="exit_to_hangar" points="1800,20 1900,20 1900,60 1800,60"></polygon>
-      <polygon class="hitbox interactive" data-action="toggle_commander_view" points="700,700 800,700 800,800 700,800" />
-      <polygon class="hitbox interactive" data-action="enter_driver_seat" points="900,900 1000,900 1000,1000 900,1000" />
-      
-      <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
-      <polygon class="hitbox interactive" data-action="toggle_heater_fuel_valve"
-        points="1050,500 1250,500 1250,700 1050,700" 
-        title="Переключить подачу топлива" />
-    </svg>
-  </div>
-</section>
+        <!-- Фон: прямой вид -->
+        <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
+
+        <!-- Фон: наклоненный вид, рычаг ОПУЩЕН -->
+        <img class="cmd-bg cmd-bg-tilted-down" src="./img/commander/tilted.png" alt="Commander Tilted Down" />
+
+        <!-- Фон: наклоненный вид, рычаг ПОДНЯТ (полный экран) -->
+        <img class="cmd-bg cmd-bg-tilted-up" src="./img/commander/fuel_valve_up.png" alt="Commander Tilted Up" />
+
+        <div class="overlay-layer" aria-hidden="true"></div>
+
+        <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
+          aria-hidden="true">
+          <polygon class="hitbox interactive exit-btn" data-action="exit_to_hangar"
+            points="1800,20 1900,20 1900,60 1800,60"></polygon>
+          <polygon class="hitbox interactive" data-action="toggle_commander_view"
+            points="700,700 800,700 800,800 700,800" />
+          <polygon class="hitbox interactive" data-action="enter_driver_seat"
+            points="900,900 1000,900 1000,1000 900,1000" />
+
+          <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
+          <polygon class="hitbox interactive" data-action="toggle_heater_fuel_valve"
+            points="1050,500 1250,500 1250,700 1050,700" title="Переключить подачу топлива" />
+        </svg>
+      </div>
+    </section>
   </main>
 </body>
 

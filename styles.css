@@ -1496,3 +1496,33 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* Наклон + рычаг поднят: показываем tilted-up вместо tilted-down */
 #scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
 #scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+
+/**/
+#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"] {
+  cursor: pointer;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"]:hover {
+  fill: rgba(100, 200, 255, 0.4) !important;
+  stroke: rgba(100, 200, 255, 0.95) !important;
+}
+#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"].hidden {
+  pointer-events: none;
+  fill: transparent !important;
+  stroke: transparent !important;
+}
+
+/* Установка козырька на выхлоп */
+#scene-heater .hitbox[data-zone="install-exhaust-cap"] {
+  cursor: pointer;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+#scene-heater .hitbox[data-zone="install-exhaust-cap"]:hover {
+  fill: rgba(0, 255, 100, 0.4) !important;
+  stroke: rgba(0, 255, 100, 0.95) !important;
+}
+#scene-heater .hitbox[data-zone="install-exhaust-cap"].hidden {
+  pointer-events: none;
+  fill: transparent !important;
+  stroke: transparent !important;
+}
