@@ -10,7 +10,7 @@ import { HangarScene } from './js/scenes/HangarScene.js';
 import { DriverScene } from './js/scenes/DriverScene.js';
 import { CommanderScene } from './js/scenes/CommanderScene.js';
 
-const APP_MODE = "debug";
+const APP_MODE = "debug"; // "debug" или "prod"
 const IS_DEBUG = APP_MODE === "debug";
 
 function bootstrap() {
