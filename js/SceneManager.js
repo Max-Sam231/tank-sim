@@ -4,39 +4,45 @@ export class SceneManager {
     }
 
     /**
-     * @param {Object} newScene - Экземпляр сцены (HangarScene или DriverScene)
-     * @param {string} sceneId - ID HTML элемента сцены ('scene-hangar' или 'scene-driver')
+     * @param {Object} newScene - экземпляр сцены
+     * @param {string} sceneId - id DOM элемента сцены
      */
     change(newScene, sceneId) {
-        if (this.currentScene) {
+        // 1. корректно уничтожаем старую сцену
+        if (this.currentScene?.dispose) {
             this.currentScene.dispose();
         }
 
+        // 2. прячем ВСЕ сцены (оставляем только hidden — is-hidden убираем)
         document.querySelectorAll('.game-scene').forEach(el => {
-            el.classList.add('is-hidden');
-            el.classList.add('hidden'); // На всякий случай, если в CSS есть оба класса
+            el.classList.add('hidden');
+            el.classList.remove('is-hidden');
         });
 
+        // 3. показываем нужную сцену
         if (sceneId) {
             const el = document.getElementById(sceneId);
-            if (el) {
-                el.classList.remove('is-hidden');
-                el.classList.remove('hidden');
-            } else {
+
+            if (!el) {
                 console.warn(`Scene element with id "${sceneId}" not found.`);
+                return;
             }
+
+            el.classList.remove('hidden');
+            el.classList.remove('is-hidden');
         }
 
-        // 4. Инициализируем логику новой сцены
+        // 4. переключаем сцену в памяти
         this.currentScene = newScene;
-        if (this.currentScene.init) {
-            this.currentScene.init();
-        }
+
+        // 5. инициализация новой сцены
+        this.currentScene?.init?.();
+
+        console.log(`Scene switched to: ${sceneId}`);
+    console.trace("SCENE CHANGE CALLED");
     }
 
     update(dt) {
-        if (this.currentScene && this.currentScene.update) {
-            this.currentScene.update(dt);
-        }
+        this.currentScene?.update?.(dt);
     }
 }
