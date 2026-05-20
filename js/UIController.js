@@ -1255,7 +1255,7 @@ class UIController {
     const imagePath = "./img/1/привод.png";
     const topPercent =
       {
-        neutral: 75,
+        neutral: 73,
         1: 65,
         2: 55,
         3: 45,
@@ -1269,7 +1269,7 @@ class UIController {
     this._gearModalImageEl.innerHTML = `
       <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
         <img src="${imagePath}" alt="Привод" style="width: 100%; height: 100%; object-fit: contain;" />
-        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 14px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
+        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 8px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
       </div>
     `;
   }
