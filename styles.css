@@ -8,7 +8,7 @@ body {
 
 /* Gauge arrow styles */
 .overlay.gauge-arrow {
-  transform-origin: center center;
+  transform-origin: var(--pivot-x, 50%) var(--pivot-y, 100%);
   transition: transform 0.1s ease-out;
   pointer-events: none;
   will-change: transform;
