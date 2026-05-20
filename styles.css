@@ -12,6 +12,7 @@ body {
   transition: transform 0.1s ease-out;
   pointer-events: none;
   will-change: transform;
+  border: 1px solid yellow;
 }
 
 body {
@@ -276,7 +277,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .debug-console {
-  /* display: none; */
+  /* display: none;  */
 
   position: absolute;
   left: 12px;
