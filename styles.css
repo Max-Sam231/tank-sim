@@ -8,10 +8,11 @@ body {
 
 /* Gauge arrow styles */
 .overlay.gauge-arrow {
-  transform-origin: center center;
+  transform-origin: var(--pivot-x, 50%) var(--pivot-y, 100%);
   transition: transform 0.1s ease-out;
   pointer-events: none;
   will-change: transform;
+  border: 1px solid yellow;
 }
 
 body {
@@ -276,7 +277,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .debug-console {
-  /* display: none; */
+  /* display: none;  */
 
   position: absolute;
   left: 12px;
@@ -1007,7 +1008,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .bcn-modal-image-placeholder {
   width: 100%;
-  height: 120px;
+  height: 260px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 8px;

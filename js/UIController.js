@@ -1,4 +1,4 @@
-import { CONTROL_OVERLAY_DEFS } from './ControlOverlayDefs.js';
+import { CONTROL_OVERLAY_DEFS } from "./ControlOverlayDefs.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true }) {
@@ -41,7 +41,7 @@ class UIController {
     // Process all SVG hitbox layers
     const svgLayers = this.rootEl.querySelectorAll("svg.hitbox-layer");
 
-    svgLayers.forEach(svgEl => {
+    svgLayers.forEach((svgEl) => {
       const existing = svgEl.querySelector("g.hitbox-labels");
       if (existing) existing.remove();
 
@@ -50,7 +50,8 @@ class UIController {
 
       const hitboxes = Array.from(svgEl.querySelectorAll(".hitbox"));
       for (const hitbox of hitboxes) {
-        const label = (hitbox.dataset.label || hitbox.dataset.action || "hitbox").trim() || "hitbox";
+        const label =
+          (hitbox.dataset.label || hitbox.dataset.action || "hitbox").trim() || "hitbox";
         const pointsAttr = hitbox.getAttribute("points") || "";
         const points = this._parsePolygonPoints(pointsAttr);
         if (points.length < 3) continue;
@@ -112,7 +113,13 @@ class UIController {
       if (p.x > maxX) maxX = p.x;
       if (p.y > maxY) maxY = p.y;
     }
-    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return null;
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(maxY)
+    )
+      return null;
     return { minX, minY, maxX, maxY };
   }
 
@@ -190,7 +197,9 @@ class UIController {
     const panelStageEl = this.rootEl.querySelector(".instrument-panel-stage");
     if (!panelStageEl) return;
 
-    const overlayLayerEl = Array.from(panelStageEl.children).find((el) => el.classList?.contains("overlay-layer")) || null;
+    const overlayLayerEl =
+      Array.from(panelStageEl.children).find((el) => el.classList?.contains("overlay-layer")) ||
+      null;
     const panelSvg = panelStageEl.querySelector("svg.instrument-panel-hitbox-layer");
     if (!overlayLayerEl || !panelSvg) return;
 
@@ -289,12 +298,12 @@ class UIController {
 
     // Center the arrow image on (cx, cy)
     const left = def.cx - aw / 2;
-    const top  = def.cy - ah / 2;
+    const top = def.cy - ah / 2;
 
     const x = (left / vbW) * 100;
-    const y = (top  / vbH) * 100;
-    const w = (aw   / vbW) * 100;
-    const h = (ah   / vbH) * 100;
+    const y = (top / vbH) * 100;
+    const w = (aw / vbW) * 100;
+    const h = (ah / vbH) * 100;
 
     img.style.setProperty("--x", String(x));
     img.style.setProperty("--y", String(y));
@@ -302,9 +311,33 @@ class UIController {
     img.style.setProperty("--h", String(h));
     img.style.setProperty("--rot", String(def.startAngle));
     img.style.setProperty("--z", String(def.z ?? 75));
+    img.style.setProperty("--pivot-x", String(def.pivotX ?? 50) + "%");
+    img.style.setProperty("--pivot-y", String(def.pivotY ?? 100) + "%");
 
     overlayLayerEl.appendChild(img);
     this._gaugeArrowEls.set(action, img);
+
+    // Add pivot point indicator (yellow dot) for debugging
+    const pivotX = def.pivotX ?? 50;
+    const pivotY = def.pivotY ?? 100;
+    const pivotAbsX = left + (pivotX / 100) * aw;
+    const pivotAbsY = top + (pivotY / 100) * ah;
+
+    const pivotDot = document.createElement("div");
+    pivotDot.className = "pivot-indicator";
+    pivotDot.style.position = "absolute";
+    pivotDot.style.left = ((pivotAbsX / vbW) * 100) + "%";
+    pivotDot.style.top = ((pivotAbsY / vbH) * 100) + "%";
+    pivotDot.style.width = "8px";
+    pivotDot.style.height = "8px";
+    pivotDot.style.backgroundColor = "yellow";
+    pivotDot.style.borderRadius = "50%";
+    pivotDot.style.border = "1px solid black";
+    pivotDot.style.zIndex = "100";
+    pivotDot.style.transform = "translate(-50%, -50%)";
+    pivotDot.style.pointerEvents = "none";
+
+    overlayLayerEl.appendChild(pivotDot);
   }
 
   _updateGaugeArrows(snapshot) {
@@ -323,7 +356,10 @@ class UIController {
       if (def.switchKey && def.secondarySensorKey) {
         const sw = snapshot[def.switchKey];
         if (this._shouldUseSecondaryGauge(action, sw)) {
-          value = Number(snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey]) || 0;
+          value =
+            Number(
+              snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey],
+            ) || 0;
           min = def.secondaryMin;
           max = def.secondaryMax;
         }
@@ -448,7 +484,6 @@ class UIController {
   }
 
   _wireEvents() {
-
     this.rootEl.addEventListener("click", (event) => {
       this._capturePointer(event);
     });
@@ -634,7 +669,7 @@ class UIController {
           this.state.setGasPedal(true);
         }
       },
-      { passive: false }
+      { passive: false },
     );
 
     window.addEventListener(
@@ -645,7 +680,7 @@ class UIController {
         this.state.setGasPedal(false);
         this._touchHeldAction = null;
       },
-      { passive: false }
+      { passive: false },
     );
 
     // Sync hover between hitboxes and overlay-controls
@@ -654,7 +689,7 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
-      
+
       // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
@@ -675,7 +710,7 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
-      
+
       // Manometer special handling
       if (action === "manometer") {
         this.state.setManometer(0);
@@ -762,12 +797,11 @@ class UIController {
       this._shuttersModalEl.addEventListener("click", (event) => {
         const btn = event.target.closest(".bcn-modal-btn");
         if (btn) {
-          const mode = btn.dataset.shuttersMode;
-          if (mode !== undefined) {
-            const isOpen = mode === "true";
-            this.state.setShutters(isOpen);
-            this._updateShuttersModalButtons(isOpen);
-            this._updateShuttersModalImage(isOpen);
+          const position = btn.dataset.shuttersPosition;
+          if (position !== undefined) {
+            this.state.setShutters(position);
+            this._updateShuttersModalButtons(position);
+            this._updateShuttersModalImage(position);
           }
         }
       });
@@ -797,12 +831,15 @@ class UIController {
     }
 
     this._handleDocumentPointerDown = (event) => {
-      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(Boolean);
+      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(
+        Boolean,
+      );
       const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
       if (!isAnyOpen) return;
 
       const target = event.target;
-      const insideContent = target && typeof target.closest === "function" && target.closest(".bcn-modal-content");
+      const insideContent =
+        target && typeof target.closest === "function" && target.closest(".bcn-modal-content");
       if (insideContent) return;
 
       this._hideAllActionModals();
@@ -811,7 +848,6 @@ class UIController {
       if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
     };
     document.addEventListener("pointerdown", this._handleDocumentPointerDown, true);
-
   }
 
   _render(snapshot) {
@@ -819,14 +855,14 @@ class UIController {
     this._updateGaugeArrows(snapshot);
 
     // Для командира
-    const commanderSection = document.getElementById('scene-commander');
+    const commanderSection = document.getElementById("scene-commander");
 
     // Проверяем, активна ли сейчас сцена командира (она не скрыта)
-    if (commanderSection && !commanderSection.classList.contains('hidden')) {
-      if (snapshot.commanderView === 'tilted') {
-        commanderSection.classList.add('commander-view-tilted');
+    if (commanderSection && !commanderSection.classList.contains("hidden")) {
+      if (snapshot.commanderView === "tilted") {
+        commanderSection.classList.add("commander-view-tilted");
       } else {
-        commanderSection.classList.remove('commander-view-tilted');
+        commanderSection.classList.remove("commander-view-tilted");
       }
     }
 
@@ -882,7 +918,7 @@ class UIController {
       `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
       `BCN: ${snapshot.bcn.toUpperCase()}`,
-      `shutters: ${snapshot.shutters ? "OPEN" : "CLOSED"}`,
+      `shutters: ${snapshot.shutters}/4`,
       `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
       `gear: ${snapshot.gearLever}`,
@@ -933,7 +969,7 @@ class UIController {
       `gear: ${snapshot.lamp_gear_engaged ? "ON" : "OFF"}`,
       "",
       `hitbox:  ${this._hitboxVisible ? "VISIBLE" : "HIDDEN"}`,
-      "[H] toggle"
+      "[H] toggle",
     ];
 
     if (this._lastClick) {
@@ -944,17 +980,17 @@ class UIController {
     }
 
     this.consoleEl.textContent = lines.join("\n");
-    const driverSection = document.getElementById('scene-driver'); 
-    
-    if (driverSection && !driverSection.classList.contains('hidden')) {
-        // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
-        const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
-        
-        if (isLightsOn) {
-            driverSection.classList.add('cabin-lights-on');
-        } else {
-            driverSection.classList.remove('cabin-lights-on');
-        }
+    const driverSection = document.getElementById("scene-driver");
+
+    if (driverSection && !driverSection.classList.contains("hidden")) {
+      // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
+      const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
+
+      if (isLightsOn) {
+        driverSection.classList.add("cabin-lights-on");
+      } else {
+        driverSection.classList.remove("cabin-lights-on");
+      }
     }
   }
 
@@ -993,16 +1029,15 @@ class UIController {
   }
 
   _renderOverlays(snapshot) {
-
     // --- Для командира ---
-    const commanderSection = document.getElementById('scene-commander');
+    const commanderSection = document.getElementById("scene-commander");
 
     // Проверяем, активна ли сейчас сцена командира (она не скрыта)
-    if (commanderSection && !commanderSection.classList.contains('hidden')) {
-      if (snapshot.commanderView === 'tilted') {
-        commanderSection.classList.add('commander-view-tilted');
+    if (commanderSection && !commanderSection.classList.contains("hidden")) {
+      if (snapshot.commanderView === "tilted") {
+        commanderSection.classList.add("commander-view-tilted");
       } else {
-        commanderSection.classList.remove('commander-view-tilted');
+        commanderSection.classList.remove("commander-view-tilted");
       }
     }
 
@@ -1079,7 +1114,7 @@ class UIController {
     this.rootEl.classList.toggle("overlays-debug", this._hitboxVisible);
 
     const svgLayers = this.rootEl.querySelectorAll("svg.hitbox-layer");
-    svgLayers.forEach(svgEl => {
+    svgLayers.forEach((svgEl) => {
       svgEl.classList.toggle("labels-visible", this._hitboxVisible);
     });
   }
@@ -1134,8 +1169,9 @@ class UIController {
     if (!this._shuttersModalEl) return;
     this._shuttersModalEl.classList.remove("hidden");
     const snapshot = this.state.getSnapshot();
-    this._updateShuttersModalButtons(snapshot.shutters);
-    this._updateShuttersModalImage(snapshot.shutters);
+    const position = String(snapshot.shutters);
+    this._updateShuttersModalButtons(position);
+    this._updateShuttersModalImage(position);
   }
 
   _hideShuttersModal() {
@@ -1143,20 +1179,42 @@ class UIController {
     this._shuttersModalEl.classList.add("hidden");
   }
 
-  _updateShuttersModalButtons(isOpen) {
+  _updateShuttersModalButtons(position) {
     if (!this._shuttersModalEl) return;
     const buttons = this._shuttersModalEl.querySelectorAll(".bcn-modal-btn");
     buttons.forEach((btn) => {
-      const mode = btn.dataset.shuttersMode;
-      const btnIsOpen = mode === "true";
-      btn.classList.toggle("is-active", btnIsOpen === isOpen);
+      const btnPosition = btn.dataset.shuttersPosition;
+      btn.classList.toggle("is-active", btnPosition === position);
     });
   }
 
-  _updateShuttersModalImage(isOpen) {
+  _updateShuttersModalImage(position) {
     if (!this._shuttersModalImageEl) return;
-    const label = isOpen ? "ОТКРЫТО" : "ЗАКРЫТО";
-    this._shuttersModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${label}</span>`;
+    const labels = {
+      0: "ЗАКРЫТО",
+      1: "ПОЛУЗАКРЫТО",
+      2: "ПОСЕРЕДИНЕ",
+      3: "ПОЛУОТКРЫТО",
+      4: "ОТКРЫТО",
+    };
+    const imagePath = "./img/2/жалюзи.png";
+    const topPercent =
+      {
+        0: 72,
+        1: 60,
+        2: 48,
+        3: 36,
+        4: 24,
+      }[String(position)] || 50;
+    this._shuttersModalImageEl.innerHTML = `
+      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <img src="${imagePath}" alt="Жалюзи" style="width: 100%; height: 100%; object-fit: contain;" />
+        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 14px);; width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
+        <div style="position: absolute; top: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ОТКРЫТО</div>
+        <div style="position: absolute; bottom: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ЗАКРЫТО</div>
+      </div>
+      <div style="position: absolute; left: -9999px;">${labels[position] || "—"}</div>
+    `;
   }
 
   _showGearModal() {
@@ -1185,14 +1243,35 @@ class UIController {
     if (!this._gearModalImageEl) return;
     const labels = {
       neutral: "НЕЙТРАЛЬ",
-      "1": "1-Я ПЕРЕДАЧА",
-      "2": "2-Я ПЕРЕДАЧА",
-      "3": "3-Я ПЕРЕДАЧА",
-      "4": "4-Я ПЕРЕДАЧА",
-      "5": "5-Я ПЕРЕДАЧА",
-      R: "ЗАДНЯЯ (R)",
+      1: "1-Я ПЕРЕДАЧА",
+      2: "2-Я ПЕРЕДАЧА",
+      3: "3-Я ПЕРЕДАЧА",
+      4: "4-Я ПЕРЕДАЧА",
+      5: "5-Я ПЕРЕДАЧА",
+      6: "6-Я ПЕРЕДАЧА",
+      7: "7-Я ПЕРЕДАЧА",
+      R: "ЗАДНЯЯ (3X)",
     };
-    this._gearModalImageEl.innerHTML = `<span style="color: rgba(255,255,255,0.5); font-size: 14px;">${labels[gear] || "—"}</span>`;
+    const imagePath = "./img/1/привод.png";
+    const topPercent =
+      {
+        neutral: 73,
+        1: 65,
+        2: 55,
+        3: 45,
+        4: 35,
+        5: 25,
+        6: 15,
+        7: 5,
+        R: 85,
+      }[String(gear)] || 50;
+    const labelText = labels[gear] || "—";
+    this._gearModalImageEl.innerHTML = `
+      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <img src="${imagePath}" alt="Привод" style="width: 100%; height: 100%; object-fit: contain;" />
+        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 8px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
+      </div>
+    `;
   }
 }
 
