@@ -6,15 +6,15 @@ import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
 
 import { SceneManager } from './js/SceneManager.js';
-import { HangarScene } from './js/HangarScene.js';
-import { DriverScene } from './js/DriverScene.js';
-import { CommanderScene } from './js/CommanderScene.js'; 
+import { HangarScene } from './js/scenes/HangarScene.js';
+import { DriverScene } from './js/scenes/DriverScene.js';
+import { CommanderScene } from './js/scenes/CommanderScene.js';
 
-const APP_MODE = "debug"; 
+const APP_MODE = "debug"; // "debug" или "prod"
 const IS_DEBUG = APP_MODE === "debug";
 
-
 function bootstrap() {
+
   const sceneEl = document.getElementById("scene");
   const consoleEl = document.getElementById("debugConsole");
   const startMenuContainerEl = document.getElementById("startMenuContainer");
@@ -53,33 +53,38 @@ function bootstrap() {
     ui,
     sceneManager,
     sceneEl,
-
-    scene: null,     
+    scene: null,
     assets: {
       get: () => null
     },
-
     raycastFromMouse: () => null,
-
-    changeScene: (name, id) => changeScene(name, id), // Передаем ID сцены
+    changeScene: (name, id) => changeScene(name, id),
   };
 
   const hangarScene = new HangarScene(app);
   const driverScene = new DriverScene(app);
-  const commanderScene = new CommanderScene(app); // <--- 2. СОЗДАНИЕ ЭКЗЕМПЛЯРА
+  const commanderScene = new CommanderScene(app);
 
   const changeScene = (name, sceneId) => {
     switch (name) {
       case "hangar":
         sceneManager.change(hangarScene, sceneId || "scene-hangar");
+        app.getScene = () => sceneManager.currentScene;
         break;
 
       case "driver":
         sceneManager.change(driverScene, sceneId || "scene-driver");
         break;
-        
-      case "commander": // <--- 3. НОВЫЙ КЕЙС ДЛЯ КОМАНДИРА
+
+      case "commander":
         sceneManager.change(commanderScene, sceneId || "scene-commander");
+        break;
+
+      case "heater":
+        sceneManager.change(null, sceneId || "scene-heater");
+        break;
+      case "zip-box":
+        sceneManager.change(null, sceneId || "scene-zip-box");
         break;
     }
   };
@@ -142,7 +147,6 @@ function bootstrap() {
     },
 
     onInstruction: () => {
-      // позже тут будет обучение
     },
   });
 
@@ -153,11 +157,26 @@ function bootstrap() {
     });
   }
 
+  const heaterBackBtn = document.getElementById("heaterBackBtn");
+  if (heaterBackBtn) {
+    heaterBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
+      setTimeout(() => {
+        hangarScene?.showSideView?.();
+      }, 50);
+    });
+  }
+  const zipBackBtn = document.getElementById("zipBackBtn");
+  if (zipBackBtn) {
+    zipBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
+    });
+  }
+
   FullscreenManager.setup();
 
   startMenu.show();
 
-  // стартовая сцена
   changeScene("hangar");
 }
 

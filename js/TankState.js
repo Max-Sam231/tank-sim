@@ -89,8 +89,18 @@ class TankState {
     this._brakeHoldTriggered = false;
 
     this._parkingBrakeHoldThresholdSec = 1.2;
+    this.exhaustBolt1 = false;
+    this.exhaustBolt2 = false;
+    this.exhaustCoverRemoved = false;
 
+    this.hasZipKey = false;
+    this.exhaustBoltsUnscrewed = false;
+
+    this.heaterFuelValve = false;
+    this.hasExhaustCap = false;        // Взял ли игрок козырёк из ЗИП
+    this.exhaustCapInstalled = false;
     this._listeners = new Set();
+
   }
 
   reset() {
@@ -167,8 +177,23 @@ class TankState {
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
-    this.cabinLight = false; 
+    this.cabinLight = false;
 
+    this.hingeLatch1 = false;
+    this.hingeLatch2 = false;
+    this.hingeLatch3 = false;
+    this.sidePanelOpen = false;
+    this.exhaustBolt1 = false;
+    this.exhaustBolt2 = false;
+    this.exhaustCoverRemoved = false;
+
+    this.hasZipKey = false;
+    this.exhaustBoltsUnscrewed = false;
+
+    this.heaterFuelValve = false;
+
+    this.hasExhaustCap = false;
+    this.exhaustCapInstalled = false;
     this._emit();
   }
 
@@ -257,6 +282,22 @@ class TankState {
       lamp_overheat: this.lamps.overheat,
       lamp_fuel_reserve: this.lamps.fuel_reserve,
       lamp_gear_engaged: this.lamps.gear_engaged,
+      hingeLatch1: this.hingeLatch1,
+      hingeLatch2: this.hingeLatch2,
+      hingeLatch3: this.hingeLatch3,
+      sidePanelOpen: this.sidePanelOpen,
+      exhaustBolt1: this.exhaustBolt1,
+      exhaustBolt2: this.exhaustBolt2,
+      exhaustCoverRemoved: this.exhaustCoverRemoved,
+
+      hasZipKey: this.hasZipKey,
+      exhaustBoltsUnscrewed: this.exhaustBoltsUnscrewed,
+
+      heaterFuelValve: this.heaterFuelValve,
+
+      hasExhaustCap: this.hasExhaustCap,
+      exhaustCapInstalled: this.exhaustCapInstalled,
+
     };
   }
 
@@ -812,6 +853,91 @@ class TankState {
   toggleCabinLight() {
     this.cabinLight = !this.cabinLight;
     this._emit();
+  }
+  toggleHingeLatch(latchId) {
+    if (latchId === "latch1") this.hingeLatch1 = !this.hingeLatch1;
+    else if (latchId === "latch2") this.hingeLatch2 = !this.hingeLatch2;
+    else if (latchId === "latch3") this.hingeLatch3 = !this.hingeLatch3;
+    else return;
+    this._emit();
+  }
+
+  canOpenSidePanel() {
+    return this.hingeLatch1 && this.hingeLatch2 && this.hingeLatch3;
+  }
+
+  openSidePanel() {
+    if (this.canOpenSidePanel()) {
+      this.sidePanelOpen = true;
+      this._emit();
+    }
+  }
+  toggleExhaustBolt(boltId) {
+    if (boltId === "1") this.exhaustBolt1 = !this.exhaustBolt1;
+    else if (boltId === "2") this.exhaustBolt2 = !this.exhaustBolt2;
+    else return;
+    this._emit();
+  }
+
+  canRemoveExhaustCover() {
+    return this.exhaustBolt1 && this.exhaustBolt2;
+  }
+
+
+  removeExhaustCover() {
+    if (this.canRemoveExhaustCover()) {
+      this.exhaustCoverRemoved = true;
+      this._emit();
+    }
+  }
+
+  // Новые методы:
+  takeZipKey() {
+    this.hasZipKey = true;
+    this._emit();
+  }
+
+  canUnscrewExhaustBolts() {
+    return this.hasZipKey;
+  }
+
+  unscrewExhaustBolts() {
+    if (this.canUnscrewExhaustBolts()) {
+      this.exhaustBoltsUnscrewed = true;
+      this._emit();
+    }
+  }
+
+  toggleHeaterFuelValve() {
+    this.heaterFuelValve = !this.heaterFuelValve;
+    this._emit();
+  }
+
+  isHeaterFuelFlowing() {
+    return this.heaterFuelValve;
+  }
+  takeExhaustCap() {
+    if (!this.hasExhaustCap) {
+      this.hasExhaustCap = true;
+      this._emit();
+    }
+  }
+
+  installExhaustCap() {
+    if (this.hasExhaustCap && !this.exhaustCapInstalled) {
+      this.exhaustCapInstalled = true;
+      this._emit();
+    }
+  }
+
+  canTakeExhaustCap() {
+    // Козырёк доступен только после снятия крышки выхлопа
+    return this.exhaustCoverRemoved && !this.hasExhaustCap;
+  }
+
+  canInstallExhaustCap() {
+    // Установить можно, если козырёк в инвентаре и ещё не установлен
+    return this.hasExhaustCap && !this.exhaustCapInstalled && this.exhaustCoverRemoved;
   }
 }
 

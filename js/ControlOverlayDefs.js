@@ -251,8 +251,8 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Kn1.png",
-    on: "./img/12/Kn2.png",
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
   },
   "air-intake": {
     kind: "boolean",
@@ -261,8 +261,8 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Kn1.png",
-    on: "./img/12/Kn2.png",
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
   },
 
   // Remaining instrument panel toggles (tmb1/tmb2)
