@@ -607,6 +607,9 @@ class UIController {
         case "cabin-light":
           this.state.toggleCabinLight();
           break;
+        case "side-panel-open":
+          sceneManager.change(null, sceneId || "scene-side-panel-open");
+          break;
       }
     });
 
