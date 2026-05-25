@@ -21,7 +21,7 @@ function getStarterGenerator15CScenario() {
         title: "Рычаг для жалюзи — Открыто",
         arm: [{ action: "shutters", phase: "click" }],
         gateKeys: ["shutters"],
-        completeWhen: (s) => Boolean(s.shutters),
+        completeWhen: (s) => Number(s.shutters) === 4,
       },
       {
         id: "battery-on",

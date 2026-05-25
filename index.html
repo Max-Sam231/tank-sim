@@ -1,23 +1,25 @@
 <!doctype html>
 <html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Sim</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./main.js"></script>
+    <script src="./live-reload.js"></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Sim</title>
-  <link rel="stylesheet" href="./styles.css" />
-  <script type="module" src="./main.js"></script>
-  <script src="./live-reload.js"></script>
-</head>
-
-<body>
-  <main class="app">
-    <div class="ui-layer-global">
-      <button class="sim-finish-button hidden" id="simFinishButton" type="button">
-        Закончить
-      </button>
-      <div class="debug-console" id="debugConsole" aria-live="polite"></div>
-
+  <body>
+    <main class="app">
+      <div class="ui-layer-global">
+        <button class="sim-finish-button hidden" id="simFinishButton" type="button">
+          Закончить
+        </button>
+        <button class="test-sensors-button" id="testSensorsButton" type="button">
+          Датчики
+        </button>
+        <div class="debug-console" id="debugConsole" aria-live="polite"></div>
+        
       <div class="fullscreen-modal hidden" id="fullscreenModal" role="dialog" aria-labelledby="modalTitle"
         aria-describedby="modalDesc">
         <div class="fullscreen-modal-content">
@@ -247,24 +249,23 @@
                 </div>
               </div>
             </div>
-
-            <!-- Модалка жалюзи -->
-            <div class="bcn-modal hidden" id="shuttersModal" role="dialog" aria-label="Рычаг жалюзи">
-              <div class="bcn-modal-content">
-                <div class="bcn-modal-header">
-                  <span class="bcn-modal-title">Рычаг жалюзи</span>
-                  <button class="bcn-modal-close" id="shuttersModalClose" type="button">&times;</button>
-                </div>
-                <div class="bcn-modal-image-placeholder" id="shuttersModalImage">
-                  <!-- Место под картинку состояния -->
-                </div>
-                <div class="bcn-modal-buttons">
-                  <button class="bcn-modal-btn" data-shutters-mode="false">Закрыто</button>
-                  <button class="bcn-modal-btn" data-shutters-mode="partial">Полузакрыто</button>
-                  <button class="bcn-modal-btn" data-shutters-mode="partial">Частично</button>
-                  <button class="bcn-modal-btn" data-shutters-mode="partial">Полуоткрыто</button>
-                  <button class="bcn-modal-btn" data-shutters-mode="true">Открыто</button>
-                </div>
+          </div>
+          <!-- Модалка жалюзи -->
+          <div class="bcn-modal hidden" id="shuttersModal" role="dialog" aria-label="Рычаг жалюзи">
+            <div class="bcn-modal-content">
+              <div class="bcn-modal-header">
+                <span class="bcn-modal-title">Рычаг жалюзи</span>
+                <button class="bcn-modal-close" id="shuttersModalClose" type="button">&times;</button>
+              </div>
+              <div class="bcn-modal-image-placeholder" id="shuttersModalImage">
+                <!-- Место под картинку состояния -->
+              </div>
+              <div class="bcn-modal-buttons">
+                <button class="bcn-modal-btn" data-shutters-position="4">Открыто</button>
+                <button class="bcn-modal-btn" data-shutters-position="3">Промежуточное</button>
+                <button class="bcn-modal-btn" data-shutters-position="2">Промежуточное</button>
+                <button class="bcn-modal-btn" data-shutters-position="1">Промежуточное</button>
+                <button class="bcn-modal-btn" data-shutters-position="0">Закрыто</button>
               </div>
             </div>
 
