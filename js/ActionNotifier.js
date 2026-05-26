@@ -65,6 +65,7 @@ class ActionNotifier {
       "cabin-light": () => boolText(snapshot.cabinLight, "Освещение кабины включено", "Освещение кабины выключено"),
       "brake-pedal": () => meta.released ? "Педаль тормоза отпущена" : "Педаль тормоза нажата",
       "gas-pedal": () => meta.released ? "Педаль газа отпущена" : "Педаль газа нажата",
+      "engine-started": () => "Танк завёлся",
     };
 
     return messages[action]?.() || null;

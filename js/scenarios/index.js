@@ -1,3 +1,4 @@
+import { getAirStart20CScenario } from "./air-start.js";
 import { getPreparationToStart20CScenario } from "./preparation-to-start.js";
 
 function getScenarioDefinition({ startMethod, ambientTempC, fuelType }) {
@@ -7,6 +8,10 @@ function getScenarioDefinition({ startMethod, ambientTempC, fuelType }) {
 
   if (method === "prestart-preparation" && t === 20 && fuel === "diesel") {
     return getPreparationToStart20CScenario();
+  }
+
+  if (method === "air-start" && t === 20 && fuel === "diesel") {
+    return getAirStart20CScenario();
   }
 
   return null;

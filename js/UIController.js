@@ -32,6 +32,9 @@ class UIController {
     this._syncHitboxVisibility();
 
     this.state.subscribe((snapshot) => {
+      if (snapshot.engineJustStarted) {
+        this._notifyAction("engine-started");
+      }
       this._render(snapshot);
     });
 

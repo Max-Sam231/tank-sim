@@ -83,6 +83,7 @@ class TankState {
     };
 
     this._engineRunning = false;
+    this._engineJustStarted = false;
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -175,6 +176,7 @@ class TankState {
     this.lamps.gear_engaged = false;
 
     this._engineRunning = false;
+    this._engineJustStarted = false;
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -208,6 +210,7 @@ class TankState {
   _emit() {
     const snapshot = this.getSnapshot();
     for (const listener of this._listeners) listener(snapshot);
+    this._engineJustStarted = false;
   }
 
 
@@ -219,6 +222,7 @@ class TankState {
       brakeEffective: this.isBrakePressed || this.parkingBrakeLatched,
       parkingBrakeLatched: this.parkingBrakeLatched,
       engineRunning: this._engineRunning,
+      engineJustStarted: this._engineJustStarted,
       cabinLight: this.cabinLight,
 
       scenario: { ...this.scenario },
@@ -388,6 +392,7 @@ class TankState {
 
     const isMassOn = Boolean(this.isBatteryOn);
     const starterPressed = this.starter === 2;
+    const epkPressed = Boolean(this.epk);
 
     if (this.isBrakePressed) {
       this._brakeHoldTime += dt;
@@ -443,7 +448,8 @@ class TankState {
     }
 
     const canCrank = isMassOn && baseVoltage >= 18.0;
-    const starterSag = starterPressed && canCrank ? 5.0 : 0.0;
+    const airStartPressed = requiresAirStart && epkPressed;
+    const starterSag = !requiresAirStart && starterPressed && canCrank ? 5.0 : 0.0;
     const voltage = this._clamp(baseVoltage - starterSag, 0.0, 30.0);
     changed = this._setSensor("voltage", voltage, { min: 0, max: 30 }) || changed;
 
@@ -459,7 +465,9 @@ class TankState {
     const airStartPressure = openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0.0;
     changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 100 }) || changed;
 
-    const isCranking = starterPressed && canCrank && !this._engineRunning;
+    const isAirCranking = airStartPressed && canCrank && !this._engineRunning;
+    const isStarterCranking = !requiresAirStart && starterPressed && canCrank && !this._engineRunning;
+    const isCranking = isAirCranking || isStarterCranking;
 
     if (bleedOpen) {
       const bleedRate = 6.0;
@@ -467,8 +475,8 @@ class TankState {
       if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 100 }) || changed;
     }
 
-    if (isCranking && requiresAirStart) {
-      const crankAirRate = 2.2;
+    if (isAirCranking) {
+      const crankAirRate = 0.9;
       if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
       if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
     }
@@ -476,9 +484,10 @@ class TankState {
     const fuelOk = fuelPressure >= 0.8;
     const airOk = requiresAirStart ? airStartPressure >= 10.0 : true;
     const primerOk = this.fuelPrimerPumps >= 3;
-    const manualOk = this.fuelManualFeed >= 10;
+    const fuelCommandOk = requiresAirStart ? Boolean(this.gasPedal) : this.fuelManualFeed >= 10;
+    const oilStartOk = requiresAirStart ? (isMznActive && this.sensors.oil_pressure_engine >= 2.0) : true;
 
-    if (isCranking && fuelOk && airOk && manualOk && primerOk) {
+    if (isCranking && fuelOk && airOk && fuelCommandOk && primerOk && oilStartOk) {
       this._crankTime += dt;
     } else {
       this._crankTime = 0;
@@ -486,6 +495,7 @@ class TankState {
 
     if (!this._engineRunning && this._crankTime >= 1.5) {
       this._engineRunning = true;
+      this._engineJustStarted = true;
       this._crankTime = 0;
     }
 
