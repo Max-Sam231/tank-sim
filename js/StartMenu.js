@@ -36,6 +36,7 @@ class StartMenu {
               <span class="scenario-menu-label">Сценарий</span>
               <select id="scenarioStartMethod" class="scenario-menu-input">
                 <option value="prestart-preparation">Подготовка к пуску</option>
+                <option value="air-start">Запуск сжатым воздухом</option>
               </select>
             </label>
             <label class="scenario-menu-field">
