@@ -5,8 +5,9 @@ class TankState {
     this.parkingBrakeLatched = false;
     this.commanderView = 'straight';
     this.scenario = {
-      startMethod: "starter-generator",
-      ambientTempC: 15,
+      startMethod: "prestart-preparation",
+      ambientTempC: 20,
+      fuelType: "diesel",
     };
 
     // Cabin controls state
@@ -17,6 +18,7 @@ class TankState {
     this.shutters = 0; // 0-4: 0=closed, 1=half-closed, 2=middle, 3=half-open, 4=open
     this.rightTank = false;
     this.fuelPrimerLever = false;
+    this.fuelPrimerPumps = 0; // number of primer lever pumps
     this.fuelManualFeed = 0; // 0-100
     this.gearLever = 'neutral'; // neutral, 1, 2, 3, 4, 5, R
     this.gasPedal = false;
@@ -66,8 +68,8 @@ class TankState {
       voltage: 0.0,
       amperage: 0.0,
       speed_kmh: 0.0,
-      fuel_level_internal: 100.0,
-      fuel_level_external: 100.0,
+      fuel_level_internal: 190.0,
+      fuel_level_external: 400.0,
       is_bcn_active: false,
       is_mzn_active: false,
     };
@@ -115,6 +117,7 @@ class TankState {
     this.shutters = 0;
     this.rightTank = false;
     this.fuelPrimerLever = false;
+    this.fuelPrimerPumps = 0;
     this.fuelManualFeed = 0;
     this.gearLever = "neutral";
     this.gasPedal = false;
@@ -221,6 +224,7 @@ class TankState {
       scenario: { ...this.scenario },
       scenario_start_method: this.scenario.startMethod,
       scenario_ambient_temp_c: this.scenario.ambientTempC,
+      scenario_fuel_type: this.scenario.fuelType,
       manometer: this.manometer,
       instrumentPanel: this.instrumentPanel,
       leftTank: this.leftTank,
@@ -228,6 +232,7 @@ class TankState {
       shutters: this.shutters,
       rightTank: this.rightTank,
       fuelPrimerLever: this.fuelPrimerLever,
+      fuelPrimerPumps: this.fuelPrimerPumps,
       fuelManualFeed: this.fuelManualFeed,
       gearLever: this.gearLever,
       gasPedal: this.gasPedal,
@@ -301,7 +306,7 @@ class TankState {
     };
   }
 
-  setScenario({ startMethod, ambientTempC } = {}) {
+  setScenario({ startMethod, ambientTempC, fuelType } = {}) {
     let changed = false;
 
     if (typeof startMethod === "string" && startMethod) {
@@ -315,6 +320,13 @@ class TankState {
       const nextTemp = Math.round(ambientTempC);
       if (this.scenario.ambientTempC !== nextTemp) {
         this.scenario.ambientTempC = nextTemp;
+        changed = true;
+      }
+    }
+
+    if (fuelType === "diesel" || fuelType === "gasoline") {
+      if (this.scenario.fuelType !== fuelType) {
+        this.scenario.fuelType = fuelType;
         changed = true;
       }
     }
@@ -409,7 +421,12 @@ class TankState {
     changed = this._setSensorBool("is_bcn_active", isBcnActive) || changed;
     changed = this._setSensorBool("is_mzn_active", isMznActive) || changed;
 
-    let targetFuelPressure = this._engineRunning ? 1.8 : (isBcnActive ? 1.8 : 0.0);
+    let targetFuelPressure = 0.0;
+    if (this._engineRunning) {
+      targetFuelPressure = 1.8;
+    } else if (isBcnActive && this.fuelPrimerPumps >= 3) {
+      targetFuelPressure = 1.8;
+    }
     const fuelPressure = this._approach(this.sensors.fuel_pressure, targetFuelPressure, 3.0, dt);
     changed = this._setSensor("fuel_pressure", fuelPressure, { min: 0, max: 3 }) || changed;
 
@@ -458,7 +475,7 @@ class TankState {
 
     const fuelOk = fuelPressure >= 0.8;
     const airOk = requiresAirStart ? airStartPressure >= 10.0 : true;
-    const primerOk = Boolean(this.fuelPrimerLever);
+    const primerOk = this.fuelPrimerPumps >= 3;
     const manualOk = this.fuelManualFeed >= 10;
 
     if (isCranking && fuelOk && airOk && manualOk && primerOk) {
@@ -659,7 +676,8 @@ class TankState {
     this._emit();
   }
 
-  toggleFuelPrimerLever() {
+  pumpFuelPrimerLever() {
+    this.fuelPrimerPumps += 1;
     this.fuelPrimerLever = !this.fuelPrimerLever;
     this._emit();
   }
