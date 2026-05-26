@@ -21,9 +21,12 @@ class UIController {
     this._hitboxVisible = this.isDebug;
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
+    this._manometerTooltipEl = null;
+    this._isManometerHovered = false;
 
     this._handleDocumentPointerDown = null;
 
+    this._ensureManometerTooltip();
     this._wireEvents();
 
     this._ensureCabinControlOverlays();
@@ -44,6 +47,70 @@ class UIController {
   _notifyAction(action, meta = {}) {
     if (!this.actionNotifier || !action) return;
     this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
+  }
+
+  _ensureManometerTooltip() {
+    const existing = this.rootEl.querySelector(".manometer-tooltip");
+    if (existing) {
+      this._manometerTooltipEl = existing;
+      return;
+    }
+
+    const el = document.createElement("div");
+    el.className = "manometer-tooltip hidden";
+    el.setAttribute("aria-hidden", "true");
+    this.rootEl.appendChild(el);
+    this._manometerTooltipEl = el;
+  }
+
+  _renderManometerTooltip(snapshot) {
+    if (!this._manometerTooltipEl || !this._isManometerHovered) return;
+
+    const pressure = this._getManometerPressure(snapshot);
+    this._manometerTooltipEl.textContent = `${pressure.toFixed(1)} кгс/см²`;
+  }
+
+  _getManometerPressure(snapshot) {
+    const leftOpen = Boolean(snapshot.leftTank);
+    const rightOpen = Boolean(snapshot.rightTank);
+    if (!leftOpen && !rightOpen) return 0;
+
+    const left = Number(snapshot.air_left_cylinder) || 0;
+    const right = Number(snapshot.air_right_cylinder) || 0;
+    const openPressures = [];
+    if (leftOpen) openPressures.push(left);
+    if (rightOpen) openPressures.push(right);
+    return openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0;
+  }
+
+  _moveManometerTooltip(clientX, clientY) {
+    if (!this._manometerTooltipEl) return;
+
+    const margin = 14;
+    const tooltipWidth = this._manometerTooltipEl.offsetWidth || 300;
+    const tooltipHeight = this._manometerTooltipEl.offsetHeight || 120;
+    const maxX = window.innerWidth - tooltipWidth - margin;
+    const maxY = window.innerHeight - tooltipHeight - margin;
+    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
+    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
+
+    this._manometerTooltipEl.style.left = `${x}px`;
+    this._manometerTooltipEl.style.top = `${y}px`;
+  }
+
+  _showManometerTooltip(event, snapshot) {
+    if (!this._manometerTooltipEl) return;
+
+    this._isManometerHovered = true;
+    this._manometerTooltipEl.classList.remove("hidden");
+    this._renderManometerTooltip(snapshot);
+    this._moveManometerTooltip(event.clientX, event.clientY);
+  }
+
+  _hideManometerTooltip() {
+    if (!this._manometerTooltipEl) return;
+    this._isManometerHovered = false;
+    this._manometerTooltipEl.classList.add("hidden");
   }
 
   _ensureHitboxLabels() {
@@ -738,6 +805,11 @@ class UIController {
       { passive: false },
     );
 
+    this.rootEl.addEventListener("mousemove", (event) => {
+      if (!this._isManometerHovered) return;
+      this._moveManometerTooltip(event.clientX, event.clientY);
+    });
+
     // Sync hover between hitboxes and overlay-controls
     this.rootEl.addEventListener("mouseover", (event) => {
       const hitbox = event.target.closest(".hitbox");
@@ -748,7 +820,8 @@ class UIController {
       // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
-        this.state.setManometer(Math.round(Number(snapshot.air_start_pressure) || 0));
+        this.state.setManometer(Math.round(this._getManometerPressure(snapshot)));
+        this._showManometerTooltip(event, snapshot);
       }
 
       // Highlight corresponding overlay-control
@@ -769,6 +842,7 @@ class UIController {
       // Manometer special handling
       if (action === "manometer") {
         this.state.setManometer(0);
+        this._hideManometerTooltip();
       }
 
       // Remove highlight from corresponding overlay-control
@@ -911,6 +985,7 @@ class UIController {
   _render(snapshot) {
     this._renderOverlays(snapshot);
     this._updateGaugeArrows(snapshot);
+    this._renderManometerTooltip(snapshot);
 
     // Для командира
     const commanderSection = document.getElementById("scene-commander");

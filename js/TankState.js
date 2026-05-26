@@ -56,8 +56,8 @@ class TankState {
     this.signalLamps = 0; // 0=closed cover, 1=open, 2=on
 
     this.sensors = {
-      air_left_cylinder: 80.0,
-      air_right_cylinder: 80.0,
+      air_left_cylinder: 150.0,
+      air_right_cylinder: 150.0,
       air_start_pressure: 0.0,
       engine_rpm: 0,
       oil_pressure_engine: 0.0,
@@ -152,8 +152,8 @@ class TankState {
     this.starter = 0;
     this.signalLamps = 0;
 
-    this.sensors.air_left_cylinder = 80.0;
-    this.sensors.air_right_cylinder = 80.0;
+    this.sensors.air_left_cylinder = 150.0;
+    this.sensors.air_right_cylinder = 150.0;
     this.sensors.air_start_pressure = 0.0;
     this.sensors.engine_rpm = 0;
     this.sensors.oil_pressure_engine = 0.0;
@@ -463,7 +463,7 @@ class TankState {
     if (leftAirOpen) openPressures.push(leftAir);
     if (rightAirOpen) openPressures.push(rightAir);
     const airStartPressure = openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0.0;
-    changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 100 }) || changed;
+    changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 165 }) || changed;
 
     const isAirCranking = airStartPressed && canCrank && !this._engineRunning;
     const isStarterCranking = !requiresAirStart && starterPressed && canCrank && !this._engineRunning;
@@ -471,14 +471,14 @@ class TankState {
 
     if (bleedOpen) {
       const bleedRate = 6.0;
-      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", leftAir - bleedRate * dt, { min: 0, max: 100 }) || changed;
-      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 100 }) || changed;
+      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", leftAir - bleedRate * dt, { min: 0, max: 165 }) || changed;
+      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 165 }) || changed;
     }
 
     if (isAirCranking) {
       const crankAirRate = 0.9;
-      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
-      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
+      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
+      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
     }
 
     const fuelOk = fuelPressure >= 0.8;
