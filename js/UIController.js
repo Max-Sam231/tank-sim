@@ -1,10 +1,11 @@
 import { CONTROL_OVERLAY_DEFS } from "./ControlOverlayDefs.js";
 
 class UIController {
-  constructor({ rootEl, consoleEl, state, isDebug = true }) {
+  constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
     this.rootEl = rootEl;
     this.consoleEl = consoleEl;
     this.state = state;
+    this.actionNotifier = actionNotifier;
 
     this.isDebug = Boolean(isDebug);
 
@@ -35,6 +36,11 @@ class UIController {
     });
 
     this._render(this.state.getSnapshot());
+  }
+
+  _notifyAction(action, meta = {}) {
+    if (!this.actionNotifier || !action) return;
+    this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
   }
 
   _ensureHitboxLabels() {
@@ -611,6 +617,42 @@ class UIController {
           sceneManager.change(null, sceneId || "scene-side-panel-open");
           break;
       }
+
+      const notifyActions = new Set([
+        "battery-toggle",
+        "instrument-panel",
+        "left-tank",
+        "right-tank",
+        "fuel-primer-lever",
+        "fuel-manual-feed",
+        "air-bleed-valve",
+        "azr",
+        "epk",
+        "horn",
+        "mzn-engine",
+        "ammeter-button",
+        "left-right-tanks",
+        "spark-plug",
+        "engine-start",
+        "emergency-hatch-rotation",
+        "oil-pump-gearbox",
+        "commander-call",
+        "air-intake",
+        "heating",
+        "combined",
+        "left-lights",
+        "right-lights",
+        "gabrate-lights",
+        "lights-all",
+        "water-antifreeze",
+        "gpk",
+        "bca-tca",
+        "mzn-tow",
+        "starter",
+        "signal-lamps",
+        "cabin-light",
+      ]);
+      if (notifyActions.has(action)) this._notifyAction(action);
     });
 
     this.rootEl.addEventListener("mousedown", (event) => {
@@ -622,9 +664,11 @@ class UIController {
       if (action === "brake-pedal") {
         event.preventDefault();
         this.state.setBrakePressed(true);
+        this._notifyAction(action);
       } else if (action === "gas-pedal") {
         event.preventDefault();
         this.state.setGasPedal(true);
+        this._notifyAction(action);
       }
     });
 
@@ -634,6 +678,7 @@ class UIController {
 
       if (action === "brake-pedal" || action === "gas-pedal") {
         event.preventDefault();
+        this._notifyAction(action, { released: true });
       }
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
@@ -659,6 +704,7 @@ class UIController {
         if (action === "battery-toggle") {
           event.preventDefault();
           this.state.toggleBattery();
+          this._notifyAction(action);
           return;
         }
 
@@ -666,10 +712,12 @@ class UIController {
           event.preventDefault();
           this._touchHeldAction = "brake-pedal";
           this.state.setBrakePressed(true);
+          this._notifyAction(action);
         } else if (action === "gas-pedal") {
           event.preventDefault();
           this._touchHeldAction = "gas-pedal";
           this.state.setGasPedal(true);
+          this._notifyAction(action);
         }
       },
       { passive: false },
@@ -679,6 +727,7 @@ class UIController {
       "touchend",
       (event) => {
         if (this._touchHeldAction) event.preventDefault();
+        if (this._touchHeldAction) this._notifyAction(this._touchHeldAction, { released: true });
         this.state.setBrakePressed(false);
         this.state.setGasPedal(false);
         this._touchHeldAction = null;
@@ -782,6 +831,7 @@ class UIController {
             this.state.setBcnMode(mode);
             this._updateBcnModalButtons(mode);
             this._updateBcnModalImage(mode);
+            this._notifyAction("bcn");
           }
         }
       });
@@ -805,6 +855,7 @@ class UIController {
             this.state.setShutters(position);
             this._updateShuttersModalButtons(position);
             this._updateShuttersModalImage(position);
+            this._notifyAction("shutters");
           }
         }
       });
@@ -828,6 +879,7 @@ class UIController {
             this.state.setGearLever(gear);
             this._updateGearModalButtons(gear);
             this._updateGearModalImage(gear);
+            this._notifyAction("gear-lever");
           }
         }
       });
@@ -1259,13 +1311,13 @@ class UIController {
     const topPercent =
       {
         neutral: 73,
-        1: 65,
-        2: 55,
-        3: 45,
-        4: 35,
-        5: 25,
+        1: 62,
+        2: 51,
+        3: 41,
+        4: 31,
+        5: 22,
         6: 15,
-        7: 5,
+        7: 7,
         R: 85,
       }[String(gear)] || 50;
     const labelText = labels[gear] || "—";

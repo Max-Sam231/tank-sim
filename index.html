@@ -399,6 +399,13 @@
         </div>
       </section>
       <section id="scene-driver" class="game-scene hidden">
+        <button
+          class="view-switch-btn"
+          data-action="exit_to_hangar"
+          style="top: 20px; right: 20px; z-index: 100;"
+        >
+          ← В ангар
+        </button>
         <div class="scene-content" id="scene">
           <!-- (Свет выключен) -->
           <img class="cabin-bg cabin-bg-dark" src="./img/фон_темный.jpg" alt="Cabin Dark" />
@@ -413,13 +420,6 @@
               preserveAspectRatio="none"
               aria-hidden="true"
             >
-              <!-- Кнопка "Выход в ангар" (невидимая зона в правом верхнем углу) -->
-              <polygon
-                class="hitbox interactive exit-btn"
-                data-action="Вернуться в ангар"
-                points="1800,20 1900,20 1900,60 1800,60"
-              ></polygon>
-
               <!-- Battery toggle -->
               <polygon
                 class="hitbox"
@@ -745,6 +745,13 @@
         </div>
       </section>
       <section id="scene-commander" class="game-scene hidden">
+        <button
+          class="view-switch-btn"
+          data-action="exit_to_hangar"
+          style="top: 20px; right: 20px; z-index: 100;"
+        >
+          ← В ангар
+        </button>
         <div class="scene-content" id="scene-commander-content">
           <!-- Фон: прямой вид -->
           <img
@@ -775,11 +782,6 @@
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            <polygon
-              class="hitbox interactive exit-btn"
-              data-action="exit_to_hangar"
-              points="1800,20 1900,20 1900,60 1800,60"
-            ></polygon>
             <polygon
               class="hitbox interactive"
               data-action="toggle_commander_view"

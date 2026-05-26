@@ -674,14 +674,14 @@ class TankState {
   }
 
   cycleGearLever() {
-    const gears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    const gears = ['neutral', '1', '2', '3', '4', '5', '6', '7', 'R'];
     const currentIndex = gears.indexOf(this.gearLever);
     this.gearLever = gears[(currentIndex + 1) % gears.length];
     this._emit();
   }
 
   setGearLever(gear) {
-    const validGears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    const validGears = ['neutral', '1', '2', '3', '4', '5', '6', '7', 'R'];
     if (validGears.includes(gear)) {
       this.gearLever = gear;
       this._emit();
