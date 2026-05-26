@@ -27,6 +27,34 @@ body {
   color: #e6edf3;
 }
 
+.action-notifier {
+  position: fixed;
+  top: 120px;
+  right: 18px;
+  max-width: 320px;
+  z-index: 3000;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(10, 14, 18, 0.88);
+  color: #f4f7fb;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.action-notifier.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .app {
   width: 100vw;
   height: 100vh;
@@ -1136,11 +1164,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   right: 20px;
 
   /* Поднимаем кнопку НАД всеми слоями сцены */
-  z-index: 9999 !important;
+  z-index: 9999;
 
   /* Гарантируем, что кнопка кликабельна и видима */
-  pointer-events: auto !important;
-  display: inline-flex !important;
+  pointer-events: auto;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
@@ -1156,6 +1184,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   /* Тень для визуального отделения от фона */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: background 0.2s, transform 0.1s;
+}
+
+/* Скрываем кнопки переключения видов и рентгена, когда открыто стартовое меню */
+.start-menu-container:not(.is-hidden) ~ .game-scene .view-switch-btn,
+.start-menu-container:not(.is-hidden) ~ .game-scene .xray-btn {
+  display: none !important;
 }
 
 .view-switch-btn:hover {

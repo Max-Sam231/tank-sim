@@ -4,6 +4,7 @@ import { FullscreenManager } from './js/FullscreenManager.js';
 import { StartMenu } from './js/StartMenu.js';
 import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
+import { ActionNotifier } from './js/ActionNotifier.js';
 
 import { SceneManager } from './js/SceneManager.js';
 import { HangarScene } from './js/scenes/HangarScene.js';
@@ -26,12 +27,14 @@ function bootstrap() {
   document.body.classList.toggle("app-prod", !IS_DEBUG);
 
   const state = new TankState();
+  const actionNotifier = new ActionNotifier({ rootEl: document.body });
 
   const ui = new UIController({
     rootEl: sceneEl,
     consoleEl,
     state,
-    isDebug: IS_DEBUG
+    isDebug: IS_DEBUG,
+    actionNotifier
   });
 
   const training = new TrainingEngine({ state });
