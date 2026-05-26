@@ -158,7 +158,7 @@ body.app-debug .overlay.overlay-control {
   stroke: transparent;
 }
 
-.scene.instrument-panel-open>.overlay-layer .overlay.overlay-control {
+.scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -328,6 +328,28 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-size: 13px;
   line-height: 1.35;
   white-space: pre;
+  user-select: none;
+}
+
+.manometer-tooltip {
+  position: fixed;
+  z-index: 1300;
+  min-width: 260px;
+  max-width: 340px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(6, 10, 16, 0.94);
+  color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre;
+  pointer-events: none;
   user-select: none;
 }
 
@@ -930,7 +952,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /*Commander*/
 
-
 /* По умолчанию показываем прямой вид, скрываем наклоненный */
 .cmd-bg-straight {
   opacity: 1;
@@ -974,7 +995,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
      rotateX(15deg): Наклоняем плоскость экрана, создавая эффект взгляда снизу вверх или сверху вниз.
      scale(1.1): Немного приближаем, чтобы компенсировать удаленность при наклоне.
   */
-  
 }
 
 /* Фоны должны занимать всё пространство и не искажаться отдельно от контейнера */
@@ -1187,7 +1207,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
   /* Тень для визуального отделения от фона */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 
 /* Скрываем кнопки переключения видов и рентгена, когда открыто стартовое меню */
@@ -1255,7 +1277,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /**/
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -1267,7 +1288,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -1294,7 +1314,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-family: inherit;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .xray-btn:hover {
@@ -1320,7 +1343,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   pointer-events: none;
   z-index: 5;
   will-change: transform, opacity, filter;
-  transition: opacity 0.3s ease, filter 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 /* === Состояние рентгена (подгонка под фото) === */
@@ -1343,7 +1368,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* === Анимации перехода === */
 
-
 @keyframes xrayFade {
   0% {
     opacity: 0.7;
@@ -1358,8 +1382,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
   }
 }
-
-
 
 @keyframes normalFade {
   0% {
@@ -1380,12 +1402,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .tank-layer-side-right {
-      bottom: 4%;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 70%;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 70%;
 }
-
 
 /***/
 /*#tank-side-right-view {
@@ -1403,34 +1424,44 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* === Рентген-режим для вида справа (подгонка под фото) === */
 #tank-side-right-view .tank-layer-side-right.xray-active {
   bottom: 11% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    height: 52% !important;
-    width: auto !important;
-    max-width: none !important;
-    object-fit: contain !important;
-    object-position: center !important;
-    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
-
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  height: 52% !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
 }
 
 #tank-side-right-view .tank-layer-side-right.xray-active:hover {
   filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.6));
-  
 }
 
 /* === Анимации перехода для вида справа === */
 
-
 @keyframes xrayFade {
-  0% { opacity: 0.7; filter: brightness(0.8) contrast(1.2); }
-  50% { opacity: 1; filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4)); }
-  100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
+  0% {
+    opacity: 0.7;
+    filter: brightness(0.8) contrast(1.2);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
 }
 
 @keyframes normalFade {
-  0% { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
-  100% { filter: none; }
+  0% {
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
+  100% {
+    filter: none;
+  }
 }
 
 /* === Кнопка рентгена (универсальная) === */
@@ -1448,7 +1479,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-family: inherit;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 #tank-side-right-view .xray-btn:hover {
@@ -1525,13 +1559,20 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Анимация подсказки */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 #scene-zip-box .hitbox[data-zone="zip-key"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
 
 #scene-zip-box .hitbox[data-zone="zip-key"]:hover {
@@ -1545,21 +1586,34 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   stroke: transparent !important;
 }
 
-
 /* Состояния по умолчанию */
-.cmd-bg-straight { opacity: 1; }
-.cmd-bg-tilted-down { opacity: 0; }
-.cmd-bg-tilted-up { opacity: 0; }
+.cmd-bg-straight {
+  opacity: 1;
+}
+.cmd-bg-tilted-down {
+  opacity: 0;
+}
+.cmd-bg-tilted-up {
+  opacity: 0;
+}
 
 /* При наклоне головы */
-.commander-view-tilted .cmd-bg-straight { opacity: 0; }
-.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+.commander-view-tilted .cmd-bg-straight {
+  opacity: 0;
+}
+.commander-view-tilted .cmd-bg-tilted-down {
+  opacity: 1;
+}
 
 /* При поднятом рычаге (скрываем опущенный, показываем поднятый) */
-.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
-.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+.commander-view-tilted.valve-up .cmd-bg-tilted-down {
+  opacity: 0;
+}
+.commander-view-tilted.valve-up .cmd-bg-tilted-up {
+  opacity: 1;
+}
 
-/**//* === Фоны сцены командира === */
+/**/ /* === Фоны сцены командира === */
 #scene-commander .cmd-bg {
   position: absolute;
   inset: 0;
@@ -1572,22 +1626,38 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /* Состояния по умолчанию */
-#scene-commander .cmd-bg-straight { opacity: 1; }
-#scene-commander .cmd-bg-tilted-down { opacity: 0; }
-#scene-commander .cmd-bg-tilted-up { opacity: 0; }
+#scene-commander .cmd-bg-straight {
+  opacity: 1;
+}
+#scene-commander .cmd-bg-tilted-down {
+  opacity: 0;
+}
+#scene-commander .cmd-bg-tilted-up {
+  opacity: 0;
+}
 
 /* Наклон головы: показываем tilted-down */
-#scene-commander.commander-view-tilted .cmd-bg-straight { opacity: 0; }
-#scene-commander.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+#scene-commander.commander-view-tilted .cmd-bg-straight {
+  opacity: 0;
+}
+#scene-commander.commander-view-tilted .cmd-bg-tilted-down {
+  opacity: 1;
+}
 
 /* Наклон + рычаг поднят: показываем tilted-up вместо tilted-down */
-#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
-#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down {
+  opacity: 0;
+}
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up {
+  opacity: 1;
+}
 
 /**/
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"]:hover {
   fill: rgba(100, 200, 255, 0.4) !important;
@@ -1602,7 +1672,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* Установка козырька на выхлоп */
 #scene-heater .hitbox[data-zone="install-exhaust-cap"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
 #scene-heater .hitbox[data-zone="install-exhaust-cap"]:hover {
   fill: rgba(0, 255, 100, 0.4) !important;
