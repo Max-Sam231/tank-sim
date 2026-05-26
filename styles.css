@@ -437,6 +437,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   outline: none;
 }
 
+.scenario-menu-input option {
+  color: #1a1a1a;
+}
+
 .scenario-menu-apply {
   width: 100%;
   box-sizing: border-box;

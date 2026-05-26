@@ -128,18 +128,20 @@ function bootstrap() {
   const startMenu = new StartMenu({
     rootEl: startMenuContainerEl,
 
-    onTrainingStart: ({ startMethod, ambientTemp }) => {
+    onTrainingStart: ({ startMethod, ambientTemp, fuelType }) => {
       stopLoop();
 
       state.setScenario({
         startMethod,
-        ambientTempC: ambientTemp
+        ambientTempC: ambientTemp,
+        fuelType,
       });
 
       state.reset();
       training.setGoal({
         startMethod,
-        ambientTempC: ambientTemp
+        ambientTempC: ambientTemp,
+        fuelType,
       });
 
       startMenu.hide();

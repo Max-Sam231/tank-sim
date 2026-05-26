@@ -17,8 +17,8 @@ class TrainingEngine {
     this._onSnapshot(this.state.getSnapshot());
   }
 
-  setGoal({ startMethod, ambientTempC }) {
-    const def = getScenarioDefinition({ startMethod, ambientTempC });
+  setGoal({ startMethod, ambientTempC, fuelType }) {
+    const def = getScenarioDefinition({ startMethod, ambientTempC, fuelType });
     this._scenario = def;
     this._steps = Array.isArray(def?.steps) ? def.steps : [];
     this._done = new Map();

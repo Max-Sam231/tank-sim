@@ -526,7 +526,7 @@ class UIController {
           this.state.toggleRightTank();
           break;
         case "fuel-primer-lever":
-          this.state.toggleFuelPrimerLever();
+          this.state.pumpFuelPrimerLever();
           break;
         case "fuel-manual-feed":
           // Increase fuel feed by 10% on click
@@ -974,7 +974,7 @@ class UIController {
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
       `BCN: ${snapshot.bcn.toUpperCase()}`,
       `shutters: ${snapshot.shutters}/4`,
-      `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
+      `fuel primer pumps: ${snapshot.fuelPrimerPumps}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
       `gear: ${snapshot.gearLever}`,
       `air bleed: ${snapshot.airBleedValve ? "OPEN" : "CLOSED"}`,

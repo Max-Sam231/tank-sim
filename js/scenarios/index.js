@@ -1,4 +1,4 @@
-import { getPreparationToStart20CScenario } from "./scenarios/preparation-to-start.js";
+import { getPreparationToStart20CScenario } from "./preparation-to-start.js";
 
 function getScenarioDefinition({ startMethod, ambientTempC, fuelType }) {
   const method = String(startMethod || "");

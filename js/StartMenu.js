@@ -33,15 +33,22 @@ class StartMenu {
           <div class="scenario-menu-content-full">
             <div class="scenario-menu-title">Условия тренировки</div>
             <label class="scenario-menu-field">
-              <span class="scenario-menu-label">Способ запуска</span>
+              <span class="scenario-menu-label">Сценарий</span>
               <select id="scenarioStartMethod" class="scenario-menu-input">
-                <option value="starter-generator">Стартер-генератор</option>
+                <option value="prestart-preparation">Подготовка к пуску</option>
               </select>
             </label>
             <label class="scenario-menu-field">
               <span class="scenario-menu-label">Температура, °C</span>
               <select id="scenarioAmbientTemp" class="scenario-menu-input">
-                <option value="15" selected>+15</option>
+                <option value="20" selected>+20</option>
+              </select>
+            </label>
+            <label class="scenario-menu-field">
+              <span class="scenario-menu-label">Вид топлива</span>
+              <select id="scenarioFuelType" class="scenario-menu-input">
+                <option value="diesel" selected>Дизель</option>
+                <option value="gasoline">Бензин</option>
               </select>
             </label>
             <button class="scenario-menu-apply-full" id="scenarioApply">Начать тренировку</button>
@@ -108,10 +115,11 @@ class StartMenu {
     const applyBtn = this.rootEl.querySelector('#scenarioApply');
     if (applyBtn) {
       applyBtn.addEventListener('click', () => {
-        const startMethod = this.rootEl.querySelector('#scenarioStartMethod')?.value || 'starter-generator';
-        const ambientTemp = Number(this.rootEl.querySelector('#scenarioAmbientTemp')?.value) || 15;
+        const startMethod = this.rootEl.querySelector('#scenarioStartMethod')?.value || 'prestart-preparation';
+        const ambientTemp = Number(this.rootEl.querySelector('#scenarioAmbientTemp')?.value) || 20;
+        const fuelType = this.rootEl.querySelector('#scenarioFuelType')?.value || 'diesel';
         if (this.onTrainingStart) {
-          this.onTrainingStart({ startMethod, ambientTemp });
+          this.onTrainingStart({ startMethod, ambientTemp, fuelType });
         }
       });
     }
