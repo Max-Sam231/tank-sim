@@ -913,7 +913,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Хитбоксы должны быть кликабельны */
 .hitbox {
-  z-index: 20;
+  z-index: 300;
   pointer-events: auto;
 }
 
