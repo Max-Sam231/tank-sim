@@ -23,6 +23,28 @@ class UIController {
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
     this._manometerTooltipEl = null;
     this._isManometerHovered = false;
+    this._gaugeTooltipEl = null;
+    this._hoveredGauge = null;
+    this._gaugeNames = {
+      "gauge-coolant-temp": "Температура охлаждающей жидкости",
+      "gauge-oil-temp": "Температура масла",
+      "gauge-voltammeter": "Вольтамперметр ВАХ",
+      "gauge-oil-pressure-engine": "Давление масла в двигателе",
+      "gauge-oil-pressure-gearbox": "Давление смазки в КП",
+      "gauge-fuel": "Топливомер",
+      "gauge-speed": "Спидометр",
+      "gauge-rpm": "Тахометр",
+    };
+    this._gaugeUnits = {
+      "gauge-coolant-temp": "°C",
+      "gauge-oil-temp": "°C",
+      "gauge-voltammeter": "",
+      "gauge-oil-pressure-engine": "кгс/см²",
+      "gauge-oil-pressure-gearbox": "кгс/см²",
+      "gauge-fuel": "л",
+      "gauge-speed": "км/ч",
+      "gauge-rpm": "об/мин",
+    };
 
     this._handleDocumentPointerDown = null;
 
@@ -111,6 +133,104 @@ class UIController {
     if (!this._manometerTooltipEl) return;
     this._isManometerHovered = false;
     this._manometerTooltipEl.classList.add("hidden");
+  }
+
+  _ensureGaugeTooltip() {
+    const existing = document.querySelector(".gauge-tooltip");
+    if (existing) {
+      this._gaugeTooltipEl = existing;
+      return;
+    }
+
+    const el = document.createElement("div");
+    el.className = "gauge-tooltip hidden";
+    el.setAttribute("aria-hidden", "true");
+    document.body.appendChild(el);
+    this._gaugeTooltipEl = el;
+  }
+
+  _getGaugeValue(gaugeId, snapshot) {
+    const def = this._controlOverlayDefs[gaugeId];
+    if (!def || def.kind !== "gauge") return null;
+
+    let value = Number(snapshot.sensors?.[def.sensorKey] ?? snapshot[def.sensorKey]) || 0;
+    let unit = this._gaugeUnits[gaugeId] || "";
+    let label = this._gaugeNames[gaugeId] || gaugeId;
+
+    // Dual gauges: voltammeter (amperage / voltage), fuel (internal / external)
+    if (def.switchKey && def.secondarySensorKey) {
+      const sw = snapshot[def.switchKey];
+      if (this._shouldUseSecondaryGauge(gaugeId, sw)) {
+        value =
+          Number(
+            snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey],
+          ) || 0;
+        // Update unit/label for secondary
+        if (gaugeId === "gauge-voltammeter") {
+          label = "Напряжение бортсети";
+          unit = "В";
+        } else if (gaugeId === "gauge-fuel") {
+          label = "Топливо (внешний бак)";
+          unit = "л";
+        }
+      } else {
+        if (gaugeId === "gauge-voltammeter") {
+          label = "Сила тока";
+          unit = "А";
+        } else if (gaugeId === "gauge-fuel") {
+          label = "Топливо (внутренний бак)";
+          unit = "л";
+        }
+      }
+    }
+
+    return { value, unit, label };
+  }
+
+  _renderGaugeTooltip() {
+    if (!this._gaugeTooltipEl || !this._hoveredGauge) return;
+
+    const snapshot = this.state.getSnapshot();
+    const data = this._getGaugeValue(this._hoveredGauge, snapshot);
+    if (!data) return;
+
+    const formattedValue = Number.isFinite(data.value)
+      ? data.value.toFixed(data.unit === "л" || data.unit === "об/мин" ? 0 : 1)
+      : "-";
+
+    this._gaugeTooltipEl.innerHTML =
+      `<div class="gauge-tooltip-value">${formattedValue} ${data.unit}</div>`;
+  }
+
+  _moveGaugeTooltip(clientX, clientY) {
+    if (!this._gaugeTooltipEl) return;
+
+    const margin = 14;
+    const tooltipWidth = this._gaugeTooltipEl.offsetWidth || 200;
+    const tooltipHeight = this._gaugeTooltipEl.offsetHeight || 80;
+    const maxX = window.innerWidth - tooltipWidth - margin;
+    const maxY = window.innerHeight - tooltipHeight - margin;
+    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
+    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
+
+    this._gaugeTooltipEl.style.left = `${x}px`;
+    this._gaugeTooltipEl.style.top = `${y}px`;
+  }
+
+  _showGaugeTooltip(gaugeId, event) {
+    if (!this._gaugeTooltipEl) this._ensureGaugeTooltip();
+    if (!this._gaugeTooltipEl) return;
+
+    this._hoveredGauge = gaugeId;
+    this._gaugeTooltipEl.classList.remove("hidden");
+    this._renderGaugeTooltip();
+    this._moveGaugeTooltip(event.clientX, event.clientY);
+  }
+
+  _hideGaugeTooltip() {
+    if (!this._gaugeTooltipEl) return;
+    this._hoveredGauge = null;
+    this._gaugeTooltipEl.classList.add("hidden");
   }
 
   _ensureHitboxLabels() {
@@ -823,8 +943,12 @@ class UIController {
     );
 
     this.rootEl.addEventListener("mousemove", (event) => {
-      if (!this._isManometerHovered) return;
-      this._moveManometerTooltip(event.clientX, event.clientY);
+      if (this._isManometerHovered) {
+        this._moveManometerTooltip(event.clientX, event.clientY);
+      }
+      if (this._hoveredGauge) {
+        this._moveGaugeTooltip(event.clientX, event.clientY);
+      }
     });
 
     // Sync hover between hitboxes and overlay-controls
@@ -833,12 +957,18 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      const gauge = hitbox.dataset.gauge;
 
       // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
         this.state.setManometer(Math.round(this._getManometerPressure(snapshot)));
         this._showManometerTooltip(event, snapshot);
+      }
+
+      // Gauge hitbox handling
+      if (gauge) {
+        this._showGaugeTooltip(gauge, event);
       }
 
       // Highlight corresponding overlay-control
@@ -855,11 +985,17 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      const gauge = hitbox.dataset.gauge;
 
       // Manometer special handling
       if (action === "manometer") {
         this.state.setManometer(0);
         this._hideManometerTooltip();
+      }
+
+      // Gauge hitbox handling
+      if (gauge) {
+        this._hideGaugeTooltip();
       }
 
       // Remove highlight from corresponding overlay-control
@@ -1003,6 +1139,7 @@ class UIController {
     this._renderOverlays(snapshot);
     this._updateGaugeArrows(snapshot);
     this._renderManometerTooltip(snapshot);
+    this._renderGaugeTooltip();
 
     // Для командира
     const commanderSection = document.getElementById("scene-commander");
@@ -1018,8 +1155,14 @@ class UIController {
 
     const panelModal = document.getElementById("instrumentPanelModal");
     if (panelModal) {
-      panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
-      this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
+      const wasOpen = !panelModal.classList.contains("hidden");
+      const isOpen = Boolean(snapshot.instrumentPanel);
+      panelModal.classList.toggle("hidden", !isOpen);
+      this.rootEl.classList.toggle("instrument-panel-open", isOpen);
+      // Sync hitbox visibility when panel opens/closes
+      if (wasOpen !== isOpen) {
+        this._syncHitboxVisibility();
+      }
     }
 
     // Управление светом в кабине механика-водителя
@@ -1273,6 +1416,8 @@ class UIController {
     if (modal) {
       modal.classList.remove("hidden");
       this.rootEl.classList.add("instrument-panel-open");
+      // Re-sync hitbox visibility for instrument panel gauge hitboxes
+      this._syncHitboxVisibility();
     }
   }
 
