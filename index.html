@@ -53,27 +53,27 @@
               preserveAspectRatio="xMidYMid meet"
               aria-hidden="true"
             >
-            <polygon
-              class="hitbox interactive"
-              data-hatch="driver"
-              points="1150,500 1190,500 1190,600 1150,600"
-            />
-            <polygon
-              class="hitbox interactive"
-              data-hatch="gunner"
-              points="860,410 820,410 820,520 860,520"
-            />
-            <polygon
-              class="hitbox interactive"
-              data-hatch="commander"
-              points="790,580 870,580 870,680 790,680"
-            />
-            <polygon
-              class="hitbox interactive"
-              data-zone="zip-box"
-              points="760,410 720,410 720,520 760,520"
-              title="Ящик ЗИП"
-            />
+              <polygon
+                class="hitbox interactive"
+                data-hatch="driver"
+                points="1150,500 1190,500 1190,600 1150,600"
+              />
+              <polygon
+                class="hitbox interactive"
+                data-hatch="gunner"
+                points="860,410 820,410 820,520 860,520"
+              />
+              <polygon
+                class="hitbox interactive"
+                data-hatch="commander"
+                points="790,580 870,580 870,680 790,680"
+              />
+              <polygon
+                class="hitbox interactive"
+                data-zone="zip-box"
+                points="760,410 720,410 720,520 760,520"
+                title="Ящик ЗИП"
+              />
             </svg>
           </div>
           <button id="xrayBtn" class="xray-btn">Рентген</button>
@@ -99,30 +99,30 @@
               preserveAspectRatio="xMidYMid meet"
               aria-hidden="true"
             >
-            <polygon
-              class="hitbox interactive"
-              data-zone="heater-rear-left"
-              points="350,700 700,700 700,900 350,900"
-              title="Обогреватель"
-            />
+              <polygon
+                class="hitbox interactive"
+                data-zone="heater-rear-left"
+                points="350,700 700,700 700,900 350,900"
+                title="Обогреватель"
+              />
             </svg>
           </div>
         </div>
         <div id="tank-side-right-view" class="tank-view hidden">
           <div class="hangar-view-container">
             <div class="hangar-bg-wrapper">
-            <img
-              class="hangar-bg"
-              src="./img/hangar/background_side_right.jpg"
-              alt="Hangar Side Right Background"
-            />
-            <!-- Добавлен id="tankSideRightImg" -->
-            <img
-              class="tank-layer tank-layer-side-right"
-              src="./img/hangar/tank_side_right.png"
-              alt="Tank Side Right"
-              id="tankSideRightImg"
-            />
+              <img
+                class="hangar-bg"
+                src="./img/hangar/background_side_right.jpg"
+                alt="Hangar Side Right Background"
+              />
+              <!-- Добавлен id="tankSideRightImg" -->
+              <img
+                class="tank-layer tank-layer-side-right"
+                src="./img/hangar/tank_side_right.png"
+                alt="Tank Side Right"
+                id="tankSideRightImg"
+              />
             </div>
           </div>
           <button id="xrayBtnRight" class="xray-btn hidden">Рентген</button>
@@ -408,7 +408,7 @@
         <button
           class="view-switch-btn"
           data-action="exit_to_hangar"
-          style="top: 20px; right: 20px; z-index: 100;"
+          style="top: 20px; right: 20px; z-index: 100"
         >
           ← В ангар
         </button>
@@ -577,6 +577,34 @@
                 <button class="bcn-modal-btn" data-gear-mode="6">6-я передача</button>
                 <button class="bcn-modal-btn" data-gear-mode="7">7-я передача</button>
                 <button class="bcn-modal-btn" data-gear-mode="R">3X</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Модалка рычага подачи топлива -->
+          <div
+            class="bcn-modal hidden"
+            id="fuelFeedModal"
+            role="dialog"
+            aria-label="Рычаг подачи топлива"
+          >
+            <div class="bcn-modal-content">
+              <div class="bcn-modal-header">
+                <span class="bcn-modal-title">Рычаг подачи топлива</span>
+                <button class="bcn-modal-close" id="fuelFeedModalClose" type="button">
+                  &times;
+                </button>
+              </div>
+              <div class="fuel-feed-modal-body">
+                <div class="fuel-feed-slider-container">
+                  <span class="fuel-feed-label-top">100%</span>
+                  <div class="fuel-feed-slider-track" id="fuelFeedSliderTrack">
+                    <div class="fuel-feed-slider-fill" id="fuelFeedSliderFill"></div>
+                    <div class="fuel-feed-slider-thumb" id="fuelFeedSliderThumb"></div>
+                  </div>
+                  <span class="fuel-feed-label-bottom">0%</span>
+                  <div class="fuel-feed-percentage" id="fuelFeedPercentage">0%</div>
+                </div>
               </div>
             </div>
           </div>
@@ -804,7 +832,7 @@
         <button
           class="view-switch-btn"
           data-action="exit_to_hangar"
-          style="top: 20px; right: 20px; z-index: 100;"
+          style="top: 20px; right: 20px; z-index: 100"
         >
           ← В ангар
         </button>
