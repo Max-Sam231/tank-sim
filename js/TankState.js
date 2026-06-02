@@ -31,14 +31,13 @@ class TankState {
     this.mznEngine = false;
     this.ammeterButton = false;
 
-    this.leftRightTanks = 1; // 0=right, 1=middle, 2=left
+    this.leftRightTanks = 1; // 0=right, 1=left
     this.sparkPlug = 1; // 0=right, 1=middle, 2=left
     this.engineStart = 1; // 0=right, 1=middle, 2=left
 
     this.emergencyHatchRotation = false;
     this.oilPumpGearbox = false;
-    this.commanderCall = false;
-    this.airIntake = false;
+    // Note: commander-call and air-intake are now indicator lamps only (in lamps object)
 
     // Instrument panel remaining toggles (tmb1/tmb2)
     this.cabinLight = false;
@@ -50,7 +49,7 @@ class TankState {
     this.lightsAll = false;
     this.waterAntifreeze = false;
     this.gpk = false;
-    this.bcaTca = false;
+    this.bcaTca = 1; // 0=БЦН, 1=off, 2=ТДА
     this.mznTow = 0; // 0=closed, 1=open idle, 2=open pressed
     this.starter = 0; // 0=closed, 1=open idle, 2=open pressed
     this.signalLamps = 0; // 0=closed cover, 1=open, 2=on
@@ -80,6 +79,8 @@ class TankState {
       overheat: false,
       fuel_reserve: false,
       gear_engaged: false,
+      commander_call: false,
+      air_intake: false,
     };
 
     this._engineRunning = false;
@@ -131,14 +132,13 @@ class TankState {
     this.mznEngine = false;
     this.ammeterButton = false;
 
-    this.leftRightTanks = 1;
+    this.leftRightTanks = 1; // 0=right, 1=left
     this.sparkPlug = 1;
     this.engineStart = 1;
 
     this.emergencyHatchRotation = false;
     this.oilPumpGearbox = false;
-    this.commanderCall = false;
-    this.airIntake = false;
+    // Note: commander-call and air-intake lamps are reset via lamps object above
 
     this.heating = false;
     this.combined = false;
@@ -148,7 +148,7 @@ class TankState {
     this.lightsAll = false;
     this.waterAntifreeze = false;
     this.gpk = false;
-    this.bcaTca = false;
+    this.bcaTca = 1; // 0=БЦН, 1=off, 2=ТДА
     this.mznTow = 0;
     this.starter = 0;
     this.signalLamps = 0;
@@ -175,6 +175,8 @@ class TankState {
     this.lamps.overheat = false;
     this.lamps.fuel_reserve = false;
     this.lamps.gear_engaged = false;
+    this.lamps.commander_call = false;
+    this.lamps.air_intake = false;
 
     this._engineRunning = false;
     this._engineJustStarted = false;
@@ -253,8 +255,7 @@ class TankState {
       engineStart: this.engineStart,
       emergencyHatchRotation: this.emergencyHatchRotation,
       oilPumpGearbox: this.oilPumpGearbox,
-      commanderCall: this.commanderCall,
-      airIntake: this.airIntake,
+      // Note: commanderCall and airIntake are now in lamps object only
       heating: this.heating,
       combined: this.combined,
       leftLights: this.leftLights,
@@ -293,6 +294,8 @@ class TankState {
       lamp_overheat: this.lamps.overheat,
       lamp_fuel_reserve: this.lamps.fuel_reserve,
       lamp_gear_engaged: this.lamps.gear_engaged,
+      lamp_commander_call: this.lamps.commander_call,
+      lamp_air_intake: this.lamps.air_intake,
       hingeLatch1: this.hingeLatch1,
       hingeLatch2: this.hingeLatch2,
       hingeLatch3: this.hingeLatch3,
@@ -660,6 +663,8 @@ class TankState {
     changed = this._setLamp("overheat", lampTest || coolantTemp >= 112.0 || oilTemp >= 112.0) || changed;
     changed = this._setLamp("fuel_reserve", lampTest || fuelLevelInternal <= 15.0) || changed;
     changed = this._setLamp("gear_engaged", lampTest || this.gearLever !== "neutral") || changed;
+    changed = this._setLamp("commander_call", lampTest) || changed;
+    changed = this._setLamp("air_intake", lampTest) || changed;
 
     this._timeSinceLastEmit += dt;
     if (changed || this._timeSinceLastEmit >= 0.25) {
@@ -825,7 +830,7 @@ class TankState {
   }
 
   cycleLeftRightTanks() {
-    this.leftRightTanks = (this.leftRightTanks + 1) % 3;
+    this.leftRightTanks = this.leftRightTanks === 0 ? 1 : 0;
     this._emit();
   }
 
@@ -849,15 +854,7 @@ class TankState {
     this._emit();
   }
 
-  toggleCommanderCall() {
-    this.commanderCall = !this.commanderCall;
-    this._emit();
-  }
-
-  toggleAirIntake() {
-    this.airIntake = !this.airIntake;
-    this._emit();
-  }
+  // Note: toggleCommanderCall and toggleAirIntake removed - these are now indicator lamps only
 
   toggleHeating() {
     this.heating = !this.heating;
@@ -899,9 +896,21 @@ class TankState {
     this._emit();
   }
 
-  toggleBcaTca() {
-    this.bcaTca = !this.bcaTca;
+  cycleBcaTca() {
+    // 0=БЦН, 1=off, 2=ТДА
+    // Cycle: 1 -> 0 -> 2 -> 1
+    if (this.bcaTca === 1) {
+      this.bcaTca = 0;
+    } else if (this.bcaTca === 0) {
+      this.bcaTca = 2;
+    } else {
+      this.bcaTca = 1;
+    }
     this._emit();
+  }
+
+  toggleBcaTca() {
+    this.cycleBcaTca();
   }
 
   cycleMznTow() {
