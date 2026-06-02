@@ -158,7 +158,7 @@ body.app-debug .overlay.overlay-control {
   stroke: transparent;
 }
 
-.scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
+.scene.instrument-panel-open>.overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -1213,8 +1213,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /* Скрываем кнопки переключения видов и рентгена, когда открыто стартовое меню */
-.start-menu-container:not(.is-hidden) ~ .game-scene .view-switch-btn,
-.start-menu-container:not(.is-hidden) ~ .game-scene .xray-btn {
+.start-menu-container:not(.is-hidden)~.game-scene .view-switch-btn,
+.start-menu-container:not(.is-hidden)~.game-scene .xray-btn {
   display: none !important;
 }
 
@@ -1277,6 +1277,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /**/
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
@@ -1288,6 +1289,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
@@ -1373,10 +1375,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
     opacity: 0.7;
     filter: brightness(0.8) contrast(1.2);
   }
+
   50% {
     opacity: 1;
     filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
   }
+
   100% {
     opacity: 1;
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
@@ -1387,6 +1391,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   0% {
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
   }
+
   100% {
     filter: none;
   }
@@ -1445,10 +1450,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
     opacity: 0.7;
     filter: brightness(0.8) contrast(1.2);
   }
+
   50% {
     opacity: 1;
     filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
   }
+
   100% {
     opacity: 1;
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
@@ -1459,6 +1466,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   0% {
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
   }
+
   100% {
     filter: none;
   }
@@ -1497,6 +1505,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   color: #fff;
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
+
 /* === Сцена ящика ЗИП === */
 #scene-zip-box {
   position: absolute;
@@ -1559,10 +1568,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Анимация подсказки */
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.4;
   }
@@ -1590,9 +1601,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .cmd-bg-straight {
   opacity: 1;
 }
+
 .cmd-bg-tilted-down {
   opacity: 0;
 }
+
 .cmd-bg-tilted-up {
   opacity: 0;
 }
@@ -1601,6 +1614,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .commander-view-tilted .cmd-bg-straight {
   opacity: 0;
 }
+
 .commander-view-tilted .cmd-bg-tilted-down {
   opacity: 1;
 }
@@ -1609,11 +1623,13 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .commander-view-tilted.valve-up .cmd-bg-tilted-down {
   opacity: 0;
 }
+
 .commander-view-tilted.valve-up .cmd-bg-tilted-up {
   opacity: 1;
 }
 
-/**/ /* === Фоны сцены командира === */
+/**/
+/* === Фоны сцены командира === */
 #scene-commander .cmd-bg {
   position: absolute;
   inset: 0;
@@ -1629,9 +1645,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 #scene-commander .cmd-bg-straight {
   opacity: 1;
 }
+
 #scene-commander .cmd-bg-tilted-down {
   opacity: 0;
 }
+
 #scene-commander .cmd-bg-tilted-up {
   opacity: 0;
 }
@@ -1640,6 +1658,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 #scene-commander.commander-view-tilted .cmd-bg-straight {
   opacity: 0;
 }
+
 #scene-commander.commander-view-tilted .cmd-bg-tilted-down {
   opacity: 1;
 }
@@ -1648,6 +1667,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 #scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down {
   opacity: 0;
 }
+
 #scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up {
   opacity: 1;
 }
@@ -1659,10 +1679,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
     fill 0.2s ease,
     stroke 0.2s ease;
 }
+
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"]:hover {
   fill: rgba(100, 200, 255, 0.4) !important;
   stroke: rgba(100, 200, 255, 0.95) !important;
 }
+
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"].hidden {
   pointer-events: none;
   fill: transparent !important;
@@ -1676,12 +1698,63 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
     fill 0.2s ease,
     stroke 0.2s ease;
 }
+
 #scene-heater .hitbox[data-zone="install-exhaust-cap"]:hover {
   fill: rgba(0, 255, 100, 0.4) !important;
   stroke: rgba(0, 255, 100, 0.95) !important;
 }
+
 #scene-heater .hitbox[data-zone="install-exhaust-cap"].hidden {
   pointer-events: none;
   fill: transparent !important;
   stroke: transparent !important;
+}
+
+/* === Анимация дыма из выхлопной трубы (вид сверху) === */
+/* === Плотный дым из выхлопной трубы (вид сверху) === */
+.exhaust-smoke {
+  position: absolute;
+  left: 22%; 
+  top: 14%;
+  width: 100px; /* Увеличили зону генерации */
+  height: 100px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.smoke-particle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  /* Базовый размер увеличен с 30px до 45px */
+  width: 450px;
+  height: 450px;
+  /* Более плотный и темный градиент */
+  background: radial-gradient(circle, rgba(50, 50, 50, 0.95) 0%, rgba(30, 30, 30, 0) 75%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.5);
+  animation: smokeRiseDense 2.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes smokeRiseDense {
+  0% {
+    opacity: 0.9; /* Почти полная непрозрачность при рождении */
+    transform: translateX(-50%) translateY(0) scale(0.5);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translateX(-30%) translateY(-40px) scale(1.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-60%) translateY(-100px) scale(3.5); /* Сильнее расширяется */
+  }
+}
+.invisible {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  /* Дополнительно страхует от кликов */
 }
