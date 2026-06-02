@@ -28,7 +28,7 @@ class UIController {
     this._gaugeNames = {
       "gauge-coolant-temp": "Температура охлаждающей жидкости",
       "gauge-oil-temp": "Температура масла",
-      "gauge-voltammeter": "Вольтамперметр ВАХ",
+      "gauge-voltammeter": "Вольтамперметр ВА-540",
       "gauge-oil-pressure-engine": "Давление масла в двигателе",
       "gauge-oil-pressure-gearbox": "Давление смазки в КП",
       "gauge-fuel": "Топливомер",
@@ -579,7 +579,25 @@ class UIController {
       }
 
       // Normalize value → angle
-      const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      // Support asymmetric scales (e.g., VA-540: 100-0-500 A with zero offset left)
+      let normalized;
+      if (typeof def.zeroOffset === "number") {
+        // Asymmetric scale: map negative and positive separately
+        if (value < 0) {
+          // Left of zero: map [min, 0] → [0, zeroOffset]
+          const leftRange = 0 - min; // e.g., 0 - (-100) = 100
+          normalized = def.zeroOffset * (1 - Math.abs(value) / leftRange);
+        } else {
+          // Right of zero: map [0, max] → [zeroOffset, 1]
+          const rightRange = max; // e.g., 500
+          normalized = def.zeroOffset + (1 - def.zeroOffset) * (value / rightRange);
+        }
+        normalized = Math.max(0, Math.min(1, normalized));
+      } else {
+        // Standard linear scale
+        normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      }
+
       const angleRange = def.endAngle - def.startAngle;
       const angle = def.startAngle + normalized * angleRange;
 

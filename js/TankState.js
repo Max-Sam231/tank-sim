@@ -84,6 +84,7 @@ class TankState {
 
     this._engineRunning = false;
     this._engineJustStarted = false;
+    this._engineRunTime = 0; // Track engine run time for VA-540 charge current curve
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -177,6 +178,7 @@ class TankState {
 
     this._engineRunning = false;
     this._engineJustStarted = false;
+    this._engineRunTime = 0;
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -384,6 +386,32 @@ class TankState {
     return true;
   }
 
+  /**
+   * Calculate generator charge current for VA-540 voltmeter-ammeter
+   * Based on technical manual for T-72 tank electrical system
+   * @param {number} runTime - seconds since engine started
+   * @param {number} dischargeLoad - current consumption in A (to cover)
+   * @returns {number} charge current in A (positive = charging)
+   */
+  _calculateChargeCurrent(runTime, dischargeLoad) {
+    // Initial peak charge after start: +200 to +300 A
+    // Settles over several minutes to +20 to +40 A (covering consumption + trickle charge)
+
+    // Charge curve: exponential decay from peak to steady state
+    const peakCharge = 250.0; // A - initial high charge
+    const steadyCharge = dischargeLoad + 25.0; // Cover consumption + ~25A for systems
+
+    // Time constants from manual:
+    // - First minute: significant drop from peak
+    // - Several minutes: settles to steady state
+    const timeConstant = 60.0; // 1 minute for noticeable drop
+    const decayFactor = Math.exp(-runTime / timeConstant);
+
+    const chargeCurrent = steadyCharge + (peakCharge - steadyCharge) * decayFactor;
+
+    return Math.max(steadyCharge, chargeCurrent); // Never below steady state
+  }
+
   tick(dt) {
     if (!Number.isFinite(dt) || dt <= 0) return;
     dt = Math.min(dt, 0.25);
@@ -496,11 +524,18 @@ class TankState {
     if (!this._engineRunning && this._crankTime >= 1.5) {
       this._engineRunning = true;
       this._engineJustStarted = true;
+      this._engineRunTime = 0;
       this._crankTime = 0;
     }
 
     if (this._engineRunning && (!fuelOk || !isMassOn) && this.sensors.engine_rpm <= 850) {
       this._engineRunning = false;
+      this._engineRunTime = 0;
+    }
+
+    // Track engine run time for charge current curve
+    if (this._engineRunning) {
+      this._engineRunTime += dt;
     }
 
     const throttle = this._clamp((this.gasPedal ? 0.7 : 0.0) + (this.fuelManualFeed / 100) * 0.5, 0.0, 1.0);
@@ -559,17 +594,48 @@ class TankState {
     else speed = this._approach(speed, speedTarget, decel, dt);
     changed = this._setSensor("speed_kmh", speed, { min: 0, max: 100 }) || changed;
 
-    // Amperage: depends on ammeterButton state
+    // VA-540 Voltammeter physics (asymmetric scale: 100-0-500 A)
+    // Negative values = discharge (left of zero, 0-100A scale)
+    // Positive values = charge (right of zero, 0-500A scale)
     let targetAmperage = 0.0;
-    if (isMassOn && this.ammeterButton) {
+
+    if (isMassOn) {
+      // Base consumption: КИП (instrument panel) + control systems
+      let dischargeCurrent = 5.0; // ~5-10 A base load
+
+      // БЦН (fuel priming pump) consumption
+      if (isBcnActive) {
+        dischargeCurrent += 20.0; // ~20-30 A total with BCN
+      }
+
+      // МЗН (engine oil priming pump) - high current draw
+      if (isMznActive) {
+        dischargeCurrent = 80.0; // ~70-90 A peak
+      }
+
+      // Starter cranking: main current bypasses shunt, but auxiliary systems draw power
+      // Starter relay + Ignition "Impulse" + start valve + MZN if active
+      if (isCranking) {
+        dischargeCurrent = 100.0; // Hits -100A (left limit), may vibrate slightly
+      }
+
       if (this._engineRunning) {
-        targetAmperage = 50.0; // Charging when engine running
+        // Generator mode: SG-10-1S produces power
+        // Initially high charge current, then settles as batteries recover
+        const runTime = this._engineRunTime || 0;
+        const chargeCurrent = this._calculateChargeCurrent(runTime, dischargeCurrent);
+        targetAmperage = chargeCurrent;
       } else {
-        targetAmperage = -200.0; // Discharging when engine off
+        // Battery discharge mode (negative values = left of zero on gauge)
+        targetAmperage = -dischargeCurrent;
       }
     }
-    const amperage = this._approach(this.sensors.amperage, targetAmperage, 100.0, dt);
-    changed = this._setSensor("amperage", amperage, { min: 0, max: 500 }) || changed;
+
+    // Apply needle inertia: ~3 seconds settling time for VA-540
+    // Use slower approach rate for realistic mechanical inertia
+    const inertiaRate = 50.0; // ~3 sec full-scale (100A / 50 per sec = 2 sec, 500A / 50 = 10 sec, balanced)
+    const amperage = this._approach(this.sensors.amperage, targetAmperage, inertiaRate, dt);
+    changed = this._setSensor("amperage", amperage, { min: -100, max: 500 }) || changed;
 
     // Fuel levels: internal (0-190L) and external (100-400L) based on leftRightTanks
     let fuelLevelInternal = this.sensors.fuel_level_internal;
