@@ -754,8 +754,7 @@ class UIController {
           this.state.pumpFuelPrimerLever();
           break;
         case "fuel-manual-feed":
-          // Increase fuel feed by 10% on click
-          this.state.adjustFuelManualFeed(event.shiftKey ? -10 : 10);
+          this._showFuelFeedModal();
           break;
         case "gear-lever":
           this._showGearModal();
@@ -1133,8 +1132,58 @@ class UIController {
       });
     }
 
+    // Fuel Feed Modal events
+    this._fuelFeedModalEl = document.getElementById("fuelFeedModal");
+    this._fuelFeedPercentageEl = document.getElementById("fuelFeedPercentage");
+    this._fuelFeedSliderTrackEl = document.getElementById("fuelFeedSliderTrack");
+    this._fuelFeedSliderFillEl = document.getElementById("fuelFeedSliderFill");
+    this._fuelFeedSliderThumbEl = document.getElementById("fuelFeedSliderThumb");
+    this._fuelFeedModalImageEl = document.getElementById("fuelFeedModalImage");
+
+    const fuelFeedCloseBtn = document.getElementById("fuelFeedModalClose");
+    if (fuelFeedCloseBtn) {
+      fuelFeedCloseBtn.addEventListener("click", () => this._hideFuelFeedModal());
+    }
+
+    // Fuel feed slider drag handling
+    this._fuelFeedDragging = false;
+    if (this._fuelFeedSliderTrackEl) {
+      const updateFuelFeedFromPosition = (clientY) => {
+        const rect = this._fuelFeedSliderTrackEl.getBoundingClientRect();
+        const relativeY = rect.bottom - clientY;
+        const percentage = Math.max(0, Math.min(100, Math.round((relativeY / rect.height) * 100)));
+        this.state.setFuelManualFeed(percentage);
+        this._updateFuelFeedModalUI(percentage);
+        this._notifyAction("fuel-manual-feed");
+      };
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointerdown", (event) => {
+        this._fuelFeedDragging = true;
+        this._fuelFeedSliderTrackEl.setPointerCapture(event.pointerId);
+        updateFuelFeedFromPosition(event.clientY);
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointermove", (event) => {
+        if (!this._fuelFeedDragging) return;
+        event.preventDefault();
+        updateFuelFeedFromPosition(event.clientY);
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointerup", (event) => {
+        if (this._fuelFeedDragging) {
+          this._fuelFeedDragging = false;
+          this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
+        }
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointercancel", (event) => {
+        this._fuelFeedDragging = false;
+        this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
+      });
+    }
+
     this._handleDocumentPointerDown = (event) => {
-      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(
+      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl, this._fuelFeedModalEl].filter(
         Boolean,
       );
       const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
@@ -1475,6 +1524,7 @@ class UIController {
     this._hideBcnModal();
     this._hideShuttersModal();
     this._hideGearModal();
+    this._hideFuelFeedModal();
   }
 
   _showShuttersModal() {
@@ -1584,6 +1634,27 @@ class UIController {
         <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 8px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
       </div>
     `;
+  }
+
+  // Fuel Feed Modal methods
+  _showFuelFeedModal() {
+    if (!this._fuelFeedModalEl) return;
+    this._fuelFeedModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateFuelFeedModalUI(snapshot.fuelManualFeed);
+  }
+
+  _hideFuelFeedModal() {
+    if (!this._fuelFeedModalEl) return;
+    this._fuelFeedModalEl.classList.add("hidden");
+  }
+
+  _updateFuelFeedModalUI(percentage) {
+    if (!this._fuelFeedPercentageEl || !this._fuelFeedSliderFillEl || !this._fuelFeedSliderThumbEl) return;
+    this._fuelFeedPercentageEl.textContent = `${percentage}%`;
+    this._fuelFeedSliderFillEl.style.height = `${percentage}%`;
+    // Thumb height is 16px, keep it within track bounds
+    this._fuelFeedSliderThumbEl.style.bottom = `calc(${percentage}% - ${percentage * 0.16}px)`;
   }
 }
 
