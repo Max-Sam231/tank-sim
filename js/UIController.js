@@ -202,6 +202,15 @@ class UIController {
   _ensureCabinControlOverlays() {
     if (!this._overlayLayerEl || !this._svgEl) return;
 
+    // Ensure overlay-container exists for proportional scaling
+    let container = this._overlayLayerEl.querySelector(".overlay-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "overlay-container";
+      this._overlayLayerEl.appendChild(container);
+    }
+    this._overlayContainerEl = container;
+
     for (const [, el] of this._controlOverlayEls) el.remove();
     this._controlOverlayEls.clear();
     this._controlOverlayMeta.clear();
@@ -256,7 +265,7 @@ class UIController {
       img.style.setProperty("--rot", "0");
       img.style.setProperty("--z", String(def.z ?? 50));
 
-      this._overlayLayerEl.appendChild(img);
+      this._overlayContainerEl.appendChild(img);
       this._controlOverlayEls.set(action, img);
       this._controlOverlayMeta.set(action, {
         vbW,
@@ -278,6 +287,14 @@ class UIController {
       null;
     const panelSvg = panelStageEl.querySelector("svg.instrument-panel-hitbox-layer");
     if (!overlayLayerEl || !panelSvg) return;
+
+    // Ensure overlay-container exists for proportional scaling
+    let panelContainer = overlayLayerEl.querySelector(".overlay-container");
+    if (!panelContainer) {
+      panelContainer = document.createElement("div");
+      panelContainer.className = "overlay-container";
+      overlayLayerEl.appendChild(panelContainer);
+    }
 
     // Clean old overlays for the panel
     for (const [action, el] of this._controlOverlayEls) {
@@ -340,7 +357,7 @@ class UIController {
       img.style.setProperty("--rot", "0");
       img.style.setProperty("--z", String(def.z ?? 50));
 
-      overlayLayerEl.appendChild(img);
+      panelContainer.appendChild(img);
       this._controlOverlayEls.set(action, img);
       this._controlOverlayMeta.set(action, {
         vbW,
@@ -355,7 +372,7 @@ class UIController {
     // Create gauge arrows from defs (they have no hitbox polygons)
     for (const [action, def] of Object.entries(this._controlOverlayDefs)) {
       if (def.kind !== "gauge") continue;
-      this._ensureGaugeArrow(action, def, overlayLayerEl, vbW, vbH);
+      this._ensureGaugeArrow(action, def, panelContainer, vbW, vbH);
     }
   }
 

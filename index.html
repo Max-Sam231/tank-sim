@@ -42,17 +42,17 @@
         <button id="switchViewBtn" class="view-switch-btn">Вид сбоку</button>
 
         <div id="tank-top-view" class="tank-view">
-          <div class="hangar-bg-wrapper">
-            <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Hangar Background" />
-            <img class="tank-layer tank-layer-top" src="./img/hangar/tank.png" alt="Tank" />
-          </div>
-          <button id="xrayBtn" class="xray-btn">Рентген</button>
-          <svg
-            class="hitbox-layer scene-hitbox-layer"
-            viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
+          <div class="hangar-view-container">
+            <div class="hangar-bg-wrapper">
+              <img class="hangar-bg" src="./img/hangar/background.jpg" alt="Hangar Background" />
+              <img class="tank-layer tank-layer-top" src="./img/hangar/tank.png" alt="Tank" />
+            </div>
+            <svg
+              class="hitbox-layer scene-hitbox-layer"
+              viewBox="0 0 1920 1080"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+            >
             <polygon
               class="hitbox interactive"
               data-hatch="driver"
@@ -74,38 +74,43 @@
               points="760,410 720,410 720,520 760,520"
               title="Ящик ЗИП"
             />
-          </svg>
+            </svg>
+          </div>
+          <button id="xrayBtn" class="xray-btn">Рентген</button>
         </div>
 
         <div id="tank-side-view" class="tank-view hidden">
-          <div class="hangar-bg-wrapper">
-            <img
-              class="hangar-bg"
-              src="./img/hangar/background_side.jpg"
-              alt="Hangar Side Background"
-            />
-            <img
-              class="tank-layer tank-layer-side"
-              src="./img/hangar/tank_side.png"
-              alt="Tank Side"
-            />
-          </div>
-          <svg
-            class="hitbox-layer side-hitbox-layer"
-            viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
+          <div class="hangar-view-container">
+            <div class="hangar-bg-wrapper">
+              <img
+                class="hangar-bg"
+                src="./img/hangar/background_side.jpg"
+                alt="Hangar Side Background"
+              />
+              <img
+                class="tank-layer tank-layer-side"
+                src="./img/hangar/tank_side.png"
+                alt="Tank Side"
+              />
+            </div>
+            <svg
+              class="hitbox-layer side-hitbox-layer"
+              viewBox="0 0 1920 1080"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+            >
             <polygon
               class="hitbox interactive"
               data-zone="heater-rear-left"
               points="350,700 700,700 700,900 350,900"
               title="Обогреватель"
             />
-          </svg>
+            </svg>
+          </div>
         </div>
         <div id="tank-side-right-view" class="tank-view hidden">
-          <div class="hangar-bg-wrapper">
+          <div class="hangar-view-container">
+            <div class="hangar-bg-wrapper">
             <img
               class="hangar-bg"
               src="./img/hangar/background_side_right.jpg"
@@ -118,6 +123,7 @@
               alt="Tank Side Right"
               id="tankSideRightImg"
             />
+            </div>
           </div>
           <button id="xrayBtnRight" class="xray-btn hidden">Рентген</button>
         </div>
@@ -142,7 +148,7 @@
           <svg
             class="hitbox-layer heater-hitbox-layer heater-hitbox-closed"
             viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
             style="
               position: absolute;
@@ -192,7 +198,7 @@
           <svg
             class="hitbox-layer heater-hitbox-layer heater-hitbox-opened hidden"
             viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
             style="
               position: absolute;
@@ -334,7 +340,7 @@
           <svg
             class="hitbox-layer zip-hitbox-layer"
             viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
             style="
               position: absolute;
@@ -417,7 +423,7 @@
             <svg
               class="hitbox-layer cabin-hitbox-layer"
               viewBox="0 0 1920 1080"
-              preserveAspectRatio="none"
+              preserveAspectRatio="xMidYMid meet"
               aria-hidden="true"
             >
               <!-- Battery toggle -->
@@ -591,7 +597,7 @@
               <svg
                 class="hitbox-layer instrument-panel-hitbox-layer"
                 viewBox="0 0 1920 1080"
-                preserveAspectRatio="none"
+                preserveAspectRatio="xMidYMid meet"
                 aria-hidden="true"
               >
                 <!-- обогрев -->
@@ -779,7 +785,7 @@
           <svg
             class="hitbox-layer commander-hitbox-layer"
             viewBox="0 0 1920 1080"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
             aria-hidden="true"
           >
             <polygon
