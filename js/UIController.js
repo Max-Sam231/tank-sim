@@ -792,12 +792,7 @@ class UIController {
         case "oil-pump-gearbox":
           this.state.toggleOilPumpGearbox();
           break;
-        case "commander-call":
-          this.state.toggleCommanderCall();
-          break;
-        case "air-intake":
-          this.state.toggleAirIntake();
-          break;
+        // Note: commander-call and air-intake are indicator lamps only (non-interactive)
         case "heating":
           this.state.toggleHeating();
           break;
@@ -823,7 +818,7 @@ class UIController {
           this.state.toggleGpk();
           break;
         case "bca-tca":
-          this.state.toggleBcaTca();
+          this.state.cycleBcaTca();
           break;
         case "mzn-tow":
           this.state.cycleMznTow();
@@ -860,8 +855,7 @@ class UIController {
         "engine-start",
         "emergency-hatch-rotation",
         "oil-pump-gearbox",
-        "commander-call",
-        "air-intake",
+        // Note: commander-call and air-intake are indicator lamps only (no notifications)
         "heating",
         "combined",
         "left-lights",
@@ -1304,8 +1298,7 @@ class UIController {
       `engine-start: ${snapshot.engineStart}`,
       `emergency-hatch-rotation: ${snapshot.emergencyHatchRotation ? "ON" : "OFF"}`,
       `oil-pump-gearbox: ${snapshot.oilPumpGearbox ? "ON" : "OFF"}`,
-      `commander-call: ${snapshot.commanderCall ? "ON" : "OFF"}`,
-      `air-intake: ${snapshot.airIntake ? "ON" : "OFF"}`,
+      // Note: commander-call and air-intake are now in lamps section
       `heating: ${snapshot.heating ? "ON" : "OFF"}`,
       `combined: ${snapshot.combined ? "ON" : "OFF"}`,
       `left-lights: ${snapshot.leftLights ? "ON" : "OFF"}`,
@@ -1314,7 +1307,7 @@ class UIController {
       `lights-all: ${snapshot.lightsAll ? "ON" : "OFF"}`,
       `water-antifreeze: ${snapshot.waterAntifreeze ? "ON" : "OFF"}`,
       `gpk: ${snapshot.gpk ? "ON" : "OFF"}`,
-      `bca-tca: ${snapshot.bcaTca ? "ON" : "OFF"}`,
+      `bca-tca: ${snapshot.bcaTca === 0 ? "БЦН" : snapshot.bcaTca === 1 ? "OFF" : "ТДА"}`,
       `mzn-tow: ${snapshot.mznTow}`,
       `starter: ${snapshot.starter}`,
       `signal-lamps: ${snapshot.signalLamps}`,
@@ -1338,6 +1331,8 @@ class UIController {
       `overheat: ${snapshot.lamp_overheat ? "ON" : "OFF"}`,
       `fuel reserve: ${snapshot.lamp_fuel_reserve ? "ON" : "OFF"}`,
       `gear: ${snapshot.lamp_gear_engaged ? "ON" : "OFF"}`,
+      `cmdr call: ${snapshot.lamp_commander_call ? "ON" : "OFF"}`,
+      `air intake: ${snapshot.lamp_air_intake ? "ON" : "OFF"}`,
       "",
       `hitbox:  ${this._hitboxVisible ? "VISIBLE" : "HIDDEN"}`,
       "[H] toggle",

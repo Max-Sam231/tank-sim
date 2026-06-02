@@ -193,8 +193,7 @@ const CONTROL_OVERLAY_DEFS = {
     z: 70,
     frames: {
       0: { src: "./img/12/Tmb2-r.png" },
-      1: { src: "./img/12/Tmb3.png", inflate: 1.3 },
-      2: { src: "./img/12/Tmb1-r.png" },
+      1: { src: "./img/12/Tmb1-r.png" },
     },
   },
   "spark-plug": {
@@ -231,8 +230,8 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Kn1.png",
-    on: "./img/12/Kn2.png",
+    off: "./img/12/zv1.png",
+    on: "./img/12/zv2.png",
   },
   "oil-pump-gearbox": {
     kind: "boolean",
@@ -246,7 +245,7 @@ const CONTROL_OVERLAY_DEFS = {
   },
   "commander-call": {
     kind: "boolean",
-    stateKey: "commanderCall",
+    stateKey: "lamp_commander_call",
     inflate: 1.0,
     offsetX: 0,
     offsetY: 0,
@@ -256,7 +255,7 @@ const CONTROL_OVERLAY_DEFS = {
   },
   "air-intake": {
     kind: "boolean",
-    stateKey: "airIntake",
+    stateKey: "lamp_air_intake",
     inflate: 1.0,
     offsetX: 0,
     offsetY: 0,
@@ -273,8 +272,8 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
+    on: "./img/12/Tmb1.png",
+    off: "./img/12/Tmb2.png",
   },
   combined: {
     kind: "boolean",
@@ -283,8 +282,8 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
+    on: "./img/12/Tmb1.png",
+    off: "./img/12/Tmb2.png",
   },
   "left-lights": {
     kind: "boolean",
@@ -343,18 +342,21 @@ const CONTROL_OVERLAY_DEFS = {
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
+    on: "./img/12/Tmb1.png",
+    off: "./img/12/Tmb2.png",
   },
   "bca-tca": {
-    kind: "boolean",
+    kind: "enum",
     stateKey: "bcaTca",
     inflate: 1.0,
     offsetX: 0,
     offsetY: 0,
     z: 70,
-    off: "./img/12/Tmb1.png",
-    on: "./img/12/Tmb2.png",
+    frames: {
+      0: { src: "./img/12/Tmb1.png" },
+      1: { src: "./img/12/Tmb3.png" },
+      2: { src: "./img/12/Tmb2.png" },
+    },
   },
   "mzn-tow": {
     kind: "enum",
