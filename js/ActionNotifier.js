@@ -43,22 +43,25 @@ class ActionNotifier {
       horn: () => boolText(snapshot.horn, "Звуковой сигнал включен", "Звуковой сигнал выключен"),
       "mzn-engine": () => boolText(snapshot.mznEngine, "МЗН двигателя включен", "МЗН двигателя выключен"),
       "ammeter-button": () => boolText(snapshot.ammeterButton, "Кнопка вольтамперметра нажата", "Кнопка вольтамперметра отпущена"),
-      "left-right-tanks": () => enumText(snapshot.leftRightTanks, { 0: "Топливомер: правые баки", 1: "Топливомер: среднее положение", 2: "Топливомер: левые баки" }),
+      "left-right-tanks": () => enumText(snapshot.leftRightTanks, { 0: "Топливомер: правые баки", 1: "Топливомер: левые баки" }),
       "spark-plug": () => `Свеча накаливания: положение ${snapshot.sparkPlug}`,
       "engine-start": () => `Переключатель запуска двигателя: положение ${snapshot.engineStart}`,
       "emergency-hatch-rotation": () => boolText(snapshot.emergencyHatchRotation, "Поворот аварийного люка включен", "Поворот аварийного люка выключен"),
       "oil-pump-gearbox": () => boolText(snapshot.oilPumpGearbox, "Маслозакачивающий насос КП включен", "Маслозакачивающий насос КП выключен"),
-      "commander-call": () => boolText(snapshot.commanderCall, "Вызов командира включен", "Вызов командира выключен"),
-      "air-intake": () => boolText(snapshot.airIntake, "Воздухоприток включен", "Воздухоприток выключен"),
+      // Note: commander-call and air-intake are indicator lamps only (non-interactive)
       heating: () => boolText(snapshot.heating, "Обогрев включен", "Обогрев выключен"),
       combined: () => boolText(snapshot.combined, "Комбинированный режим включен", "Комбинированный режим выключен"),
       "left-lights": () => boolText(snapshot.leftLights, "Левые фары включены", "Левые фары выключены"),
       "right-lights": () => boolText(snapshot.rightLights, "Правые фары включены", "Правые фары выключены"),
       "gabrate-lights": () => boolText(snapshot.gabrateLights, "Габаритные огни включены", "Габаритные огни выключены"),
       "lights-all": () => boolText(snapshot.lightsAll, "Все огни включены", "Все огни выключены"),
-      "water-antifreeze": () => boolText(snapshot.waterAntifreeze, "Вода/антифриз включено", "Вода/антифриз выключено"),
+      "water-antifreeze": () => boolText(snapshot.waterAntifreeze, "Используется вода", "Используется антифриз"),
       gpk: () => boolText(snapshot.gpk, "ГПК включен", "ГПК выключен"),
-      "bca-tca": () => boolText(snapshot.bcaTca, "БЦА/ТЦА включено", "БЦА/ТЦА выключено"),
+      "bca-tca": () => {
+        if (snapshot.bcaTca === 0) return "БЦН включен";
+        if (snapshot.bcaTca === 1) return "БЦН/ТДА выключено";
+        return "ТДА включен";
+      },
       "mzn-tow": () => `МЗН буксировки: положение ${snapshot.mznTow}`,
       starter: () => `Стартер: положение ${snapshot.starter}`,
       "signal-lamps": () => `Сигнальные лампы: положение ${snapshot.signalLamps}`,
