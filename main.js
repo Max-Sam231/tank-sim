@@ -10,7 +10,7 @@ import { SceneManager } from './js/SceneManager.js';
 import { HangarScene } from './js/scenes/HangarScene.js';
 import { DriverScene } from './js/scenes/DriverScene.js';
 import { CommanderScene } from './js/scenes/CommanderScene.js';
-
+import { ExhaustSmoke } from './js/smoke/ExhaustSmoke.js';
 const APP_MODE = "prod"; // "debug" или "prod"
 const IS_DEBUG = APP_MODE === "debug";
 
@@ -26,6 +26,7 @@ function bootstrap() {
   document.body.classList.toggle("app-prod", !IS_DEBUG);
 
   const state = new TankState();
+  const exhaustSmoke = new ExhaustSmoke('exhaust-smoke-container'); 
   const audioManager = new AudioManager();
   const actionNotifier = new ActionNotifier({ rootEl: document.body });
 
@@ -54,6 +55,7 @@ function bootstrap() {
 
   state.subscribe((snapshot) => {
     audioManager.onStateChange(snapshot);
+    exhaustSmoke.update(snapshot.engine_rpm, snapshot.engineRunning);
   });
 
   const ui = new UIController({
