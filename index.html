@@ -478,6 +478,34 @@
             </div>
           </div>
 
+          <!-- Модалка рычага подачи топлива -->
+          <div
+            class="bcn-modal hidden"
+            id="fuelFeedModal"
+            role="dialog"
+            aria-label="Рычаг подачи топлива"
+          >
+            <div class="bcn-modal-content">
+              <div class="bcn-modal-header">
+                <span class="bcn-modal-title">Рычаг подачи топлива</span>
+                <button class="bcn-modal-close" id="fuelFeedModalClose" type="button">
+                  &times;
+                </button>
+              </div>
+              <div class="fuel-feed-modal-body">
+                <div class="fuel-feed-slider-container">
+                  <span class="fuel-feed-label-top">100%</span>
+                  <div class="fuel-feed-slider-track" id="fuelFeedSliderTrack">
+                    <div class="fuel-feed-slider-fill" id="fuelFeedSliderFill"></div>
+                    <div class="fuel-feed-slider-thumb" id="fuelFeedSliderThumb"></div>
+                  </div>
+                  <span class="fuel-feed-label-bottom">0%</span>
+                  <div class="fuel-feed-percentage" id="fuelFeedPercentage">0%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Модалка приборной панели -->
           <div
             class="instrument-panel-modal hidden"
@@ -701,7 +729,7 @@
         <button
           class="view-switch-btn"
           data-action="exit_to_hangar"
-          style="top: 20px; right: 20px; z-index: 100;"
+          style="top: 20px; right: 20px; z-index: 100"
         >
           ← В ангар
         </button>

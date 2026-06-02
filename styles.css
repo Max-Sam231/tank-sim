@@ -1180,6 +1180,73 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   transform: translateY(1px);
 }
 
+/* Fuel Feed Modal with Vertical Slider */
+.fuel-feed-modal-body {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.fuel-feed-slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  min-width: 80px;
+}
+
+.fuel-feed-label-top,
+.fuel-feed-label-bottom {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fuel-feed-percentage {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.fuel-feed-slider-track {
+  position: relative;
+  width: 24px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.fuel-feed-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(46, 160, 67, 0.8), rgba(35, 134, 54, 0.6));
+  border-radius: 12px 12px 12px 12px;
+  height: 0%;
+}
+
+.fuel-feed-slider-thumb {
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transform: translateX(-50%);
+  cursor: grab;
+  bottom: 0%;
+  margin-bottom: 0px;
+}
+
+.fuel-feed-slider-thumb:active {
+  cursor: grabbing;
+  background: #fff;
+}
+
 #scene-hangar {
   position: relative;
   width: 100vw;
