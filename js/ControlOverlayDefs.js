@@ -434,12 +434,17 @@ const CONTROL_OVERLAY_DEFS = {
     z: 75,
     arrowImage: "./img/12/14_0001_Фигура-1-копия-2.png",
   },
-  // 3. Вольтамперметр ВАХ (верхний правый)
+  // 3. Вольтамперметр ВА-540 (верхний правый)
+  // Asymmetric scale: 100-0-500 A (zero offset left of center)
+  // Negative sensor values = discharge (left side: -100 to 0)
+  // Positive sensor values = charge (right side: 0 to 500)
   "gauge-voltammeter": {
     kind: "gauge",
     sensorKey: "amperage",
-    min: 0,
+    // Primary mode: Ammeter (button released) - asymmetric scale
+    min: -100,
     max: 500,
+    zeroOffset: 0.167, // Zero at 16.7% from left (100/(100+500) = 1/6)
     cx: 815,
     cy: 285,
     arrowW: 151,
@@ -450,6 +455,7 @@ const CONTROL_OVERLAY_DEFS = {
     endAngle: 55,
     z: 75,
     switchKey: "ammeterButton",
+    // Secondary mode: Voltmeter (button pressed) - linear 0-30V
     secondarySensorKey: "voltage",
     secondaryMin: 0,
     secondaryMax: 30,
