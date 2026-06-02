@@ -163,13 +163,13 @@ body.app-debug .overlay.overlay-control {
   pointer-events: none;
 }
 
-.scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
+#scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
   pointer-events: none;
   fill: transparent;
   stroke: transparent;
 }
 
-.scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
+#scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -194,13 +194,28 @@ body.app-debug .overlay.overlay-control {
   pointer-events: none;
 }
 
-.scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox {
+#scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox {
   pointer-events: all;
 }
 
-body.app-debug .scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox.transparent {
+body.app-debug #scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox.transparent {
   fill: rgba(255, 0, 0, 0.25);
   stroke: rgba(255, 0, 0, 0.55);
+}
+
+/* Gauge hitboxes specific styles */
+.gauge-hitbox {
+  cursor: crosshair;
+}
+
+body.app-debug .gauge-hitbox {
+  fill: rgba(0, 170, 255, 0.15);
+  stroke: rgba(0, 170, 255, 0.6);
+}
+
+body.app-debug .gauge-hitbox:hover {
+  fill: rgba(0, 255, 100, 0.25);
+  stroke: rgba(0, 255, 100, 0.8);
 }
 
 .instrument-panel-toolbar {
@@ -362,6 +377,41 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   white-space: pre;
   pointer-events: none;
   user-select: none;
+}
+
+.gauge-tooltip {
+  position: fixed;
+  z-index: 1300;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(6, 10, 16, 0.94);
+  color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gauge-tooltip-title {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 4px;
+}
+
+.gauge-tooltip-value {
+  font-size: 14px;
+  color: rgba(100, 200, 255, 0.95);
 }
 
 .sim-finish-button {
