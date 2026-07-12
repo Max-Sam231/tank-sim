@@ -1,10 +1,11 @@
 import { CONTROL_OVERLAY_DEFS } from "./ControlOverlayDefs.js";
 
 class UIController {
-  constructor({ rootEl, consoleEl, state, isDebug = true }) {
+  constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
     this.rootEl = rootEl;
     this.consoleEl = consoleEl;
     this.state = state;
+    this.actionNotifier = actionNotifier;
 
     this.isDebug = Boolean(isDebug);
 
@@ -20,9 +21,34 @@ class UIController {
     this._hitboxVisible = this.isDebug;
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
+    this._manometerTooltipEl = null;
+    this._isManometerHovered = false;
+    this._gaugeTooltipEl = null;
+    this._hoveredGauge = null;
+    this._gaugeNames = {
+      "gauge-coolant-temp": "Температура охлаждающей жидкости",
+      "gauge-oil-temp": "Температура масла",
+      "gauge-voltammeter": "Вольтамперметр ВА-540",
+      "gauge-oil-pressure-engine": "Давление масла в двигателе",
+      "gauge-oil-pressure-gearbox": "Давление смазки в КП",
+      "gauge-fuel": "Топливомер",
+      "gauge-speed": "Спидометр",
+      "gauge-rpm": "Тахометр",
+    };
+    this._gaugeUnits = {
+      "gauge-coolant-temp": "°C",
+      "gauge-oil-temp": "°C",
+      "gauge-voltammeter": "",
+      "gauge-oil-pressure-engine": "кгс/см²",
+      "gauge-oil-pressure-gearbox": "кгс/см²",
+      "gauge-fuel": "л",
+      "gauge-speed": "км/ч",
+      "gauge-rpm": "об/мин",
+    };
 
     this._handleDocumentPointerDown = null;
 
+    this._ensureManometerTooltip();
     this._wireEvents();
 
     this._ensureCabinControlOverlays();
@@ -31,10 +57,180 @@ class UIController {
     this._syncHitboxVisibility();
 
     this.state.subscribe((snapshot) => {
+      if (snapshot.engineJustStarted) {
+        this._notifyAction("engine-started");
+      }
       this._render(snapshot);
     });
 
     this._render(this.state.getSnapshot());
+  }
+
+  _notifyAction(action, meta = {}) {
+    if (!this.actionNotifier || !action) return;
+    this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
+  }
+
+  _ensureManometerTooltip() {
+    const existing = this.rootEl.querySelector(".manometer-tooltip");
+    if (existing) {
+      this._manometerTooltipEl = existing;
+      return;
+    }
+
+    const el = document.createElement("div");
+    el.className = "manometer-tooltip hidden";
+    el.setAttribute("aria-hidden", "true");
+    this.rootEl.appendChild(el);
+    this._manometerTooltipEl = el;
+  }
+
+  _renderManometerTooltip(snapshot) {
+    if (!this._manometerTooltipEl || !this._isManometerHovered) return;
+
+    const pressure = this._getManometerPressure(snapshot);
+    this._manometerTooltipEl.textContent = `${pressure.toFixed(1)} кгс/см²`;
+  }
+
+  _getManometerPressure(snapshot) {
+    const leftOpen = Boolean(snapshot.leftTank);
+    const rightOpen = Boolean(snapshot.rightTank);
+    if (!leftOpen && !rightOpen) return 0;
+
+    const left = Number(snapshot.air_left_cylinder) || 0;
+    const right = Number(snapshot.air_right_cylinder) || 0;
+    const openPressures = [];
+    if (leftOpen) openPressures.push(left);
+    if (rightOpen) openPressures.push(right);
+    return openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0;
+  }
+
+  _moveManometerTooltip(clientX, clientY) {
+    if (!this._manometerTooltipEl) return;
+
+    const margin = 14;
+    const tooltipWidth = this._manometerTooltipEl.offsetWidth || 300;
+    const tooltipHeight = this._manometerTooltipEl.offsetHeight || 120;
+    const maxX = window.innerWidth - tooltipWidth - margin;
+    const maxY = window.innerHeight - tooltipHeight - margin;
+    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
+    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
+
+    this._manometerTooltipEl.style.left = `${x}px`;
+    this._manometerTooltipEl.style.top = `${y}px`;
+  }
+
+  _showManometerTooltip(event, snapshot) {
+    if (!this._manometerTooltipEl) return;
+
+    this._isManometerHovered = true;
+    this._manometerTooltipEl.classList.remove("hidden");
+    this._renderManometerTooltip(snapshot);
+    this._moveManometerTooltip(event.clientX, event.clientY);
+  }
+
+  _hideManometerTooltip() {
+    if (!this._manometerTooltipEl) return;
+    this._isManometerHovered = false;
+    this._manometerTooltipEl.classList.add("hidden");
+  }
+
+  _ensureGaugeTooltip() {
+    const existing = document.querySelector(".gauge-tooltip");
+    if (existing) {
+      this._gaugeTooltipEl = existing;
+      return;
+    }
+
+    const el = document.createElement("div");
+    el.className = "gauge-tooltip hidden";
+    el.setAttribute("aria-hidden", "true");
+    document.body.appendChild(el);
+    this._gaugeTooltipEl = el;
+  }
+
+  _getGaugeValue(gaugeId, snapshot) {
+    const def = this._controlOverlayDefs[gaugeId];
+    if (!def || def.kind !== "gauge") return null;
+
+    let value = Number(snapshot.sensors?.[def.sensorKey] ?? snapshot[def.sensorKey]) || 0;
+    let unit = this._gaugeUnits[gaugeId] || "";
+    let label = this._gaugeNames[gaugeId] || gaugeId;
+
+    // Dual gauges: voltammeter (amperage / voltage), fuel (internal / external)
+    if (def.switchKey && def.secondarySensorKey) {
+      const sw = snapshot[def.switchKey];
+      if (this._shouldUseSecondaryGauge(gaugeId, sw)) {
+        value =
+          Number(
+            snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey],
+          ) || 0;
+        // Update unit/label for secondary
+        if (gaugeId === "gauge-voltammeter") {
+          label = "Напряжение бортсети";
+          unit = "В";
+        } else if (gaugeId === "gauge-fuel") {
+          label = "Топливо (внешний бак)";
+          unit = "л";
+        }
+      } else {
+        if (gaugeId === "gauge-voltammeter") {
+          label = "Сила тока";
+          unit = "А";
+        } else if (gaugeId === "gauge-fuel") {
+          label = "Топливо (внутренний бак)";
+          unit = "л";
+        }
+      }
+    }
+
+    return { value, unit, label };
+  }
+
+  _renderGaugeTooltip() {
+    if (!this._gaugeTooltipEl || !this._hoveredGauge) return;
+
+    const snapshot = this.state.getSnapshot();
+    const data = this._getGaugeValue(this._hoveredGauge, snapshot);
+    if (!data) return;
+
+    const formattedValue = Number.isFinite(data.value)
+      ? data.value.toFixed(data.unit === "л" || data.unit === "об/мин" ? 0 : 1)
+      : "-";
+
+    this._gaugeTooltipEl.innerHTML =
+      `<div class="gauge-tooltip-value">${formattedValue} ${data.unit}</div>`;
+  }
+
+  _moveGaugeTooltip(clientX, clientY) {
+    if (!this._gaugeTooltipEl) return;
+
+    const margin = 14;
+    const tooltipWidth = this._gaugeTooltipEl.offsetWidth || 200;
+    const tooltipHeight = this._gaugeTooltipEl.offsetHeight || 80;
+    const maxX = window.innerWidth - tooltipWidth - margin;
+    const maxY = window.innerHeight - tooltipHeight - margin;
+    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
+    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
+
+    this._gaugeTooltipEl.style.left = `${x}px`;
+    this._gaugeTooltipEl.style.top = `${y}px`;
+  }
+
+  _showGaugeTooltip(gaugeId, event) {
+    if (!this._gaugeTooltipEl) this._ensureGaugeTooltip();
+    if (!this._gaugeTooltipEl) return;
+
+    this._hoveredGauge = gaugeId;
+    this._gaugeTooltipEl.classList.remove("hidden");
+    this._renderGaugeTooltip();
+    this._moveGaugeTooltip(event.clientX, event.clientY);
+  }
+
+  _hideGaugeTooltip() {
+    if (!this._gaugeTooltipEl) return;
+    this._hoveredGauge = null;
+    this._gaugeTooltipEl.classList.add("hidden");
   }
 
   _ensureHitboxLabels() {
@@ -126,6 +322,15 @@ class UIController {
   _ensureCabinControlOverlays() {
     if (!this._overlayLayerEl || !this._svgEl) return;
 
+    // Ensure overlay-container exists for proportional scaling
+    let container = this._overlayLayerEl.querySelector(".overlay-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "overlay-container";
+      this._overlayLayerEl.appendChild(container);
+    }
+    this._overlayContainerEl = container;
+
     for (const [, el] of this._controlOverlayEls) el.remove();
     this._controlOverlayEls.clear();
     this._controlOverlayMeta.clear();
@@ -180,7 +385,7 @@ class UIController {
       img.style.setProperty("--rot", "0");
       img.style.setProperty("--z", String(def.z ?? 50));
 
-      this._overlayLayerEl.appendChild(img);
+      this._overlayContainerEl.appendChild(img);
       this._controlOverlayEls.set(action, img);
       this._controlOverlayMeta.set(action, {
         vbW,
@@ -202,6 +407,14 @@ class UIController {
       null;
     const panelSvg = panelStageEl.querySelector("svg.instrument-panel-hitbox-layer");
     if (!overlayLayerEl || !panelSvg) return;
+
+    // Ensure overlay-container exists for proportional scaling
+    let panelContainer = overlayLayerEl.querySelector(".overlay-container");
+    if (!panelContainer) {
+      panelContainer = document.createElement("div");
+      panelContainer.className = "overlay-container";
+      overlayLayerEl.appendChild(panelContainer);
+    }
 
     // Clean old overlays for the panel
     for (const [action, el] of this._controlOverlayEls) {
@@ -264,7 +477,7 @@ class UIController {
       img.style.setProperty("--rot", "0");
       img.style.setProperty("--z", String(def.z ?? 50));
 
-      overlayLayerEl.appendChild(img);
+      panelContainer.appendChild(img);
       this._controlOverlayEls.set(action, img);
       this._controlOverlayMeta.set(action, {
         vbW,
@@ -279,7 +492,7 @@ class UIController {
     // Create gauge arrows from defs (they have no hitbox polygons)
     for (const [action, def] of Object.entries(this._controlOverlayDefs)) {
       if (def.kind !== "gauge") continue;
-      this._ensureGaugeArrow(action, def, overlayLayerEl, vbW, vbH);
+      this._ensureGaugeArrow(action, def, panelContainer, vbW, vbH);
     }
   }
 
@@ -366,7 +579,25 @@ class UIController {
       }
 
       // Normalize value → angle
-      const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      // Support asymmetric scales (e.g., VA-540: 100-0-500 A with zero offset left)
+      let normalized;
+      if (typeof def.zeroOffset === "number") {
+        // Asymmetric scale: map negative and positive separately
+        if (value < 0) {
+          // Left of zero: map [min, 0] → [0, zeroOffset]
+          const leftRange = 0 - min; // e.g., 0 - (-100) = 100
+          normalized = def.zeroOffset * (1 - Math.abs(value) / leftRange);
+        } else {
+          // Right of zero: map [0, max] → [zeroOffset, 1]
+          const rightRange = max; // e.g., 500
+          normalized = def.zeroOffset + (1 - def.zeroOffset) * (value / rightRange);
+        }
+        normalized = Math.max(0, Math.min(1, normalized));
+      } else {
+        // Standard linear scale
+        normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      }
+
       const angleRange = def.endAngle - def.startAngle;
       const angle = def.startAngle + normalized * angleRange;
 
@@ -520,11 +751,10 @@ class UIController {
           this.state.toggleRightTank();
           break;
         case "fuel-primer-lever":
-          this.state.toggleFuelPrimerLever();
+          this.state.pumpFuelPrimerLever();
           break;
         case "fuel-manual-feed":
-          // Increase fuel feed by 10% on click
-          this.state.adjustFuelManualFeed(event.shiftKey ? -10 : 10);
+          this._showFuelFeedModal();
           break;
         case "gear-lever":
           this._showGearModal();
@@ -562,12 +792,7 @@ class UIController {
         case "oil-pump-gearbox":
           this.state.toggleOilPumpGearbox();
           break;
-        case "commander-call":
-          this.state.toggleCommanderCall();
-          break;
-        case "air-intake":
-          this.state.toggleAirIntake();
-          break;
+        // Note: commander-call and air-intake are indicator lamps only (non-interactive)
         case "heating":
           this.state.toggleHeating();
           break;
@@ -593,7 +818,7 @@ class UIController {
           this.state.toggleGpk();
           break;
         case "bca-tca":
-          this.state.toggleBcaTca();
+          this.state.cycleBcaTca();
           break;
         case "mzn-tow":
           this.state.cycleMznTow();
@@ -611,6 +836,41 @@ class UIController {
           sceneManager.change(null, sceneId || "scene-side-panel-open");
           break;
       }
+
+      const notifyActions = new Set([
+        "battery-toggle",
+        "instrument-panel",
+        "left-tank",
+        "right-tank",
+        "fuel-primer-lever",
+        "fuel-manual-feed",
+        "air-bleed-valve",
+        "azr",
+        "epk",
+        "horn",
+        "mzn-engine",
+        "ammeter-button",
+        "left-right-tanks",
+        "spark-plug",
+        "engine-start",
+        "emergency-hatch-rotation",
+        "oil-pump-gearbox",
+        // Note: commander-call and air-intake are indicator lamps only (no notifications)
+        "heating",
+        "combined",
+        "left-lights",
+        "right-lights",
+        "gabrate-lights",
+        "lights-all",
+        "water-antifreeze",
+        "gpk",
+        "bca-tca",
+        "mzn-tow",
+        "starter",
+        "signal-lamps",
+        "cabin-light",
+      ]);
+      if (notifyActions.has(action)) this._notifyAction(action);
     });
 
     this.rootEl.addEventListener("mousedown", (event) => {
@@ -622,9 +882,11 @@ class UIController {
       if (action === "brake-pedal") {
         event.preventDefault();
         this.state.setBrakePressed(true);
+        this._notifyAction(action);
       } else if (action === "gas-pedal") {
         event.preventDefault();
         this.state.setGasPedal(true);
+        this._notifyAction(action);
       }
     });
 
@@ -634,6 +896,7 @@ class UIController {
 
       if (action === "brake-pedal" || action === "gas-pedal") {
         event.preventDefault();
+        this._notifyAction(action, { released: true });
       }
       this.state.setBrakePressed(false);
       this.state.setGasPedal(false);
@@ -659,6 +922,7 @@ class UIController {
         if (action === "battery-toggle") {
           event.preventDefault();
           this.state.toggleBattery();
+          this._notifyAction(action);
           return;
         }
 
@@ -666,10 +930,12 @@ class UIController {
           event.preventDefault();
           this._touchHeldAction = "brake-pedal";
           this.state.setBrakePressed(true);
+          this._notifyAction(action);
         } else if (action === "gas-pedal") {
           event.preventDefault();
           this._touchHeldAction = "gas-pedal";
           this.state.setGasPedal(true);
+          this._notifyAction(action);
         }
       },
       { passive: false },
@@ -679,6 +945,7 @@ class UIController {
       "touchend",
       (event) => {
         if (this._touchHeldAction) event.preventDefault();
+        if (this._touchHeldAction) this._notifyAction(this._touchHeldAction, { released: true });
         this.state.setBrakePressed(false);
         this.state.setGasPedal(false);
         this._touchHeldAction = null;
@@ -686,17 +953,33 @@ class UIController {
       { passive: false },
     );
 
+    this.rootEl.addEventListener("mousemove", (event) => {
+      if (this._isManometerHovered) {
+        this._moveManometerTooltip(event.clientX, event.clientY);
+      }
+      if (this._hoveredGauge) {
+        this._moveGaugeTooltip(event.clientX, event.clientY);
+      }
+    });
+
     // Sync hover between hitboxes and overlay-controls
     this.rootEl.addEventListener("mouseover", (event) => {
       const hitbox = event.target.closest(".hitbox");
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      const gauge = hitbox.dataset.gauge;
 
       // Manometer special handling
       if (action === "manometer") {
         const snapshot = this.state.getSnapshot();
-        this.state.setManometer(Math.round(Number(snapshot.air_start_pressure) || 0));
+        this.state.setManometer(Math.round(this._getManometerPressure(snapshot)));
+        this._showManometerTooltip(event, snapshot);
+      }
+
+      // Gauge hitbox handling
+      if (gauge) {
+        this._showGaugeTooltip(gauge, event);
       }
 
       // Highlight corresponding overlay-control
@@ -713,10 +996,17 @@ class UIController {
       if (!hitbox) return;
 
       const action = hitbox.dataset.action;
+      const gauge = hitbox.dataset.gauge;
 
       // Manometer special handling
       if (action === "manometer") {
         this.state.setManometer(0);
+        this._hideManometerTooltip();
+      }
+
+      // Gauge hitbox handling
+      if (gauge) {
+        this._hideGaugeTooltip();
       }
 
       // Remove highlight from corresponding overlay-control
@@ -782,6 +1072,7 @@ class UIController {
             this.state.setBcnMode(mode);
             this._updateBcnModalButtons(mode);
             this._updateBcnModalImage(mode);
+            this._notifyAction("bcn");
           }
         }
       });
@@ -805,6 +1096,7 @@ class UIController {
             this.state.setShutters(position);
             this._updateShuttersModalButtons(position);
             this._updateShuttersModalImage(position);
+            this._notifyAction("shutters");
           }
         }
       });
@@ -828,13 +1120,64 @@ class UIController {
             this.state.setGearLever(gear);
             this._updateGearModalButtons(gear);
             this._updateGearModalImage(gear);
+            this._notifyAction("gear-lever");
           }
         }
       });
     }
 
+    // Fuel Feed Modal events
+    this._fuelFeedModalEl = document.getElementById("fuelFeedModal");
+    this._fuelFeedPercentageEl = document.getElementById("fuelFeedPercentage");
+    this._fuelFeedSliderTrackEl = document.getElementById("fuelFeedSliderTrack");
+    this._fuelFeedSliderFillEl = document.getElementById("fuelFeedSliderFill");
+    this._fuelFeedSliderThumbEl = document.getElementById("fuelFeedSliderThumb");
+    this._fuelFeedModalImageEl = document.getElementById("fuelFeedModalImage");
+
+    const fuelFeedCloseBtn = document.getElementById("fuelFeedModalClose");
+    if (fuelFeedCloseBtn) {
+      fuelFeedCloseBtn.addEventListener("click", () => this._hideFuelFeedModal());
+    }
+
+    // Fuel feed slider drag handling
+    this._fuelFeedDragging = false;
+    if (this._fuelFeedSliderTrackEl) {
+      const updateFuelFeedFromPosition = (clientY) => {
+        const rect = this._fuelFeedSliderTrackEl.getBoundingClientRect();
+        const relativeY = rect.bottom - clientY;
+        const percentage = Math.max(0, Math.min(100, Math.round((relativeY / rect.height) * 100)));
+        this.state.setFuelManualFeed(percentage);
+        this._updateFuelFeedModalUI(percentage);
+        this._notifyAction("fuel-manual-feed");
+      };
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointerdown", (event) => {
+        this._fuelFeedDragging = true;
+        this._fuelFeedSliderTrackEl.setPointerCapture(event.pointerId);
+        updateFuelFeedFromPosition(event.clientY);
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointermove", (event) => {
+        if (!this._fuelFeedDragging) return;
+        event.preventDefault();
+        updateFuelFeedFromPosition(event.clientY);
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointerup", (event) => {
+        if (this._fuelFeedDragging) {
+          this._fuelFeedDragging = false;
+          this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
+        }
+      });
+
+      this._fuelFeedSliderTrackEl.addEventListener("pointercancel", (event) => {
+        this._fuelFeedDragging = false;
+        this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
+      });
+    }
+
     this._handleDocumentPointerDown = (event) => {
-      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl].filter(
+      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl, this._fuelFeedModalEl].filter(
         Boolean,
       );
       const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
@@ -856,6 +1199,8 @@ class UIController {
   _render(snapshot) {
     this._renderOverlays(snapshot);
     this._updateGaugeArrows(snapshot);
+    this._renderManometerTooltip(snapshot);
+    this._renderGaugeTooltip();
 
     // Для командира
     const commanderSection = document.getElementById("scene-commander");
@@ -871,8 +1216,25 @@ class UIController {
 
     const panelModal = document.getElementById("instrumentPanelModal");
     if (panelModal) {
-      panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
-      this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
+      const wasOpen = !panelModal.classList.contains("hidden");
+      const isOpen = Boolean(snapshot.instrumentPanel);
+      panelModal.classList.toggle("hidden", !isOpen);
+      this.rootEl.classList.toggle("instrument-panel-open", isOpen);
+      // Sync hitbox visibility when panel opens/closes
+      if (wasOpen !== isOpen) {
+        this._syncHitboxVisibility();
+      }
+    }
+
+    // Управление светом в кабине механика-водителя
+    const driverSection = document.getElementById("scene-driver");
+    if (driverSection && !driverSection.classList.contains("hidden")) {
+      const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
+      if (isLightsOn) {
+        driverSection.classList.add("cabin-lights-on");
+      } else {
+        driverSection.classList.remove("cabin-lights-on");
+      }
     }
 
     if (!this.isDebug) {
@@ -922,7 +1284,7 @@ class UIController {
       `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
       `BCN: ${snapshot.bcn.toUpperCase()}`,
       `shutters: ${snapshot.shutters}/4`,
-      `fuel primer: ${snapshot.fuelPrimerLever ? "ON" : "OFF"}`,
+      `fuel primer pumps: ${snapshot.fuelPrimerPumps}`,
       `fuel feed: ${snapshot.fuelManualFeed}%`,
       `gear: ${snapshot.gearLever}`,
       `air bleed: ${snapshot.airBleedValve ? "OPEN" : "CLOSED"}`,
@@ -936,8 +1298,7 @@ class UIController {
       `engine-start: ${snapshot.engineStart}`,
       `emergency-hatch-rotation: ${snapshot.emergencyHatchRotation ? "ON" : "OFF"}`,
       `oil-pump-gearbox: ${snapshot.oilPumpGearbox ? "ON" : "OFF"}`,
-      `commander-call: ${snapshot.commanderCall ? "ON" : "OFF"}`,
-      `air-intake: ${snapshot.airIntake ? "ON" : "OFF"}`,
+      // Note: commander-call and air-intake are now in lamps section
       `heating: ${snapshot.heating ? "ON" : "OFF"}`,
       `combined: ${snapshot.combined ? "ON" : "OFF"}`,
       `left-lights: ${snapshot.leftLights ? "ON" : "OFF"}`,
@@ -946,7 +1307,7 @@ class UIController {
       `lights-all: ${snapshot.lightsAll ? "ON" : "OFF"}`,
       `water-antifreeze: ${snapshot.waterAntifreeze ? "ON" : "OFF"}`,
       `gpk: ${snapshot.gpk ? "ON" : "OFF"}`,
-      `bca-tca: ${snapshot.bcaTca ? "ON" : "OFF"}`,
+      `bca-tca: ${snapshot.bcaTca === 0 ? "БЦН" : snapshot.bcaTca === 1 ? "OFF" : "ТДА"}`,
       `mzn-tow: ${snapshot.mznTow}`,
       `starter: ${snapshot.starter}`,
       `signal-lamps: ${snapshot.signalLamps}`,
@@ -970,6 +1331,8 @@ class UIController {
       `overheat: ${snapshot.lamp_overheat ? "ON" : "OFF"}`,
       `fuel reserve: ${snapshot.lamp_fuel_reserve ? "ON" : "OFF"}`,
       `gear: ${snapshot.lamp_gear_engaged ? "ON" : "OFF"}`,
+      `cmdr call: ${snapshot.lamp_commander_call ? "ON" : "OFF"}`,
+      `air intake: ${snapshot.lamp_air_intake ? "ON" : "OFF"}`,
       "",
       `hitbox:  ${this._hitboxVisible ? "VISIBLE" : "HIDDEN"}`,
       "[H] toggle",
@@ -983,18 +1346,6 @@ class UIController {
     }
 
     this.consoleEl.textContent = lines.join("\n");
-    const driverSection = document.getElementById("scene-driver");
-
-    if (driverSection && !driverSection.classList.contains("hidden")) {
-      // Свет включен только если ВКЛЮЧЕНА МАССА И НАЖАТ РЫЧАЖОК
-      const isLightsOn = snapshot.isBatteryOn && snapshot.cabinLight;
-
-      if (isLightsOn) {
-        driverSection.classList.add("cabin-lights-on");
-      } else {
-        driverSection.classList.remove("cabin-lights-on");
-      }
-    }
   }
 
   _capturePointer(event) {
@@ -1127,6 +1478,8 @@ class UIController {
     if (modal) {
       modal.classList.remove("hidden");
       this.rootEl.classList.add("instrument-panel-open");
+      // Re-sync hitbox visibility for instrument panel gauge hitboxes
+      this._syncHitboxVisibility();
     }
   }
 
@@ -1166,6 +1519,7 @@ class UIController {
     this._hideBcnModal();
     this._hideShuttersModal();
     this._hideGearModal();
+    this._hideFuelFeedModal();
   }
 
   _showShuttersModal() {
@@ -1259,13 +1613,13 @@ class UIController {
     const topPercent =
       {
         neutral: 73,
-        1: 65,
-        2: 55,
-        3: 45,
-        4: 35,
-        5: 25,
+        1: 62,
+        2: 51,
+        3: 41,
+        4: 31,
+        5: 22,
         6: 15,
-        7: 5,
+        7: 7,
         R: 85,
       }[String(gear)] || 50;
     const labelText = labels[gear] || "—";
@@ -1275,6 +1629,27 @@ class UIController {
         <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 8px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
       </div>
     `;
+  }
+
+  // Fuel Feed Modal methods
+  _showFuelFeedModal() {
+    if (!this._fuelFeedModalEl) return;
+    this._fuelFeedModalEl.classList.remove("hidden");
+    const snapshot = this.state.getSnapshot();
+    this._updateFuelFeedModalUI(snapshot.fuelManualFeed);
+  }
+
+  _hideFuelFeedModal() {
+    if (!this._fuelFeedModalEl) return;
+    this._fuelFeedModalEl.classList.add("hidden");
+  }
+
+  _updateFuelFeedModalUI(percentage) {
+    if (!this._fuelFeedPercentageEl || !this._fuelFeedSliderFillEl || !this._fuelFeedSliderThumbEl) return;
+    this._fuelFeedPercentageEl.textContent = `${percentage}%`;
+    this._fuelFeedSliderFillEl.style.height = `${percentage}%`;
+    // Thumb height is 16px, keep it within track bounds
+    this._fuelFeedSliderThumbEl.style.bottom = `calc(${percentage}% - ${percentage * 0.16}px)`;
   }
 }
 

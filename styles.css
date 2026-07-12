@@ -27,6 +27,34 @@ body {
   color: #e6edf3;
 }
 
+.action-notifier {
+  position: fixed;
+  top: 120px;
+  right: 18px;
+  max-width: 320px;
+  z-index: 3000;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(10, 14, 18, 0.88);
+  color: #f4f7fb;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.action-notifier.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .app {
   width: 100vw;
   height: 100vh;
@@ -65,6 +93,17 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-container {
+  position: relative;
+  /* Match SVG "xMidYMid meet" behavior: fill while maintaining 16:9 aspect ratio */
+  width: min(100%, calc(100vh * 16 / 9));
+  height: min(calc(100vw * 9 / 16), 100%);
+  pointer-events: none;
 }
 
 .overlay {
@@ -124,13 +163,12 @@ body.app-debug .overlay.overlay-control {
   pointer-events: none;
 }
 
-.scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
+#scene.instrument-panel-open .cabin-hitbox-layer .hitbox {
   pointer-events: none;
   fill: transparent;
   stroke: transparent;
 }
-
-.scene.instrument-panel-open>.overlay-layer .overlay.overlay-control {
+#scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -155,13 +193,28 @@ body.app-debug .overlay.overlay-control {
   pointer-events: none;
 }
 
-.scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox {
+#scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox {
   pointer-events: all;
 }
 
-body.app-debug .scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox.transparent {
+body.app-debug #scene.instrument-panel-open .instrument-panel-hitbox-layer .hitbox.transparent {
   fill: rgba(255, 0, 0, 0.25);
   stroke: rgba(255, 0, 0, 0.55);
+}
+
+/* Gauge hitboxes specific styles */
+.gauge-hitbox {
+  cursor: crosshair;
+}
+
+body.app-debug .gauge-hitbox {
+  fill: rgba(0, 170, 255, 0.15);
+  stroke: rgba(0, 170, 255, 0.6);
+}
+
+body.app-debug .gauge-hitbox:hover {
+  fill: rgba(0, 255, 100, 0.25);
+  stroke: rgba(0, 255, 100, 0.8);
 }
 
 .instrument-panel-toolbar {
@@ -303,6 +356,63 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   user-select: none;
 }
 
+.manometer-tooltip {
+  position: fixed;
+  z-index: 1300;
+  min-width: 260px;
+  max-width: 340px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(6, 10, 16, 0.94);
+  color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gauge-tooltip {
+  position: fixed;
+  z-index: 1300;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(6, 10, 16, 0.94);
+  color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gauge-tooltip-title {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 4px;
+}
+
+.gauge-tooltip-value {
+  font-size: 14px;
+  color: rgba(100, 200, 255, 0.95);
+}
+
 .sim-finish-button {
   position: absolute;
   right: 12px;
@@ -407,6 +517,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.92);
   outline: none;
+}
+
+.scenario-menu-input option {
+  color: #1a1a1a;
 }
 
 .scenario-menu-apply {
@@ -791,8 +905,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  /* Или contain, если важно видеть всю картинку целиком */
+  object-fit: contain;
   object-position: center;
   z-index: 0;
   pointer-events: none;
@@ -859,7 +972,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Хитбоксы должны быть кликабельны */
 .hitbox {
-  z-index: 20;
+  z-index: 300;
   pointer-events: auto;
 }
 
@@ -897,7 +1010,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /*Commander*/
-
 
 /* По умолчанию показываем прямой вид, скрываем наклоненный */
 .cmd-bg-straight {
@@ -942,7 +1054,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
      rotateX(15deg): Наклоняем плоскость экрана, создавая эффект взгляда снизу вверх или сверху вниз.
      scale(1.1): Немного приближаем, чтобы компенсировать удаленность при наклоне.
   */
-  
 }
 
 /* Фоны должны занимать всё пространство и не искажаться отдельно от контейнера */
@@ -1069,10 +1180,88 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   transform: translateY(1px);
 }
 
+/* Fuel Feed Modal with Vertical Slider */
+.fuel-feed-modal-body {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.fuel-feed-slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  min-width: 80px;
+}
+
+.fuel-feed-label-top,
+.fuel-feed-label-bottom {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fuel-feed-percentage {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.fuel-feed-slider-track {
+  position: relative;
+  width: 24px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.fuel-feed-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(46, 160, 67, 0.8), rgba(35, 134, 54, 0.6));
+  border-radius: 12px 12px 12px 12px;
+  height: 0%;
+}
+
+.fuel-feed-slider-thumb {
+  position: absolute;
+  left: 50%;
+  width: 32px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transform: translateX(-50%);
+  cursor: grab;
+  bottom: 0%;
+  margin-bottom: 0px;
+}
+
+.fuel-feed-slider-thumb:active {
+  cursor: grabbing;
+  background: #fff;
+}
+
 #scene-hangar {
   position: relative;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hangar-view-container {
+  position: relative;
+  /* Match SVG "xMidYMid meet" behavior: 16:9 aspect ratio */
+  width: min(100%, calc(100vh * 16 / 9));
+  height: min(calc(100vw * 9 / 16), 100%);
+  overflow: hidden;
 }
 
 .tank-layer {
@@ -1108,7 +1297,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   z-index: 0;
   pointer-events: none;
@@ -1121,6 +1310,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   width: 100%;
   height: 100%;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hangar-bg-wrapper {
@@ -1136,11 +1328,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   right: 20px;
 
   /* Поднимаем кнопку НАД всеми слоями сцены */
-  z-index: 9999 !important;
+  z-index: 9999;
 
   /* Гарантируем, что кнопка кликабельна и видима */
-  pointer-events: auto !important;
-  display: inline-flex !important;
+  pointer-events: auto;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
@@ -1155,7 +1347,15 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
   /* Тень для визуального отделения от фона */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: background 0.2s, transform 0.1s;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+}
+
+/* Скрываем кнопки переключения видов и рентгена, когда открыто стартовое меню */
+.start-menu-container:not(.is-hidden)~.game-scene .view-switch-btn,
+.start-menu-container:not(.is-hidden)~.game-scene .xray-btn {
+  display: none !important;
 }
 
 .view-switch-btn:hover {
@@ -1256,7 +1456,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-family: inherit;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .xray-btn:hover {
@@ -1282,7 +1485,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   pointer-events: none;
   z-index: 5;
   will-change: transform, opacity, filter;
-  transition: opacity 0.3s ease, filter 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 /* === Состояние рентгена (подгонка под фото) === */
@@ -1305,28 +1510,28 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* === Анимации перехода === */
 
-
 @keyframes xrayFade {
   0% {
     opacity: 0.7;
     filter: brightness(0.8) contrast(1.2);
   }
+
   50% {
     opacity: 1;
     filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
   }
+
   100% {
     opacity: 1;
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
   }
 }
 
-
-
 @keyframes normalFade {
   0% {
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
   }
+
   100% {
     filter: none;
   }
@@ -1342,12 +1547,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .tank-layer-side-right {
-      bottom: 4%;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 70%;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 70%;
 }
-
 
 /***/
 /*#tank-side-right-view {
@@ -1365,34 +1569,47 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* === Рентген-режим для вида справа (подгонка под фото) === */
 #tank-side-right-view .tank-layer-side-right.xray-active {
   bottom: 11% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    height: 52% !important;
-    width: auto !important;
-    max-width: none !important;
-    object-fit: contain !important;
-    object-position: center !important;
-    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
-
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  height: 52% !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.15));
 }
 
 #tank-side-right-view .tank-layer-side-right.xray-active:hover {
   filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.6));
-  
 }
 
 /* === Анимации перехода для вида справа === */
 
-
 @keyframes xrayFade {
-  0% { opacity: 0.7; filter: brightness(0.8) contrast(1.2); }
-  50% { opacity: 1; filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4)); }
-  100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
+  0% {
+    opacity: 0.7;
+    filter: brightness(0.8) contrast(1.2);
+  }
+
+  50% {
+    opacity: 1;
+    filter: brightness(1.1) contrast(1.4) drop-shadow(0 0 10px rgba(0, 255, 255, 0.4));
+  }
+
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
 }
 
 @keyframes normalFade {
-  0% { filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3)); }
-  100% { filter: none; }
+  0% {
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  }
+
+  100% {
+    filter: none;
+  }
 }
 
 /* === Кнопка рентгена (универсальная) === */
@@ -1410,7 +1627,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   font-family: inherit;
   font-size: 14px;
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 #tank-side-right-view .xray-btn:hover {
@@ -1425,6 +1645,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   color: #fff;
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
+
 /* === Сцена ящика ЗИП === */
 #scene-zip-box {
   position: absolute;
@@ -1487,13 +1708,22 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Анимация подсказки */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 #scene-zip-box .hitbox[data-zone="zip-key"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
 
 #scene-zip-box .hitbox[data-zone="zip-key"]:hover {
@@ -1507,21 +1737,39 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   stroke: transparent !important;
 }
 
-
 /* Состояния по умолчанию */
-.cmd-bg-straight { opacity: 1; }
-.cmd-bg-tilted-down { opacity: 0; }
-.cmd-bg-tilted-up { opacity: 0; }
+.cmd-bg-straight {
+  opacity: 1;
+}
+
+.cmd-bg-tilted-down {
+  opacity: 0;
+}
+
+.cmd-bg-tilted-up {
+  opacity: 0;
+}
 
 /* При наклоне головы */
-.commander-view-tilted .cmd-bg-straight { opacity: 0; }
-.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+.commander-view-tilted .cmd-bg-straight {
+  opacity: 0;
+}
+
+.commander-view-tilted .cmd-bg-tilted-down {
+  opacity: 1;
+}
 
 /* При поднятом рычаге (скрываем опущенный, показываем поднятый) */
-.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
-.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+.commander-view-tilted.valve-up .cmd-bg-tilted-down {
+  opacity: 0;
+}
 
-/**//* === Фоны сцены командира === */
+.commander-view-tilted.valve-up .cmd-bg-tilted-up {
+  opacity: 1;
+}
+
+/**/
+/* === Фоны сцены командира === */
 #scene-commander .cmd-bg {
   position: absolute;
   inset: 0;
@@ -1534,27 +1782,49 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /* Состояния по умолчанию */
-#scene-commander .cmd-bg-straight { opacity: 1; }
-#scene-commander .cmd-bg-tilted-down { opacity: 0; }
-#scene-commander .cmd-bg-tilted-up { opacity: 0; }
+#scene-commander .cmd-bg-straight {
+  opacity: 1;
+}
+
+#scene-commander .cmd-bg-tilted-down {
+  opacity: 0;
+}
+
+#scene-commander .cmd-bg-tilted-up {
+  opacity: 0;
+}
 
 /* Наклон головы: показываем tilted-down */
-#scene-commander.commander-view-tilted .cmd-bg-straight { opacity: 0; }
-#scene-commander.commander-view-tilted .cmd-bg-tilted-down { opacity: 1; }
+#scene-commander.commander-view-tilted .cmd-bg-straight {
+  opacity: 0;
+}
+
+#scene-commander.commander-view-tilted .cmd-bg-tilted-down {
+  opacity: 1;
+}
 
 /* Наклон + рычаг поднят: показываем tilted-up вместо tilted-down */
-#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down { opacity: 0; }
-#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up { opacity: 1; }
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-down {
+  opacity: 0;
+}
+
+#scene-commander.commander-view-tilted.valve-up .cmd-bg-tilted-up {
+  opacity: 1;
+}
 
 /**/
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
+
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"]:hover {
   fill: rgba(100, 200, 255, 0.4) !important;
   stroke: rgba(100, 200, 255, 0.95) !important;
 }
+
 #scene-zip-box .hitbox[data-zone="zip-exhaust-cap"].hidden {
   pointer-events: none;
   fill: transparent !important;
@@ -1564,14 +1834,67 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* Установка козырька на выхлоп */
 #scene-heater .hitbox[data-zone="install-exhaust-cap"] {
   cursor: pointer;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  transition:
+    fill 0.2s ease,
+    stroke 0.2s ease;
 }
+
 #scene-heater .hitbox[data-zone="install-exhaust-cap"]:hover {
   fill: rgba(0, 255, 100, 0.4) !important;
   stroke: rgba(0, 255, 100, 0.95) !important;
 }
+
 #scene-heater .hitbox[data-zone="install-exhaust-cap"].hidden {
   pointer-events: none;
   fill: transparent !important;
   stroke: transparent !important;
+}
+
+/* === Анимация дыма из выхлопной трубы (вид сверху) === */
+/* === Плотный дым из выхлопной трубы (вид сверху) === */
+.exhaust-smoke {
+  position: absolute;
+  left: 22%; 
+  top: 14%;
+  width: 100px; /* Увеличили зону генерации */
+  height: 100px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.smoke-particle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  /* Базовый размер увеличен с 30px до 45px */
+  width: 450px;
+  height: 450px;
+  /* Более плотный и темный градиент */
+  background: radial-gradient(circle, rgba(50, 50, 50, 0.95) 0%, rgba(30, 30, 30, 0) 75%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.5);
+  animation: smokeRiseDense 2.2s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes smokeRiseDense {
+  0% {
+    opacity: 0.9; /* Почти полная непрозрачность при рождении */
+    transform: translateX(-50%) translateY(0) scale(0.5);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translateX(-30%) translateY(-40px) scale(1.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-60%) translateY(-100px) scale(3.5); /* Сильнее расширяется */
+  }
+}
+.invisible {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  /* Дополнительно страхует от кликов */
 }
