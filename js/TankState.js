@@ -5,8 +5,9 @@ class TankState {
     this.parkingBrakeLatched = false;
     this.commanderView = 'straight';
     this.scenario = {
-      startMethod: "starter-generator",
-      ambientTempC: 15,
+      startMethod: "prestart-preparation",
+      ambientTempC: 20,
+      fuelType: "diesel",
     };
 
     // Cabin controls state
@@ -17,6 +18,7 @@ class TankState {
     this.shutters = 0; // 0-4: 0=closed, 1=half-closed, 2=middle, 3=half-open, 4=open
     this.rightTank = false;
     this.fuelPrimerLever = false;
+    this.fuelPrimerPumps = 0; // number of primer lever pumps
     this.fuelManualFeed = 0; // 0-100
     this.gearLever = 'neutral'; // neutral, 1, 2, 3, 4, 5, R
     this.gasPedal = false;
@@ -29,14 +31,13 @@ class TankState {
     this.mznEngine = false;
     this.ammeterButton = false;
 
-    this.leftRightTanks = 1; // 0=right, 1=middle, 2=left
+    this.leftRightTanks = 1; // 0=right, 1=left
     this.sparkPlug = 1; // 0=right, 1=middle, 2=left
     this.engineStart = 1; // 0=right, 1=middle, 2=left
 
     this.emergencyHatchRotation = false;
     this.oilPumpGearbox = false;
-    this.commanderCall = false;
-    this.airIntake = false;
+    // Note: commander-call and air-intake are now indicator lamps only (in lamps object)
 
     // Instrument panel remaining toggles (tmb1/tmb2)
     this.cabinLight = false;
@@ -48,14 +49,14 @@ class TankState {
     this.lightsAll = false;
     this.waterAntifreeze = false;
     this.gpk = false;
-    this.bcaTca = false;
+    this.bcaTca = 1; // 0=БЦН, 1=off, 2=ТДА
     this.mznTow = 0; // 0=closed, 1=open idle, 2=open pressed
     this.starter = 0; // 0=closed, 1=open idle, 2=open pressed
     this.signalLamps = 0; // 0=closed cover, 1=open, 2=on
 
     this.sensors = {
-      air_left_cylinder: 80.0,
-      air_right_cylinder: 80.0,
+      air_left_cylinder: 150.0,
+      air_right_cylinder: 150.0,
       air_start_pressure: 0.0,
       engine_rpm: 0,
       oil_pressure_engine: 0.0,
@@ -66,8 +67,8 @@ class TankState {
       voltage: 0.0,
       amperage: 0.0,
       speed_kmh: 0.0,
-      fuel_level_internal: 100.0,
-      fuel_level_external: 100.0,
+      fuel_level_internal: 190.0,
+      fuel_level_external: 400.0,
       is_bcn_active: false,
       is_mzn_active: false,
     };
@@ -78,9 +79,13 @@ class TankState {
       overheat: false,
       fuel_reserve: false,
       gear_engaged: false,
+      commander_call: false,
+      air_intake: false,
     };
 
     this._engineRunning = false;
+    this._engineJustStarted = false;
+    this._engineRunTime = 0; // Track engine run time for VA-540 charge current curve
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -115,6 +120,7 @@ class TankState {
     this.shutters = 0;
     this.rightTank = false;
     this.fuelPrimerLever = false;
+    this.fuelPrimerPumps = 0;
     this.fuelManualFeed = 0;
     this.gearLever = "neutral";
     this.gasPedal = false;
@@ -126,14 +132,13 @@ class TankState {
     this.mznEngine = false;
     this.ammeterButton = false;
 
-    this.leftRightTanks = 1;
+    this.leftRightTanks = 1; // 0=right, 1=left
     this.sparkPlug = 1;
     this.engineStart = 1;
 
     this.emergencyHatchRotation = false;
     this.oilPumpGearbox = false;
-    this.commanderCall = false;
-    this.airIntake = false;
+    // Note: commander-call and air-intake lamps are reset via lamps object above
 
     this.heating = false;
     this.combined = false;
@@ -143,13 +148,13 @@ class TankState {
     this.lightsAll = false;
     this.waterAntifreeze = false;
     this.gpk = false;
-    this.bcaTca = false;
+    this.bcaTca = 1; // 0=БЦН, 1=off, 2=ТДА
     this.mznTow = 0;
     this.starter = 0;
     this.signalLamps = 0;
 
-    this.sensors.air_left_cylinder = 80.0;
-    this.sensors.air_right_cylinder = 80.0;
+    this.sensors.air_left_cylinder = 150.0;
+    this.sensors.air_right_cylinder = 150.0;
     this.sensors.air_start_pressure = 0.0;
     this.sensors.engine_rpm = 0;
     this.sensors.oil_pressure_engine = 0.0;
@@ -170,8 +175,12 @@ class TankState {
     this.lamps.overheat = false;
     this.lamps.fuel_reserve = false;
     this.lamps.gear_engaged = false;
+    this.lamps.commander_call = false;
+    this.lamps.air_intake = false;
 
     this._engineRunning = false;
+    this._engineJustStarted = false;
+    this._engineRunTime = 0;
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._timeSinceLastEmit = 0;
@@ -205,6 +214,7 @@ class TankState {
   _emit() {
     const snapshot = this.getSnapshot();
     for (const listener of this._listeners) listener(snapshot);
+    this._engineJustStarted = false;
   }
 
 
@@ -216,11 +226,13 @@ class TankState {
       brakeEffective: this.isBrakePressed || this.parkingBrakeLatched,
       parkingBrakeLatched: this.parkingBrakeLatched,
       engineRunning: this._engineRunning,
+      engineJustStarted: this._engineJustStarted,
       cabinLight: this.cabinLight,
 
       scenario: { ...this.scenario },
       scenario_start_method: this.scenario.startMethod,
       scenario_ambient_temp_c: this.scenario.ambientTempC,
+      scenario_fuel_type: this.scenario.fuelType,
       manometer: this.manometer,
       instrumentPanel: this.instrumentPanel,
       leftTank: this.leftTank,
@@ -228,6 +240,7 @@ class TankState {
       shutters: this.shutters,
       rightTank: this.rightTank,
       fuelPrimerLever: this.fuelPrimerLever,
+      fuelPrimerPumps: this.fuelPrimerPumps,
       fuelManualFeed: this.fuelManualFeed,
       gearLever: this.gearLever,
       gasPedal: this.gasPedal,
@@ -242,8 +255,7 @@ class TankState {
       engineStart: this.engineStart,
       emergencyHatchRotation: this.emergencyHatchRotation,
       oilPumpGearbox: this.oilPumpGearbox,
-      commanderCall: this.commanderCall,
-      airIntake: this.airIntake,
+      // Note: commanderCall and airIntake are now in lamps object only
       heating: this.heating,
       combined: this.combined,
       leftLights: this.leftLights,
@@ -282,6 +294,8 @@ class TankState {
       lamp_overheat: this.lamps.overheat,
       lamp_fuel_reserve: this.lamps.fuel_reserve,
       lamp_gear_engaged: this.lamps.gear_engaged,
+      lamp_commander_call: this.lamps.commander_call,
+      lamp_air_intake: this.lamps.air_intake,
       hingeLatch1: this.hingeLatch1,
       hingeLatch2: this.hingeLatch2,
       hingeLatch3: this.hingeLatch3,
@@ -301,7 +315,7 @@ class TankState {
     };
   }
 
-  setScenario({ startMethod, ambientTempC } = {}) {
+  setScenario({ startMethod, ambientTempC, fuelType } = {}) {
     let changed = false;
 
     if (typeof startMethod === "string" && startMethod) {
@@ -315,6 +329,13 @@ class TankState {
       const nextTemp = Math.round(ambientTempC);
       if (this.scenario.ambientTempC !== nextTemp) {
         this.scenario.ambientTempC = nextTemp;
+        changed = true;
+      }
+    }
+
+    if (fuelType === "diesel" || fuelType === "gasoline") {
+      if (this.scenario.fuelType !== fuelType) {
+        this.scenario.fuelType = fuelType;
         changed = true;
       }
     }
@@ -368,6 +389,32 @@ class TankState {
     return true;
   }
 
+  /**
+   * Calculate generator charge current for VA-540 voltmeter-ammeter
+   * Based on technical manual for T-72 tank electrical system
+   * @param {number} runTime - seconds since engine started
+   * @param {number} dischargeLoad - current consumption in A (to cover)
+   * @returns {number} charge current in A (positive = charging)
+   */
+  _calculateChargeCurrent(runTime, dischargeLoad) {
+    // Initial peak charge after start: +200 to +300 A
+    // Settles over several minutes to +20 to +40 A (covering consumption + trickle charge)
+
+    // Charge curve: exponential decay from peak to steady state
+    const peakCharge = 250.0; // A - initial high charge
+    const steadyCharge = dischargeLoad + 25.0; // Cover consumption + ~25A for systems
+
+    // Time constants from manual:
+    // - First minute: significant drop from peak
+    // - Several minutes: settles to steady state
+    const timeConstant = 60.0; // 1 minute for noticeable drop
+    const decayFactor = Math.exp(-runTime / timeConstant);
+
+    const chargeCurrent = steadyCharge + (peakCharge - steadyCharge) * decayFactor;
+
+    return Math.max(steadyCharge, chargeCurrent); // Never below steady state
+  }
+
   tick(dt) {
     if (!Number.isFinite(dt) || dt <= 0) return;
     dt = Math.min(dt, 0.25);
@@ -376,6 +423,7 @@ class TankState {
 
     const isMassOn = Boolean(this.isBatteryOn);
     const starterPressed = this.starter === 2;
+    const epkPressed = Boolean(this.epk);
 
     if (this.isBrakePressed) {
       this._brakeHoldTime += dt;
@@ -409,7 +457,12 @@ class TankState {
     changed = this._setSensorBool("is_bcn_active", isBcnActive) || changed;
     changed = this._setSensorBool("is_mzn_active", isMznActive) || changed;
 
-    let targetFuelPressure = this._engineRunning ? 1.8 : (isBcnActive ? 1.8 : 0.0);
+    let targetFuelPressure = 0.0;
+    if (this._engineRunning) {
+      targetFuelPressure = 1.8;
+    } else if (isBcnActive && this.fuelPrimerPumps >= 3) {
+      targetFuelPressure = 1.8;
+    }
     const fuelPressure = this._approach(this.sensors.fuel_pressure, targetFuelPressure, 3.0, dt);
     changed = this._setSensor("fuel_pressure", fuelPressure, { min: 0, max: 3 }) || changed;
 
@@ -426,7 +479,8 @@ class TankState {
     }
 
     const canCrank = isMassOn && baseVoltage >= 18.0;
-    const starterSag = starterPressed && canCrank ? 5.0 : 0.0;
+    const airStartPressed = requiresAirStart && epkPressed;
+    const starterSag = !requiresAirStart && starterPressed && canCrank ? 5.0 : 0.0;
     const voltage = this._clamp(baseVoltage - starterSag, 0.0, 30.0);
     changed = this._setSensor("voltage", voltage, { min: 0, max: 30 }) || changed;
 
@@ -440,28 +494,31 @@ class TankState {
     if (leftAirOpen) openPressures.push(leftAir);
     if (rightAirOpen) openPressures.push(rightAir);
     const airStartPressure = openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0.0;
-    changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 100 }) || changed;
+    changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 165 }) || changed;
 
-    const isCranking = starterPressed && canCrank && !this._engineRunning;
+    const isAirCranking = airStartPressed && canCrank && !this._engineRunning;
+    const isStarterCranking = !requiresAirStart && starterPressed && canCrank && !this._engineRunning;
+    const isCranking = isAirCranking || isStarterCranking;
 
     if (bleedOpen) {
       const bleedRate = 6.0;
-      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", leftAir - bleedRate * dt, { min: 0, max: 100 }) || changed;
-      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 100 }) || changed;
+      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", leftAir - bleedRate * dt, { min: 0, max: 165 }) || changed;
+      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 165 }) || changed;
     }
 
-    if (isCranking && requiresAirStart) {
-      const crankAirRate = 2.2;
-      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
-      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 100 }) || changed;
+    if (isAirCranking) {
+      const crankAirRate = 0.9;
+      if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
+      if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
     }
 
     const fuelOk = fuelPressure >= 0.8;
     const airOk = requiresAirStart ? airStartPressure >= 10.0 : true;
-    const primerOk = Boolean(this.fuelPrimerLever);
-    const manualOk = this.fuelManualFeed >= 10;
+    const primerOk = this.fuelPrimerPumps >= 3;
+    const fuelCommandOk = requiresAirStart ? Boolean(this.gasPedal) : this.fuelManualFeed >= 10;
+    const oilStartOk = requiresAirStart ? (isMznActive && this.sensors.oil_pressure_engine >= 2.0) : true;
 
-    if (isCranking && fuelOk && airOk && manualOk && primerOk) {
+    if (isCranking && fuelOk && airOk && fuelCommandOk && primerOk && oilStartOk) {
       this._crankTime += dt;
     } else {
       this._crankTime = 0;
@@ -469,11 +526,19 @@ class TankState {
 
     if (!this._engineRunning && this._crankTime >= 1.5) {
       this._engineRunning = true;
+      this._engineJustStarted = true;
+      this._engineRunTime = 0;
       this._crankTime = 0;
     }
 
     if (this._engineRunning && (!fuelOk || !isMassOn) && this.sensors.engine_rpm <= 850) {
       this._engineRunning = false;
+      this._engineRunTime = 0;
+    }
+
+    // Track engine run time for charge current curve
+    if (this._engineRunning) {
+      this._engineRunTime += dt;
     }
 
     const throttle = this._clamp((this.gasPedal ? 0.7 : 0.0) + (this.fuelManualFeed / 100) * 0.5, 0.0, 1.0);
@@ -532,17 +597,48 @@ class TankState {
     else speed = this._approach(speed, speedTarget, decel, dt);
     changed = this._setSensor("speed_kmh", speed, { min: 0, max: 100 }) || changed;
 
-    // Amperage: depends on ammeterButton state
+    // VA-540 Voltammeter physics (asymmetric scale: 100-0-500 A)
+    // Negative values = discharge (left of zero, 0-100A scale)
+    // Positive values = charge (right of zero, 0-500A scale)
     let targetAmperage = 0.0;
-    if (isMassOn && this.ammeterButton) {
+
+    if (isMassOn) {
+      // Base consumption: КИП (instrument panel) + control systems
+      let dischargeCurrent = 5.0; // ~5-10 A base load
+
+      // БЦН (fuel priming pump) consumption
+      if (isBcnActive) {
+        dischargeCurrent += 20.0; // ~20-30 A total with BCN
+      }
+
+      // МЗН (engine oil priming pump) - high current draw
+      if (isMznActive) {
+        dischargeCurrent = 80.0; // ~70-90 A peak
+      }
+
+      // Starter cranking: main current bypasses shunt, but auxiliary systems draw power
+      // Starter relay + Ignition "Impulse" + start valve + MZN if active
+      if (isCranking) {
+        dischargeCurrent = 100.0; // Hits -100A (left limit), may vibrate slightly
+      }
+
       if (this._engineRunning) {
-        targetAmperage = 50.0; // Charging when engine running
+        // Generator mode: SG-10-1S produces power
+        // Initially high charge current, then settles as batteries recover
+        const runTime = this._engineRunTime || 0;
+        const chargeCurrent = this._calculateChargeCurrent(runTime, dischargeCurrent);
+        targetAmperage = chargeCurrent;
       } else {
-        targetAmperage = -200.0; // Discharging when engine off
+        // Battery discharge mode (negative values = left of zero on gauge)
+        targetAmperage = -dischargeCurrent;
       }
     }
-    const amperage = this._approach(this.sensors.amperage, targetAmperage, 100.0, dt);
-    changed = this._setSensor("amperage", amperage, { min: 0, max: 500 }) || changed;
+
+    // Apply needle inertia: ~3 seconds settling time for VA-540
+    // Use slower approach rate for realistic mechanical inertia
+    const inertiaRate = 50.0; // ~3 sec full-scale (100A / 50 per sec = 2 sec, 500A / 50 = 10 sec, balanced)
+    const amperage = this._approach(this.sensors.amperage, targetAmperage, inertiaRate, dt);
+    changed = this._setSensor("amperage", amperage, { min: -100, max: 500 }) || changed;
 
     // Fuel levels: internal (0-190L) and external (100-400L) based on leftRightTanks
     let fuelLevelInternal = this.sensors.fuel_level_internal;
@@ -567,6 +663,8 @@ class TankState {
     changed = this._setLamp("overheat", lampTest || coolantTemp >= 112.0 || oilTemp >= 112.0) || changed;
     changed = this._setLamp("fuel_reserve", lampTest || fuelLevelInternal <= 15.0) || changed;
     changed = this._setLamp("gear_engaged", lampTest || this.gearLever !== "neutral") || changed;
+    changed = this._setLamp("commander_call", lampTest) || changed;
+    changed = this._setLamp("air_intake", lampTest) || changed;
 
     this._timeSinceLastEmit += dt;
     if (changed || this._timeSinceLastEmit >= 0.25) {
@@ -659,7 +757,8 @@ class TankState {
     this._emit();
   }
 
-  toggleFuelPrimerLever() {
+  pumpFuelPrimerLever() {
+    this.fuelPrimerPumps += 1;
     this.fuelPrimerLever = !this.fuelPrimerLever;
     this._emit();
   }
@@ -674,14 +773,14 @@ class TankState {
   }
 
   cycleGearLever() {
-    const gears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    const gears = ['neutral', '1', '2', '3', '4', '5', '6', '7', 'R'];
     const currentIndex = gears.indexOf(this.gearLever);
     this.gearLever = gears[(currentIndex + 1) % gears.length];
     this._emit();
   }
 
   setGearLever(gear) {
-    const validGears = ['neutral', '1', '2', '3', '4', '5', 'R'];
+    const validGears = ['neutral', '1', '2', '3', '4', '5', '6', '7', 'R'];
     if (validGears.includes(gear)) {
       this.gearLever = gear;
       this._emit();
@@ -731,7 +830,7 @@ class TankState {
   }
 
   cycleLeftRightTanks() {
-    this.leftRightTanks = (this.leftRightTanks + 1) % 3;
+    this.leftRightTanks = this.leftRightTanks === 0 ? 1 : 0;
     this._emit();
   }
 
@@ -755,15 +854,7 @@ class TankState {
     this._emit();
   }
 
-  toggleCommanderCall() {
-    this.commanderCall = !this.commanderCall;
-    this._emit();
-  }
-
-  toggleAirIntake() {
-    this.airIntake = !this.airIntake;
-    this._emit();
-  }
+  // Note: toggleCommanderCall and toggleAirIntake removed - these are now indicator lamps only
 
   toggleHeating() {
     this.heating = !this.heating;
@@ -805,9 +896,21 @@ class TankState {
     this._emit();
   }
 
-  toggleBcaTca() {
-    this.bcaTca = !this.bcaTca;
+  cycleBcaTca() {
+    // 0=БЦН, 1=off, 2=ТДА
+    // Cycle: 1 -> 0 -> 2 -> 1
+    if (this.bcaTca === 1) {
+      this.bcaTca = 0;
+    } else if (this.bcaTca === 0) {
+      this.bcaTca = 2;
+    } else {
+      this.bcaTca = 1;
+    }
     this._emit();
+  }
+
+  toggleBcaTca() {
+    this.cycleBcaTca();
   }
 
   cycleMznTow() {
