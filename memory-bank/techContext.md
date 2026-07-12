@@ -10,25 +10,25 @@
 | Сборка      | Нет (native ES modules) | -              |
 | Зависимости | Нет                     | -              |
 
-**Принцип:** NO frameworks, NO external libraries. Финальный билд должен быть лёгким и работать на legacy Windows машинах.
+**Принцип:** NO frameworks, NO external libraries. Финальный билд должен быть лёгким и работать на legacy Windows машинах в оффлайн-режиме.
 
 ## Браузерные API
 
 ### Используемые
 
-- **ES Modules** — `import`/`export` для модульности
-- **requestAnimationFrame** — игровой цикл
-- **Fullscreen API** — полноэкранный режим
-- **DOM Events** — click, mousedown/up, touchstart/end, keydown
-- **SVG** — хитбоксы через `<polygon>`
-- **CSS Custom Properties** — позиционирование оверлеев (`--x`, `--y`, etc.)
-- **CSS Transitions** — анимации переключения
+- **ES Modules** — модульная структура через нативные `import`/`export`.
+- **requestAnimationFrame** — плавный и энергоэффективный игровой цикл.
+- **Fullscreen API** — развертывание симулятора на весь экран с блокировкой масштабирования.
+- **Web Audio API** — управление звуковым сопровождением (`AudioContext`, HTML5 `Audio`), динамическое управление скоростью воспроизведения (`playbackRate`) и громкостью звуков двигателя.
+- **DOM Events** — обработка кликов, удерживания (mousedown/mouseup, touchstart/touchend), движения мыши (mousemove) и отслеживания ховеров.
+- **SVG** — векторный слой хитбоксов `<polygon>` с сохранением пропорций (`xMidYMid meet`).
+- **CSS Custom Properties** — передача динамических координат (`--x`, `--y`, `--w`, `--h`) и углов поворота стрелок (`--rot`, `--pivot-x`, `--pivot-y`) из JS в стили.
+- **CSS Transitions & Animations** — сглаживание движения стрелок, анимации выхлопного дыма и переключения видов.
 
 ### Не используемые (намеренно)
 
-- Canvas API
+- Canvas API (кроме возможного использования для сложных эффектов, но сейчас все эффекты на DOM+CSS)
 - WebGL
-- Web Audio
 - Service Workers
 - IndexedDB
 
@@ -36,104 +36,86 @@
 
 ```
 tank/
-├── index.html              # Единственный HTML файл
-├── main.js                 # Точка входа (ES module)
+├── index.html              # Единственный HTML файл (разметка сцен и модалок)
+├── main.js                 # Точка входа (ES module, инициализация, игровой цикл)
 ├── styles.css              # Все стили в одном файле
 ├── js/                     # JavaScript модули
-│   ├── TankState.js
-│   ├── UIController.js
-│   ├── ControlOverlayDefs.js
-│   ├── SceneManager.js
-│   ├── HangarScene.js
-│   ├── DriverScene.js
-│   ├── CommanderScene.js
-│   ├── TrainingEngine.js
-│   ├── TrainingScenarios.js
-│   ├── StartMenu.js
-│   ├── FullscreenManager.js
-│   └── FinishReportModal.js
+│   ├── TankState.js        # Состояние и физическая модель танка
+│   ├── UIController.js     # Контроллер интерфейса, оверлеев и стрелок
+│   ├── ControlOverlayDefs.js # Справочник оверлеев и параметров приборов
+│   ├── SceneManager.js     # Управление сценами
+│   ├── StartMenu.js        # Экран выбора сценария запуска
+│   ├── FullscreenManager.js # Менеджер полноэкранного режима
+│   ├── FinishReportModal.js # Отчет о результатах
+│   ├── ActionNotifier.js   # Менеджер уведомлений
+│   ├── scenes/             # Сцены
+│   │   ├── HangarScene.js
+│   │   ├── DriverScene.js
+│   │   └── CommanderScene.js
+│   ├── scenarios/          # Описания сценариев шагов
+│   │   ├── index.js
+│   │   ├── preparation-to-start.js
+│   │   └── air-start.js
+│   ├── views/              # Классы представлений ангара
+│   │   ├── TankTopView.js
+│   │   ├── TankSideView.js
+│   │   └── TankSideRightView.js
+│   ├── audio/              # Звуковая подсистема
+│   │   └── AudioManager.js
+│   └── smoke/              # Эффекты частиц
+│       └── ExhaustSmoke.js
 ├── img/                    # Спрайты и фоны
-│   ├── 1/ - 12/           # Спрайты элементов управления
-│   ├── hangar/            # Фоны ангара
-│   ├── commander/         # Фоны командира
-│   ├── фон.jpg            # Фон кабины водителя
-│   └── Прибор фон.png     # Фон приборной панели
-└── memory-bank/            # Документация для AI
+├── sounds/                 # Аудиофайлы MP3/WAV
+└── memory-bank/            # Системная документация
 ```
 
 ## Соглашения кода
 
 ### Именование
 
-- **Классы** — PascalCase (`TankState`, `UIController`)
-- **Методы/функции** — camelCase (`toggleBattery`, `_emit`)
-- **Приватные** — underscore prefix (`_listeners`, `_render`)
-- **Константы** — UPPER_SNAKE_CASE (`APP_MODE`, `CONTROL_OVERLAY_DEFS`)
-- **CSS классы** — kebab-case (`hitbox-layer`, `overlay-control`)
-- **data-атрибуты** — kebab-case (`data-action`, `data-bcn-mode`)
+- **Классы** — PascalCase (`TankState`, `UIController`, `AudioManager`).
+- **Методы/функции** — camelCase (`toggleBattery`, `_emit`, `updateEngineSound`).
+- **Приватные методы/свойства** — префикс в виде одинарного подчеркивания (`_listeners`, `_render`, `_calculateChargeCurrent`).
+- **Константы** — UPPER_SNAKE_CASE (`APP_MODE`, `CONTROL_OVERLAY_DEFS`).
+- **CSS-классы** — kebab-case (`hitbox-layer`, `overlay-control`, `smoke-particle`).
+- **data-атрибуты** — kebab-case (`data-action`, `data-bcn-mode`, `data-zone`).
 
 ### Модули
 
-Каждый файл экспортирует один основной класс/объект:
-
+Каждый JS-файл представляет собой ES-модуль с явным экспортом:
 ```javascript
-// TankState.js
-class TankState { ... }
-export { TankState };
-
-// main.js
-import { TankState } from './js/TankState.js';
+// js/audio/AudioManager.js
+export class AudioManager { ... }
 ```
 
 ## Режимы работы
 
-### Debug mode
+Режим переключается через константу `APP_MODE` в `main.js`:
 
-```javascript
-const APP_MODE = "debug";
-const IS_DEBUG = true;
-document.body.classList.add("app-debug");
-```
+### Debug mode (`APP_MODE = "debug"`)
+- Тело документа получает класс `.app-debug`.
+- Визуально отображаются хитбоксы (красный полупрозрачный цвет).
+- Оверлеи элементов управления получают синюю рамку для проверки позиционирования.
+- В консоли выводятся текстовые метки хитбоксов.
+- Отладочная консоль показывает полный внутренний дамп переменных состояния, сенсоров и ламп.
+- Доступно переключение видимости хитбоксов по клавише `H`.
 
-Особенности:
-
-- Видимые хитбоксы (красная заливка)
-- Подсветка оверлеев (голубой outline)
-- Текстовые метки на хитбоксах
-- Полный дамп состояния в консоли
-- Клавиша H — toggle хитбоксов
-
-### Production mode
-
-```javascript
-const APP_MODE = "prod";
-const IS_DEBUG = false;
-document.body.classList.add("app-prod");
-```
-
-Особенности:
-
-- Невидимые хитбоксы
-- Усиленная подсветка при hover (glow)
-- Телеметрия на русском в консоли
-- Без отладочной информации
+### Production mode (`APP_MODE = "prod"`)
+- Тело документа получает класс `.app-prod`.
+- Хитбоксы полностью прозрачны и не видны пользователю.
+- При наведении на элементы управления применяется эффект свечения (glow).
+- Отладочная консоль превращается в бортовой щиток телеметрии с русскоязычными показаниями приборов.
+- Скрываются любые служебные маркеры.
 
 ## Координатная система
 
-- **viewBox**: 1920×1080 (соответствует разрешению фонов)
-- **Позиция оверлеев**: проценты от размера контейнера (0-100)
-- **Смещения в ControlOverlayDefs**: пиксели viewBox
-
-```javascript
-// Преобразование viewBox → проценты
-const x = (left / 1920) * 100;
-const y = (top / 1080) * 100;
-```
+- **Координаты SVG**: Базовое разрешение 1920×1080 пикселей. Все точки полигонов хитбоксов жестко прописаны в этих координатах.
+- **Координаты оверлеев**: Вычисляются динамически в JS как процентное отношение от ширины/высоты viewBox и передаются в CSS переменные `--x`, `--y`, `--w`, `--h`.
+- **Смещения в оверлеях**: Настраиваются в пикселях оригинального viewBox (`offsetX`, `offsetY`) для точного наложения спрайта на хитбокс.
 
 ## Ограничения и требования
 
-1. **Legacy support** — должно работать на старых Windows машинах
-2. **Offline** — не требует сервера для работы (кроме dev)
-3. **Fullscreen** — оптимизировано под полноэкранный режим
-4. **Touch support** — поддержка тач-устройств
-5. **No build step** — нативные ES modules без бандлера
+1. **Legacy support** — работоспособность в старых версиях браузеров (поддерживающих ES6) без компиляции.
+2. **Offline-first** — симулятор полностью автономен и не выполняет сетевых запросов. Все ресурсы (изображения, аудио) должны находиться в локальных папках.
+3. **Разблокировка звука** — браузерное ограничение на автовоспроизведение обходится через глобальный слушатель первого клика/нажатия клавиши на странице, инициализирующий `AudioContext`.
+4. **Масштабирование** — интерфейс адаптируется под экраны с разным соотношением сторон благодаря контейнеру `.overlay-container`, сохраняющему пропорции 16:9.

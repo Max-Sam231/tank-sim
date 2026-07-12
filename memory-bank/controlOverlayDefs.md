@@ -1,51 +1,30 @@
-# ControlOverlayDefs — Определения визуальных оверлеев
+# ControlOverlayDefs — Справочник оверлеев и приборов
 
 **Файл:** `js/ControlOverlayDefs.js`
 
 ## Назначение
 
-Конфигурация для визуального отображения каждого элемента управления. Определяет:
+Содержит статические конфигурации для всех графических наложений элементов управления и стрелок приборов КИП. Он определяет поведение оверлея в зависимости от значения соответствующего поля в `TankState`.
 
-- Тип поведения (boolean/enum/range)
-- Привязку к ключу состояния
-- Пути к спрайтам
-- Параметры позиционирования
+## Типы элементов управления
 
-## Структура определения
-
-```javascript
-const CONTROL_OVERLAY_DEFS = {
-  "action-name": {
-    kind: "boolean" | "enum" | "range",
-    stateKey: "keyInTankState",
-    inflate: 1.0, // Масштаб относительно хитбокса
-    offsetX: 0, // Смещение по X (пиксели viewBox)
-    offsetY: 0, // Смещение по Y (пиксели viewBox)
-    z: 50, // z-index слоя
-    // ... специфичные поля по типу
-  },
-};
-```
-
-## Типы оверлеев
-
-### boolean — Два состояния
-
+### 1. Boolean — Двухпозиционные переключатели
+Переключаются между двумя картинками (`on` и `off`) на основе булевого значения:
 ```javascript
 "battery-toggle": {
   kind: "boolean",
   stateKey: "isBatteryOn",
-  inflate: 1.0,
-  offsetX: 22,
-  offsetY: 5,
-  z: 60,
-  off: "./img/11/11_0001_Слой-2.png",      // Выключено
-  on: "./img/11/11_0000_Слой-289-копия.png" // Включено
+  inflate: 1.0,           // Коэффициент размера относительно хитбокса
+  offsetX: 22,            // Смещение по X (в пикселях viewBox 1920x1080)
+  offsetY: 5,             // Смещение по Y (в пикселях viewBox 1920x1080)
+  z: 60,                  // Слои наложения (z-index)
+  off: "./img/11/11_0001_Слой-2.png",
+  on: "./img/11/11_0000_Слой-289-копия.png",
 }
 ```
 
-### enum — Несколько дискретных состояний
-
+### 2. Enum — Многопозиционные переключатели
+Мапят дискретные состояния (числа или строки) на конкретные оверлеи:
 ```javascript
 "gear-lever": {
   kind: "enum",
@@ -55,21 +34,16 @@ const CONTROL_OVERLAY_DEFS = {
   offsetY: -25,
   z: 80,
   frames: {
-    neutral: { src: "./img/1/...", offsetX: -10, offsetY: -25 },
-    "1": { src: "./img/1/...", offsetX: -10, offsetY: -20 },
-    "2": { src: "./img/1/...", offsetX: -10, offsetY: -14 },
-    "3": { src: "./img/1/...", offsetX: -10, offsetY: -14 },
-    "4": { src: "./img/1/...", offsetX: -8, offsetY: -8 },
-    "5": { src: "./img/1/...", offsetX: -10, offsetY: -6 },
-    R: { src: "./img/1/...", offsetX: -10, offsetY: -6 }
+    neutral: { src: "./img/1/1_0000s_0000_Слой-57-копия-8.png", offsetX: -10, offsetY: -25 },
+    "1": { src: "./img/1/1_0000s_0001_Слой-57-копия-7.png", offsetX: -10, offsetY: -20 },
+    //...
   }
 }
 ```
+*Примечание:* Отдельные кадры могут переопределять глобальные параметры смещения и масштаба.
 
-**Особенность:** Каждый кадр может переопределять `inflate`, `offsetX`, `offsetY`, `z`.
-
-### range — Диапазон значений
-
+### 3. Range — Плавные регуляторы
+Выбирают наиболее подходящий кадр на основе приближенности к ключевым точкам `at`:
 ```javascript
 "fuel-manual-feed": {
   kind: "range",
@@ -79,95 +53,70 @@ const CONTROL_OVERLAY_DEFS = {
   offsetY: 80,
   z: 58,
   frames: [
-    { at: 0, src: "./img/7/...", offsetX: -34, offsetY: 80 },
-    { at: 33, src: "./img/7/...", offsetX: -38, offsetY: 60 },
-    { at: 66, src: "./img/7/...", offsetX: -36, offsetY: 38 },
-    { at: 100, src: "./img/7/...", offsetX: -36, offsetY: 38 }
+    { at: 0, src: "./img/7/7_0000_Слой-306-копия-3.png", offsetX: -34, offsetY: 80 },
+    { at: 33, src: "./img/7/7_0001_Слой-306-копия-2.png", offsetX: -38, offsetY: 60 },
+    { at: 66, src: "./img/7/7_0002_Слой-306-копия.png", offsetX: -36, offsetY: 38 },
+    { at: 100, src: "./img/7/7_0003_Слой-2.png", offsetX: -36, offsetY: 38 }
   ]
 }
 ```
 
-**Логика:** Выбирается кадр с ближайшим значением `at` к текущему `stateKey`.
+### 4. Gauge — Стрелочные индикаторы приборов
+Используются для отображения физических значений на шкалах с помощью вращения стрелки:
+```javascript
+"gauge-coolant-temp": {
+  kind: "gauge",
+  sensorKey: "coolant_temp", // Ключ сенсора в TankState
+  min: 0,                    // Минимальное значение на шкале
+  max: 120,                  // Максимальное значение на шкале
+  cx: 485,                   // Центр вращения по X во viewBox
+  cy: 290,                   // Центр вращения по Y во viewBox
+  arrowW: 151,               // Ширина спрайта стрелки
+  arrowH: 115,               // Высота спрайта стрелки
+  pivotX: 58,                // Точка вращения по X на спрайте стрелки (%)
+  pivotY: 70,                // Точка вращения по Y на спрайте стрелки (%)
+  startAngle: -92,           // Угол в градусах для значения min
+  endAngle: 68,              // Угол в градусах для значения max
+  z: 75,
+  arrowImage: "./img/12/14_0001_Фигура-1-копия-2.png" // Спрайт стрелки
+}
+```
 
-## Полный список элементов управления
+## Полный список приборов КИП (Gauges)
+
+| Идентификатор прибора | Ключ датчика | Диапазон шкалы | Углы (мин/макс) | Особенности |
+| --- | --- | --- | --- | --- |
+| `gauge-coolant-temp` | `coolant_temp` | 0 .. 120 °C | -92° .. +68° | Температура ОЖ двигателя |
+| `gauge-oil-temp` | `oil_temp` | 0 .. 120 °C | -92° .. +68° | Температура масла двигателя |
+| `gauge-voltammeter` | `amperage` / `voltage` | -100..500 А / 0..30 В | -55° .. +55° | Вольтамперметр ВА-540. Асимметричная шкала. При зажатой кнопке `ammeterButton` отображает напряжение (0-30 В). |
+| `gauge-oil-pressure-engine` | `oil_pressure_engine` | 0 .. 15 кгс/см² | -62° .. +62° | Давление масла двигателя |
+| `gauge-oil-pressure-gearbox`| `oil_pressure_gearbox`| 0 .. 15 кгс/см² | -62° .. +62° | Давление смазки в КПП |
+| `gauge-fuel` | `fuel_level_internal` / `_external` | 0..190 л / 100..400 л | -55° .. +55° | Топливомер. При переключателе `leftRightTanks === 0` переключается на внешний бак. |
+| `gauge-speed` | `speed_kmh` | 0 .. 100 км/ч | -100° .. +100° | Спидометр (большая стрелка) |
+| `gauge-rpm` | `engine_rpm` | 0 .. 4000 об/мин | -115° .. +115° | Тахометр |
+
+## Классификация переключателей
 
 ### Кабина водителя
+- `battery-toggle` (boolean): Масса.
+- `gear-lever` (enum): Рычаг КПП (neutral, 1-7, R).
+- `shutters` (enum): Жалюзи радиатора (0, 1, 2, 3, 4).
+- `right-tank` / `left-tank` (boolean): Воздушные баллоны.
+- `gas-pedal` / `brake-pedal` (boolean): Педали.
+- `fuel-manual-feed` (range): Ручной газ.
+- `bcn` (enum): Кран БЦН (off, on, pump).
+- `air-bleed-valve` (boolean): Спуск воздуха.
+- `fuel-primer-lever` (boolean): Ручной насос подкачки.
+- `cabin-light` (boolean): Тумблер плафона кабины.
 
-| Action              | Kind    | StateKey        | Описание                   |
-| ------------------- | ------- | --------------- | -------------------------- |
-| `battery-toggle`    | boolean | isBatteryOn     | Выключатель массы          |
-| `gear-lever`        | enum    | gearLever       | Рычаг переключения передач |
-| `shutters`          | boolean | shutters        | Жалюзи                     |
-| `right-tank`        | boolean | rightTank       | Правый воздушный баллон    |
-| `left-tank`         | boolean | leftTank        | Левый воздушный баллон     |
-| `gas-pedal`         | boolean | gasPedal        | Педаль газа                |
-| `brake-pedal`       | boolean | brakeEffective  | Педаль тормоза             |
-| `fuel-manual-feed`  | range   | fuelManualFeed  | Ручная подача топлива      |
-| `bcn`               | enum    | bcn             | БЦН ТЦА                    |
-| `air-bleed-valve`   | boolean | airBleedValve   | Клапан спуска воздуха      |
-| `fuel-primer-lever` | boolean | fuelPrimerLever | Рычаг ручной подкачки      |
-
-### Приборная панель
-
-| Action                     | Kind    | StateKey               | Описание                  |
-| -------------------------- | ------- | ---------------------- | ------------------------- |
-| `azr`                      | enum    | azr                    | АЗР (0/1/2)               |
-| `epk`                      | boolean | epk                    | ЭПК                       |
-| `horn`                     | boolean | horn                   | Звуковой сигнал           |
-| `mzn-engine`               | boolean | mznEngine              | МЗН двигателя             |
-| `ammeter-button`           | boolean | ammeterButton          | Кнопка амперметра         |
-| `left-right-tanks`         | enum    | leftRightTanks         | Переключатель баков       |
-| `spark-plug`               | enum    | sparkPlug              | Свеча/мотор               |
-| `engine-start`             | enum    | engineStart            | Пуск мотора               |
-| `emergency-hatch-rotation` | boolean | emergencyHatchRotation | Аварийный поворот колпака |
-| `oil-pump-gearbox`         | boolean | oilPumpGearbox         | Откачка масла КП          |
-| `commander-call`           | boolean | commanderCall          | Вызов командира           |
-| `air-intake`               | boolean | airIntake              | ВО                        |
-| `heating`                  | boolean | heating                | Обогрев                   |
-| `combined`                 | boolean | combined               | Комбинированный           |
-| `left-lights`              | boolean | leftLights             | Левые фары                |
-| `right-lights`             | boolean | rightLights            | Правые фары               |
-| `gabrate-lights`           | boolean | gabrateLights          | Габаритные огни           |
-| `lights-all`               | boolean | lightsAll              | Все/задние фонари         |
-| `water-antifreeze`         | boolean | waterAntifreeze        | Вода/антифриз             |
-| `gpk`                      | boolean | gpk                    | ГПК                       |
-| `bca-tca`                  | boolean | bcaTca                 | БЦА/ТЦА                   |
-| `mzn-tow`                  | enum    | mznTow                 | МЗН буксир (0/1/2)        |
-| `starter`                  | enum    | starter                | Стартер (0/1/2)           |
-| `signal-lamps`             | enum    | signalLamps            | Контроль ламп (0/1/2)     |
-
-## Типичные спрайты
-
-Спрайты хранятся в `img/` с нумерованными папками:
-
-```
-img/
-├── 1/  → gear-lever (7 кадров для передач)
-├── 2/  → shutters
-├── 3/  → right-tank
-├── 4/  → left-tank
-├── 5/  → gas-pedal
-├── 6/  → brake-pedal
-├── 7/  → fuel-manual-feed (4 кадра)
-├── 8/  → bcn
-├── 9/  → air-bleed-valve
-├── 10/ → fuel-primer-lever
-├── 11/ → battery-toggle
-├── 12/ → приборная панель (множество спрайтов)
-```
-
-## Позиционирование
-
-1. **Базовая позиция** — центр bounding box хитбокса
-2. **inflate** — масштабирует размер оверлея относительно хитбокса
-3. **offsetX/offsetY** — смещение в пикселях viewBox (1920×1080)
-4. **z** — z-index для порядка наложения
-
-Итоговые CSS-переменные:
-
-```javascript
-const x = ((cx - targetW / 2 + offsetX) / vbW) * 100; // % от ширины
-const y = ((cy - targetH / 2 + offsetY) / vbH) * 100; // % от высоты
-const w = (targetW / vbW) * 100;
-const h = (targetH / vbH) * 100;
-```
+### Приборная панель КИП
+- `azr` (enum): Автомат защиты сети (0/1/2).
+- `epk` / `horn` / `mzn-engine` / `emergency-hatch-rotation` (boolean): Кнопки удержания.
+- `ammeter-button` (boolean): Переключение шкалы ВА-540.
+- `left-right-tanks` (enum): Переключатель баков топливомера.
+- `spark-plug` / `engine-start` (enum): Трехпозиционные тумблеры (0/1/2).
+- `oil-pump-gearbox` (boolean): Откачка масла КП.
+- `commander-call` / `air-intake` (boolean): Сигнальные лампы (работают как оверлеи индикаторов).
+- `heating` / `combined` / `left-lights` / `right-lights` / `gabrate-lights` / `lights-all` / `water-antifreeze` / `gpk` (boolean): Тумблеры КИП.
+- `bca-tca` (enum): Трехпозиционный переключатель БЦН/off/ТДА.
+- `mzn-tow` / `starter` / `signal-lamps` (enum): Переключатели под защитными крышками (0/1/2).

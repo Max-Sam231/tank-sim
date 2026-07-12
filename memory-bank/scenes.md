@@ -1,218 +1,91 @@
-# Система сцен
+# Система сцен и видов
 
-## SceneManager
+## Менеджер сцен (SceneManager)
 
 **Файл:** `js/SceneManager.js`
 
-Менеджер управляет переключением между сценами.
-
-### API
-
-```javascript
-const sceneManager = new SceneManager();
-
-sceneManager.change(sceneInstance, sceneId);
-// sceneInstance — объект сцены (HangarScene, DriverScene, etc.)
-// sceneId — ID HTML-элемента ("scene-hangar", "scene-driver", etc.)
-
-sceneManager.update(dt);
-// Вызывает update() на текущей сцене
-```
-
-### Логика переключения
-
-1. Вызвать `dispose()` на текущей сцене
-2. Скрыть все `.game-scene` элементы (добавить `.hidden`)
-3. Показать элемент с указанным `sceneId` (убрать `.hidden`)
-4. Вызвать `init()` на новой сцене
-5. Сохранить новую сцену как `currentScene`
+Менеджер сцен осуществляет навигацию и управляет отображением основных экранов приложения:
+1. Вызывает метод `dispose()` на активной сцене для очистки глобальных слушателей событий и предотвращения утечек памяти.
+2. Скрывает все элементы с классом `.game-scene` путем добавления класса `.hidden` (и удаления `.is-hidden` для обратной совместимости).
+3. Находит элемент с новым `sceneId` в DOM и удаляет класс `.hidden` / `.is-hidden`.
+4. Переключает ссылку `currentScene` на новый экземпляр сцены.
+5. Вызывает метод `init()` на новой сцене для настройки обработчиков и отображения элементов интерфейса.
 
 ---
 
-## HangarScene
+## Сцена: Ангар (HangarScene)
 
-**Файл:** `js/HangarScene.js`
+**Файл:** `js/scenes/HangarScene.js`
 
-Начальная сцена — вид на танк в ангаре.
+Начальная сцена, представляющая танк снаружи. Поддерживает переключение между **тремя видами** с помощью кнопки `#switchViewBtn`:
 
-### HTML-структура
+### 1. Вид сверху (TankTopView)
+- Отображает танк Т-72 сверху.
+- Поддерживает **режим "Рентген"** (кнопка `#xrayBtn`). При нажатии изображение танка плавно (`.xray-transition`) заменяется на полупрозрачное рентгеновское представление `tank_xray.png`, раскрывающее внутреннее расположение узлов.
+- **Интерактивные люки (SVG-хитбоксы)**:
+  - Люк механика-водителя (`data-hatch="driver"`) → переход в `DriverScene`.
+  - Люк командира (`data-hatch="commander"`) → переход в `CommanderScene`.
+  - Люк наводчика (`data-hatch="gunner"`) → переход в нереализованную заглушку.
+  - Ящик ЗИП (`data-zone="zip-box"`) → переход к сцене `ZipBoxScene`.
+- **Эффект выхлопа**: над выхлопным патрубком размещен контейнер `#exhaust-smoke-container`. Если двигатель танка работает, `ExhaustSmoke` генерирует частицы дыма в реальном времени.
 
-```html
-<section id="scene-hangar" class="game-scene">
-  <div class="hangar-bg-wrapper">
-    <img class="hangar-bg" src="./img/hangar/background.jpg" />
-    <img class="tank-layer" src="./img/hangar/tank.png" />
-  </div>
-  <svg class="hitbox-layer scene-hitbox-layer">
-    <polygon data-action="enter_driver_seat" points="..." />
-    <polygon data-action="enter_commander_seat" points="..." />
-    <polygon data-action="enter_gunner_seat" points="..." />
-  </svg>
-</section>
-```
+### 2. Вид сбоку слева (TankSideView)
+- Отображает левый борт танка.
+- Содержит хитбокс доступа к системе подогревателя (`data-zone="heater-rear-left"`). Клик по нему переводит пользователя к сцене обслуживания обогревателя `HeaterScene`.
 
-### Интерактивные зоны
-
-| Action                 | Описание              | Реализация                 |
-| ---------------------- | --------------------- | -------------------------- |
-| `enter_driver_seat`    | Люк механика-водителя | → переход к DriverScene    |
-| `enter_commander_seat` | Люк командира         | → переход к CommanderScene |
-| `enter_gunner_seat`    | Люк наводчика         | (не реализовано)           |
-
-### Методы
-
-```javascript
-init(); // Включить обработчики кликов
-dispose(); // Убрать обработчики
-onHatchClick(event); // Обработать клик по люку
-enterDriverCabin(); // changeScene("driver", "scene-driver")
-enterCommanderCabin(); // changeScene("commander", "scene-commander")
-update(dt); // Пусто
-```
+### 3. Вид сбоку справа (TankSideRightView)
+- Демонстрационный вид правого борта танка.
 
 ---
 
-## DriverScene
+## Сцена: Кабина водителя (DriverScene)
 
-**Файл:** `js/DriverScene.js`
+**Файл:** `js/scenes/DriverScene.js`
 
-Основная сцена — кабина механика-водителя.
-
-### HTML-структура
-
-```html
-<section id="scene-driver" class="game-scene">
-  <div class="scene-content" id="scene">
-    <img class="cabin-bg" src="./img/фон.jpg" />
-    <div class="overlay-layer"></div>
-    <svg class="hitbox-layer cabin-hitbox-layer">
-      <!-- Множество хитбоксов элементов управления -->
-    </svg>
-
-    <!-- BCN модалка -->
-    <div class="bcn-modal hidden" id="bcnModal">...</div>
-
-    <!-- Приборная панель модалка -->
-    <div class="instrument-panel-modal hidden" id="instrumentPanelModal">
-      <svg class="instrument-panel-hitbox-layer">...</svg>
-      <div class="overlay-layer"></div>
-    </div>
-  </div>
-</section>
-```
-
-### Хитбоксы кабины
-
-- `battery-toggle` — выключатель массы
-- `manometer` — манометр (показывает давление при наведении)
-- `instrument-panel` — открывает приборную панель
-- `left-tank`, `right-tank` — воздушные баллоны
-- `bcn` — открывает модалку БЦН
-- `shutters` — жалюзи
-- `fuel-primer-lever` — рычаг подкачки
-- `fuel-manual-feed` — ручная подача топлива
-- `gear-lever` — рычаг КПП
-- `brake-pedal`, `gas-pedal` — педали
-- `air-bleed-valve` — клапан спуска воздуха
-
-### Методы
-
-```javascript
-init(); // Показать кнопку "Закончить", включить обработчики
-dispose(); // Скрыть кнопку, убрать обработчики
-handleExit(event); // Обработать клик "выход в ангар"
-update(dt); // Пусто
-```
+Основная рабочая область.
+- Отображает кабину механика-водителя изнутри.
+- При входе в кабину в углу отображается кнопка «Закончить» (`#simFinishButton`), открывающая отчет результатов.
+- Переключение массы и выключателя плафона `cabinLight` меняет фон кабины с темной версии (`фон_темный.jpg`) на освещенную (`фон_светлый.jpg`) путем добавления класса `.cabin-lights-on`.
+- Большинство хитбоксов открывают специализированные модалки выбора положения (КПП, БЦН, жалюзи, ручной газ) или панели приборов КИП.
 
 ---
 
-## CommanderScene
+## Сцена: Обогреватель (HeaterScene)
 
-**Файл:** `js/CommanderScene.js`
+**Файл:** `js/scenes/HangarScene.js` (управляется логикой HangarScene через переключение картинок и хитбоксов внутри `#scene-heater`)
 
-Сцена командира — вид из башни.
-
-### HTML-структура
-
-```html
-<section id="scene-commander" class="game-scene">
-  <div class="scene-content" id="scene-commander-content">
-    <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" />
-    <img class="cmd-bg cmd-bg-tilted" src="./img/commander/tilted.png" />
-    <div class="overlay-layer"></div>
-    <svg class="hitbox-layer commander-hitbox-layer">
-      <polygon data-action="exit_to_hangar" points="..." />
-      <polygon data-action="toggle_commander_view" points="..." />
-      <polygon data-action="enter_driver_seat" points="..." />
-    </svg>
-  </div>
-</section>
-```
-
-### Переключение вида
-
-Два фоновых изображения с плавным переключением через CSS:
-
-```css
-.cmd-bg-straight {
-  opacity: 1;
-}
-.cmd-bg-tilted {
-  opacity: 0;
-}
-
-.commander-view-tilted .cmd-bg-straight {
-  opacity: 0;
-}
-.commander-view-tilted .cmd-bg-tilted {
-  opacity: 1;
-}
-```
-
-Дополнительно применяется 3D-трансформация:
-
-```css
-.commander-view-tilted #scene-commander-content {
-  transform: translateY(60px) rotateX(10deg) scale(1.05);
-}
-```
-
-### Actions
-
-| Action                  | Описание                            |
-| ----------------------- | ----------------------------------- |
-| `exit_to_hangar`        | Выход в ангар                       |
-| `toggle_commander_view` | Переключить вид (straight ↔ tilted) |
-| `enter_driver_seat`     | Переход к водителю                  |
-
-### Методы
-
-```javascript
-init(); // Показать кнопку "Закончить", включить обработчики
-dispose(); // Скрыть кнопку, убрать обработчики
-handleAction(event); // Обработать клики по хитбоксам
-update(dt); // Пусто
-```
+Предназначена для подготовки котла подогревателя к зимнему пуску:
+1. **Закрытый борт (`heater-hitbox-closed`)**:
+   - Пользователь должен по очереди кликнуть на 3 шпингалета (`hinge-latch-1`, `2`, `3`). При клике они меняют цвет на зеленый.
+   - После открытия всех шпингалетов клик по области борта (`side-panel-open`) открывает его. Текстура меняется на `rear_left_heater_opened.jpg`.
+2. **Открытый борт (`heater-hitbox-opened`)**:
+   - Открывается доступ к узлам подогревателя.
+   - Клик по патрубку (`heater-exhaust-closeup`) приближает камеру к выхлопному отверстию (текстура `exhaust_closeup.jpg`).
+3. **Крупный план выхлопа**:
+   - Для снятия крышки выхлопа подогревателя требуется открутить два болта (`exhaust-bolt-1` и `exhaust-bolt-2`).
+   - Если у пользователя в инвентаре нет ключа из ЗИП (`state.hasZipKey === false`), болты не откручиваются, а хитбокс предупреждающе пульсирует.
+   - При наличии ключа клик по болтам откручивает их (хитбокс становится зеленым).
+   - После откручивания обоих болтов клик по крышке выхлопа (`exhaust-cover`) снимает её. Текстура меняется на `exhaust_cover_removed.jpg`.
+4. **Установка защитного козырька**:
+   - После снятия крышки, если у пользователя в инвентаре есть козырек из ЗИП (`state.hasExhaustCap === true`), активируется хитбокс `install-exhaust-cap`.
+   - Клик по нему устанавливает козырек. Текстура меняется на `exhaust_cover_removed_with_cap.jpg`.
 
 ---
 
-## Переключение сцен
+## Сцена: Ящик ЗИП (ZipBoxScene)
 
-```javascript
-// В main.js
-const changeScene = (name, sceneId) => {
-  switch (name) {
-    case "hangar":
-      sceneManager.change(hangarScene, sceneId || "scene-hangar");
-      break;
-    case "driver":
-      sceneManager.change(driverScene, sceneId || "scene-driver");
-      break;
-    case "commander":
-      sceneManager.change(commanderScene, sceneId || "scene-commander");
-      break;
-  }
-};
+Представляет собой разметку открытого инструментального ящика (`#scene-zip-box`):
+- **Взять ключ (`zip-key`)**: клик по ключу добавляет его в инвентарь (`state.hasZipKey = true`). Хитбокс ключа исчезает.
+- **Взять защитный козырек выхлопа (`zip-exhaust-cap`)**: хитбокс становится активным только после того, как в сцене обогревателя была снята старая крышка выхлопа. Клик по козырьку забирает его в инвентарь (`state.hasExhaustCap = true`).
 
-// Доступно через app.changeScene("driver")
-```
+---
+
+## Сцена: Кабина командира (CommanderScene)
+
+**Файл:** `js/scenes/CommanderScene.js`
+
+Включает в себя обзор с места командира:
+- Клик по прицелу/визиру (`toggle_commander_view`) наклоняет камеру вниз к органам управления подогревателем (добавляется класс `.commander-view-tilted`).
+- В наклоненном виде доступен **клапан подачи топлива на подогреватель** (`toggle_heater_fuel_valve`).
+- Если клапан открыт (поднят вверх) при наклоненном виде, фоновая картинка заменяется на `fuel_valve_up.png` (добавляется класс `.valve-up`), наглядно показывая открытое положение рукоятки.
+- Также из кабины командира можно быстро перебраться на сиденье водителя (`enter_driver_seat`) или выйти в ангар.

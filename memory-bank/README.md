@@ -4,22 +4,22 @@
 
 ## Порядок чтения
 
-1. **projectOverview.md** — Начни здесь. Общее описание проекта, цели, функционал.
-2. **architecture.md** — Архитектура системы, диаграммы, поток данных.
-3. **techContext.md** — Технологии, соглашения кода, ограничения.
+1. **projectOverview.md** — Начни здесь. Общее описание проекта, цели, функционал, сценарии тренировки.
+2. **architecture.md** — Архитектура системы, диаграммы, поток данных, игровой цикл, реактивность.
+3. **techContext.md** — Технологический стек, соглашения кода, файловая структура и ограничения.
 
 ## Модули (по важности)
 
-4. **tankState.md** — Центральное состояние танка. Все параметры, методы, физика.
-5. **uiController.md** — Управление UI, рендеринг, обработка событий.
-6. **controlOverlayDefs.md** — Конфигурация визуальных оверлеев элементов управления.
-7. **scenes.md** — Система сцен (ангар, водитель, командир).
-8. **trainingSystem.md** — Движок тренировки, сценарии, чеклист.
+4. **tankState.md** — Центральное состояние танка. Все параметры, физическая симуляция `tick(dt)`, логика пуска двигателя.
+5. **uiController.md** — Управление UI, обработка событий, модальные окна, стрелочные приборы и подсказки приборов.
+6. **controlOverlayDefs.md** — Конфигурация оверлеев и стрелочных приборов.
+7. **scenes.md** — Система сцен (ангар с тремя видами, водитель, командир, обогреватель, ЗИП) и их жизненный цикл.
+8. **trainingSystem.md** — Движок тренировки, сценарии запуска двигателя, чеклисты.
 
 ## Вёрстка и стили
 
-9. **htmlStructure.md** — HTML-разметка, атрибуты, классы состояния.
-10. **styles.md** — CSS-классы, z-index слои, режимы debug/prod.
+9. **htmlStructure.md** — HTML-разметка, виды ангара, слои оверлеев и хитбоксов, структурные примечания.
+10. **styles.md** — CSS-классы, z-index слои, адаптивная разметка 16:9, эффекты частиц (дым, рентген).
 
 ## Быстрые ссылки
 
@@ -40,8 +40,8 @@
 | tankState.md          | `js/TankState.js`                                 |
 | uiController.md       | `js/UIController.js`                              |
 | controlOverlayDefs.md | `js/ControlOverlayDefs.js`                        |
-| scenes.md             | `js/SceneManager.js`, `js/*Scene.js`              |
-| trainingSystem.md     | `js/TrainingEngine.js`, `js/TrainingScenarios.js` |
+| scenes.md             | `js/SceneManager.js`, `js/scenes/*Scene.js`       |
+| trainingSystem.md     | `js/TrainingEngine.js`, `js/scenarios/*.js`       |
 | htmlStructure.md      | `index.html`                                      |
 | styles.md             | `styles.css`                                      |
 | architecture.md       | `main.js`                                         |
