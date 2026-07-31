@@ -53,9 +53,43 @@ function bootstrap() {
   // Также пробуем разблокировать сразу при загрузке (если браузер уже разрешил)
   setTimeout(() => audioManager.init(), 100);
 
+  function updateInventoryBar(snapshot) {
+    const bar = document.getElementById("inventoryBar");
+    if (!bar) return;
+
+    const keyStatus = document.getElementById("inv-key-status");
+    const visorStatus = document.getElementById("inv-visor-status");
+
+    // Update key
+    if (keyStatus) {
+      if (snapshot.hasZipKey) {
+        keyStatus.className = "status-value status-green";
+        keyStatus.textContent = "есть";
+      } else {
+        keyStatus.className = "status-value status-red";
+        keyStatus.textContent = "нет";
+      }
+    }
+
+    // Update visor
+    if (visorStatus) {
+      if (snapshot.exhaustCapInstalled) {
+        visorStatus.className = "status-value status-blue";
+        visorStatus.textContent = "установлен";
+      } else if (snapshot.hasExhaustCap) {
+        visorStatus.className = "status-value status-green";
+        visorStatus.textContent = "есть";
+      } else {
+        visorStatus.className = "status-value status-red";
+        visorStatus.textContent = "нет";
+      }
+    }
+  }
+
   state.subscribe((snapshot) => {
     audioManager.onStateChange(snapshot);
     exhaustSmoke.update(snapshot.engine_rpm, snapshot.engineRunning);
+    updateInventoryBar(snapshot);
   });
 
   const ui = new UIController({
@@ -73,6 +107,9 @@ function bootstrap() {
     },
     onMenu: () => {
       stopLoop();
+      audioManager.stopAll();
+      if (finishBtnEl) finishBtnEl.classList.add("hidden");
+      document.getElementById("inventoryBar")?.classList.add("hidden");
       startMenu.show();
     },
   });
@@ -110,9 +147,11 @@ function bootstrap() {
         break;
       case "heater":
         sceneManager.change(null, sceneId || "scene-heater");
+        hangarScene.syncHeaterDOM();
         break;
       case "zip-box":
         sceneManager.change(null, sceneId || "scene-zip-box");
+        hangarScene.syncZipBoxDOM();
         break;
     }
   };
@@ -154,6 +193,7 @@ function bootstrap() {
     onTrainingStart: ({ startMethod, ambientTemp, fuelType }) => {
       // Разблокируем звук при первом реальном действии пользователя
       audioManager.init(); 
+      audioManager.stopAll();
       
       stopLoop();
 
@@ -171,6 +211,9 @@ function bootstrap() {
       });
 
       startMenu.hide();
+      if (finishBtnEl) finishBtnEl.classList.remove("hidden");
+      document.getElementById("inventoryBar")?.classList.remove("hidden");
+      updateInventoryBar(state.getSnapshot());
       changeScene("hangar");
       startLoop();
     },

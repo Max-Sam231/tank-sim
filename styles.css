@@ -168,7 +168,8 @@ body.app-debug .overlay.overlay-control {
   fill: transparent;
   stroke: transparent;
 }
-#scene.instrument-panel-open > .overlay-layer .overlay.overlay-control {
+
+#scene.instrument-panel-open>.overlay-layer .overlay.overlay-control {
   pointer-events: none;
 }
 
@@ -332,7 +333,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .debug-console {
-  /* display: none;  */
+  display: none;
 
   position: absolute;
   left: 12px;
@@ -436,9 +437,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .test-sensors-button {
   position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 20px;
+  right: 160px;
   z-index: 1200;
   padding: 10px 14px;
   border-radius: 10px;
@@ -740,6 +740,137 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   opacity: 0.7;
 }
 
+/* Instruction Tabs */
+.instruction-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+}
+
+.instruction-tab-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ccc;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.instruction-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.instruction-tab-btn.active {
+  background: #238636;
+  border-color: #2ea043;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(46, 160, 67, 0.3);
+}
+
+.instruction-tab-pane {
+  display: none;
+  animation: fadeIn 0.25s ease-out;
+  line-height: 1.6;
+}
+
+.instruction-tab-pane.active {
+  display: block;
+}
+
+.instruction-tab-pane h3 {
+  margin-top: 0;
+  color: #58a6ff;
+  font-size: 20px;
+}
+
+.instruction-tab-pane ol {
+  padding-left: 20px;
+  margin: 16px 0;
+}
+
+.instruction-tab-pane li {
+  margin-bottom: 10px;
+}
+
+.instruction-stage-title {
+  font-weight: 600;
+  color: #ff7b72;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  border-left: 3px solid #ff7b72;
+  padding-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Authors Card */
+.authors-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 550px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.authors-lead {
+  color: #8b949e;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.authors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.author-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.author-role {
+  color: #8b949e;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #58a6ff;
+}
+
+.authors-footer {
+  color: #484f58;
+  font-size: 13px;
+  margin-top: 24px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 .fullscreen-modal {
   position: fixed;
   inset: 0;
@@ -924,18 +1055,59 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 /* Интерактивные хитбоксы (подсветка при наведении) */
-.hitbox.interactive {
-  fill: transparent;
+.hitbox.interactive,
+#scene-heater .hitbox,
+#scene-zip-box .hitbox {
+  fill: rgba(255, 255, 255, 1);
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.5px;
   cursor: pointer;
   transition:
     fill 0.2s,
-    stroke 0.2s;
+    stroke 0.2s,
+    filter 0.2s;
 }
 
-.hitbox.interactive:hover {
-  fill: rgba(255, 255, 255, 0.1);
-  stroke: rgba(255, 255, 255, 0.5);
+.hitbox.interactive:hover,
+#scene-heater .hitbox:hover,
+#scene-zip-box .hitbox:hover {
+  fill: rgba(255, 255, 255, 0.45);
+  stroke: rgba(255, 255, 255, 0.9);
   stroke-width: 2px;
+}
+
+/* В продакшене скрываем хитбоксы по умолчанию */
+body.app-prod .hitbox.interactive,
+body.app-prod #scene-heater .hitbox,
+body.app-prod #scene-zip-box .hitbox {
+  fill: rgba(255, 255, 255, 1);
+  stroke: transparent;
+}
+
+/* В продакшене подсвечиваем хитбоксы при наведении */
+body.app-prod .hitbox.interactive:hover,
+body.app-prod #scene-heater .hitbox:hover,
+body.app-prod #scene-zip-box .hitbox:hover {
+  fill: rgba(255, 255, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.5px;
+}
+
+/* Постоянная белая подсветка хитбоксов в кабине командира */
+#scene-commander .hitbox {
+  fill: rgba(255, 255, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+  cursor: pointer;
+  transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease, stroke-dasharray 0.3s ease;
+}
+
+#scene-commander .hitbox:hover {
+  fill: rgba(255, 255, 255, 0.25);
+  stroke: rgba(255, 255, 255, 1);
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
 }
 
 .game-scene {
@@ -1384,7 +1556,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   height: 100%;
 }
 
-#scene-heater img[src*="heater"] {
+#scene-heater .scene-content > img {
   position: absolute;
   top: 0;
   left: 0;
@@ -1395,7 +1567,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   z-index: 1;
 }
 
-#heaterBackBtn {
+#heaterBackBtn,
+#heaterCloseupBackBtn {
   position: absolute;
   top: 20px;
   left: 20px;
@@ -1411,8 +1584,24 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-#heaterBackBtn:hover {
+#heaterBackBtn:hover,
+#heaterCloseupBackBtn:hover {
   background: rgba(0, 0, 0, 0.9);
+}
+
+.heater-toolbar-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.heater-toolbar-right .view-switch-btn {
+  position: static;
+  top: auto;
+  right: auto;
 }
 
 /**/
@@ -1664,7 +1853,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   height: 100%;
 }
 
-#scene-zip-box img[src*="zip"] {
+#scene-zip-box .scene-content > img {
   position: absolute;
   top: 0;
   left: 0;
@@ -1717,24 +1906,6 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   50% {
     opacity: 0.4;
   }
-}
-
-#scene-zip-box .hitbox[data-zone="zip-key"] {
-  cursor: pointer;
-  transition:
-    fill 0.2s ease,
-    stroke 0.2s ease;
-}
-
-#scene-zip-box .hitbox[data-zone="zip-key"]:hover {
-  fill: rgba(255, 215, 0, 0.4) !important;
-  stroke: rgba(255, 215, 0, 0.9) !important;
-}
-
-#scene-zip-box .hitbox[data-zone="zip-key"].hidden {
-  pointer-events: none;
-  fill: transparent !important;
-  stroke: transparent !important;
 }
 
 /* Состояния по умолчанию */
@@ -1812,36 +1983,12 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   opacity: 1;
 }
 
-/**/
-#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"] {
-  cursor: pointer;
-  transition:
-    fill 0.2s ease,
-    stroke 0.2s ease;
-}
-
-#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"]:hover {
-  fill: rgba(100, 200, 255, 0.4) !important;
-  stroke: rgba(100, 200, 255, 0.95) !important;
-}
-
-#scene-zip-box .hitbox[data-zone="zip-exhaust-cap"].hidden {
-  pointer-events: none;
-  fill: transparent !important;
-  stroke: transparent !important;
-}
-
 /* Установка козырька на выхлоп */
 #scene-heater .hitbox[data-zone="install-exhaust-cap"] {
   cursor: pointer;
   transition:
     fill 0.2s ease,
     stroke 0.2s ease;
-}
-
-#scene-heater .hitbox[data-zone="install-exhaust-cap"]:hover {
-  fill: rgba(0, 255, 100, 0.4) !important;
-  stroke: rgba(0, 255, 100, 0.95) !important;
 }
 
 #scene-heater .hitbox[data-zone="install-exhaust-cap"].hidden {
@@ -1854,9 +2001,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 /* === Плотный дым из выхлопной трубы (вид сверху) === */
 .exhaust-smoke {
   position: absolute;
-  left: 22%; 
+  left: 22%;
   top: 14%;
-  width: 100px; /* Увеличили зону генерации */
+  width: 100px;
+  /* Увеличили зону генерации */
   height: 100px;
   pointer-events: none;
   z-index: 20;
@@ -1880,21 +2028,121 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 @keyframes smokeRiseDense {
   0% {
-    opacity: 0.9; /* Почти полная непрозрачность при рождении */
+    opacity: 0.9;
+    /* Почти полная непрозрачность при рождении */
     transform: translateX(-50%) translateY(0) scale(0.5);
   }
+
   40% {
     opacity: 0.7;
     transform: translateX(-30%) translateY(-40px) scale(1.8);
   }
+
   100% {
     opacity: 0;
-    transform: translateX(-60%) translateY(-100px) scale(3.5); /* Сильнее расширяется */
+    transform: translateX(-60%) translateY(-100px) scale(3.5);
+    /* Сильнее расширяется */
   }
 }
+
 .invisible {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
   /* Дополнительно страхует от кликов */
+}
+
+/* Подсветка хитбоксов в ангаре */
+#scene-hangar .hitbox {
+  fill: rgba(255, 255, 255, 1);
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.5px;
+  transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#scene-hangar .hitbox:hover {
+  fill: rgba(255, 255, 255, 0.45);
+  stroke: rgba(255, 255, 255, 0.85);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+}
+
+/* В продакшене хитбоксы в ангаре полностью прозрачны, а при наведении дают только тень (свечение) */
+body.app-prod #scene-hangar .hitbox {
+  fill: rgba(255, 255, 255, 1);
+  stroke: transparent;
+}
+
+body.app-prod #scene-hangar .hitbox:hover {
+  fill: rgba(255, 255, 255, 0.01);
+  /* Очень низкая непрозрачность для drop-shadow */
+  stroke: transparent;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.85));
+}
+
+/* === Панель Инвентаря (Inventory Bar) === */
+.inventory-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(11, 17, 26, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  color: #8b949e;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.inventory-bar.hidden {
+  display: none !important;
+}
+
+.inventory-title {
+  font-weight: bold;
+  color: #c9d1d9;
+}
+
+.inventory-item {
+  color: #c9d1d9;
+}
+
+.inventory-divider {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.status-value {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-value.status-red {
+  color: #ff7b72;
+}
+
+.status-value.status-green {
+  color: #3fb950;
+  text-shadow: 0 0 8px rgba(63, 185, 80, 0.4);
+}
+
+.status-value.status-blue {
+  color: #58a6ff;
+  text-shadow: 0 0 8px rgba(88, 166, 255, 0.4);
+}
+
+/* Показ отладочной консоли в debug-режиме */
+body.app-debug .debug-console {
+  display: block;
 }

@@ -88,6 +88,7 @@ class TankState {
     this._engineRunTime = 0; // Track engine run time for VA-540 charge current curve
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
+    this._oilPrimed = false;
     this._timeSinceLastEmit = 0;
 
     this._brakeHoldTime = 0;
@@ -104,6 +105,7 @@ class TankState {
     this.heaterFuelValve = false;
     this.hasExhaustCap = false;        // Взял ли игрок козырёк из ЗИП
     this.exhaustCapInstalled = false;
+    this._heaterBurning = false;
     this._listeners = new Set();
 
   }
@@ -183,6 +185,7 @@ class TankState {
     this._engineRunTime = 0;
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
+    this._oilPrimed = false;
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
@@ -203,6 +206,7 @@ class TankState {
 
     this.hasExhaustCap = false;
     this.exhaustCapInstalled = false;
+    this._heaterBurning = false;
     this._emit();
   }
 
@@ -311,7 +315,7 @@ class TankState {
 
       hasExhaustCap: this.hasExhaustCap,
       exhaustCapInstalled: this.exhaustCapInstalled,
-
+      heaterBurning: this._heaterBurning,
     };
   }
 
@@ -469,7 +473,7 @@ class TankState {
     if (!isMassOn) {
       this._batteryVoltage = 25.0;
     } else if (!this._engineRunning) {
-      const drainRate = 0.002;
+      const drainRate = 0.0002;
       this._batteryVoltage = this._clamp(this._batteryVoltage - drainRate * dt, 15.0, 26.0);
     }
 
@@ -477,11 +481,16 @@ class TankState {
     if (isMassOn) {
       baseVoltage = this._engineRunning ? 27.8 : this._batteryVoltage;
     }
-
     const canCrank = isMassOn && baseVoltage >= 18.0;
-    const airStartPressed = requiresAirStart && epkPressed;
-    const starterSag = !requiresAirStart && starterPressed && canCrank ? 5.0 : 0.0;
-    const voltage = this._clamp(baseVoltage - starterSag, 0.0, 30.0);
+    const requiresElectricStart = startMethod === "electric-start";
+    const requiresCombinedStart = startMethod === "combined-start";
+
+    const starterSag = (requiresElectricStart || requiresCombinedStart) && starterPressed && canCrank ? 5.0 : 0.0;
+    const targetVoltage = this._clamp(baseVoltage - starterSag, 0.0, 30.0);
+    const voltageInertiaRate = 5.0; // Slow, realistic mechanical needle movement
+    const voltage = targetVoltage > this.sensors.voltage
+      ? targetVoltage
+      : this._approach(this.sensors.voltage, targetVoltage, voltageInertiaRate, dt);
     changed = this._setSensor("voltage", voltage, { min: 0, max: 30 }) || changed;
 
     const leftAirOpen = Boolean(this.leftTank);
@@ -496,9 +505,10 @@ class TankState {
     const airStartPressure = openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0.0;
     changed = this._setSensor("air_start_pressure", airStartPressure, { min: 0, max: 165 }) || changed;
 
-    const isAirCranking = airStartPressed && canCrank && !this._engineRunning;
-    const isStarterCranking = !requiresAirStart && starterPressed && canCrank && !this._engineRunning;
-    const isCranking = isAirCranking || isStarterCranking;
+    const isAirCranking = requiresAirStart && epkPressed && canCrank && !this._engineRunning;
+    const isStarterCranking = requiresElectricStart && starterPressed && canCrank && !this._engineRunning;
+    const isCombinedCranking = requiresCombinedStart && Boolean(this.combined) && starterPressed && epkPressed && canCrank && !this._engineRunning;
+    const isCranking = isAirCranking || isStarterCranking || isCombinedCranking;
 
     if (bleedOpen) {
       const bleedRate = 6.0;
@@ -506,23 +516,24 @@ class TankState {
       if (rightAirOpen) changed = this._setSensor("air_right_cylinder", rightAir - bleedRate * dt, { min: 0, max: 165 }) || changed;
     }
 
-    if (isAirCranking) {
+    if (isAirCranking || isCombinedCranking) {
       const crankAirRate = 0.9;
       if (leftAirOpen) changed = this._setSensor("air_left_cylinder", this.sensors.air_left_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
       if (rightAirOpen) changed = this._setSensor("air_right_cylinder", this.sensors.air_right_cylinder - crankAirRate * dt, { min: 0, max: 165 }) || changed;
     }
 
     const fuelOk = fuelPressure >= 0.8;
-    const airOk = requiresAirStart ? airStartPressure >= 10.0 : true;
+    const airOk = (requiresAirStart || requiresCombinedStart) ? airStartPressure >= 10.0 : true;
     const primerOk = this.fuelPrimerPumps >= 3;
-    const fuelCommandOk = requiresAirStart ? Boolean(this.gasPedal) : this.fuelManualFeed >= 10;
-    const oilStartOk = requiresAirStart ? (isMznActive && this.sensors.oil_pressure_engine >= 2.0) : true;
+    const fuelCommandOk = (requiresAirStart || requiresCombinedStart) ? (Boolean(this.gasPedal) || this.fuelManualFeed >= 10) : (this.fuelManualFeed >= 10 || Boolean(this.gasPedal));
+    const oilStartOk = requiresAirStart ? (isMznActive && this.sensors.oil_pressure_engine >= 2.0) : (this.sensors.oil_pressure_engine >= 1.5 || this._oilPrimed);
 
     if (isCranking && fuelOk && airOk && fuelCommandOk && primerOk && oilStartOk) {
       this._crankTime += dt;
     } else {
       this._crankTime = 0;
     }
+
 
     if (!this._engineRunning && this._crankTime >= 1.5) {
       this._engineRunning = true;
@@ -534,6 +545,7 @@ class TankState {
     if (this._engineRunning && (!fuelOk || !isMassOn) && this.sensors.engine_rpm <= 850) {
       this._engineRunning = false;
       this._engineRunTime = 0;
+      this._oilPrimed = false;
     }
 
     // Track engine run time for charge current curve
@@ -545,7 +557,11 @@ class TankState {
 
     let targetRpm = 0;
     if (this._engineRunning) {
-      targetRpm = Math.round(900 + throttle * 1700);
+      const manualPart = this.fuelManualFeed / 100;
+      const manualContribution = Math.pow(manualPart, 2.3) * 1250;
+      const pedalContribution = this.gasPedal ? 1100 : 0;
+      targetRpm = Math.round(750 + manualContribution + pedalContribution);
+      targetRpm = Math.min(targetRpm, 2200);
     } else if (isCranking) {
       targetRpm = 150;
     }
@@ -557,9 +573,13 @@ class TankState {
     let targetOilEngine = 0.0;
     if (this._engineRunning) targetOilEngine = 5.5;
     else if (isMznActive && voltage >= 20.0) targetOilEngine = 3.5;
-    const oilEngineRate = this._engineRunning ? 6.0 : 1.2;
+    const oilEngineRate = this._engineRunning ? 6.0 : (isMznActive ? 1.2 : 0.12);
     const oilEngine = this._approach(this.sensors.oil_pressure_engine, targetOilEngine, oilEngineRate, dt);
     changed = this._setSensor("oil_pressure_engine", oilEngine, { min: 0, max: 15 }) || changed;
+
+    if (this.sensors.oil_pressure_engine >= 2.0) {
+      this._oilPrimed = true;
+    }
 
     const targetOilGearbox = this._engineRunning ? 2.5 : 0.0;
     const oilGearbox = this._approach(this.sensors.oil_pressure_gearbox, targetOilGearbox, 4.0, dt);
@@ -567,22 +587,44 @@ class TankState {
 
     const ambient = Number.isFinite(this.scenario.ambientTempC) ? this.scenario.ambientTempC : 20.0;
     const rpmFactor = this._engineRunning ? this._clamp((rpm - 900) / 1700, 0.0, 1.0) : 0.0;
-    const targetCoolant = this._engineRunning ? 80.0 + rpmFactor * 15.0 : ambient;
-    const targetOilTemp = this._engineRunning ? 85.0 + rpmFactor * 20.0 : ambient;
-    const heatRate = this._engineRunning ? 2.0 : 1.0;
-    const coolRate = this._engineRunning ? 0.0 : 0.7;
+
+    // Heater state logic
+    const isHeaterActive = isMassOn && this.heating && this.heaterFuelValve && this.exhaustCapInstalled;
+    if (isHeaterActive && this.sparkPlug === 2) {
+      this._heaterBurning = true;
+    }
+    if (!isHeaterActive) {
+      this._heaterBurning = false;
+    }
+
+    let targetCoolant = ambient;
+    let targetOilTemp = ambient;
+    let heatRate = 1.0;
+    let coolRate = 0.7;
+
+    if (this._engineRunning) {
+      targetCoolant = 80.0 + rpmFactor * 15.0;
+      targetOilTemp = 85.0 + rpmFactor * 20.0;
+      heatRate = 2.0;
+      coolRate = 0.0;
+    } else if (this._heaterBurning) {
+      targetCoolant = 70.0;
+      targetOilTemp = 65.0;
+      heatRate = 1.5; // Quick warming rate for training purposes
+      coolRate = 0.0;
+    }
 
     let coolantTemp = this.sensors.coolant_temp;
     coolantTemp = targetCoolant > coolantTemp
       ? this._approach(coolantTemp, targetCoolant, heatRate, dt)
       : this._approach(coolantTemp, targetCoolant, coolRate, dt);
-    changed = this._setSensor("coolant_temp", coolantTemp, { min: 0, max: 120 }) || changed;
+    changed = this._setSensor("coolant_temp", coolantTemp, { min: -50, max: 120 }) || changed;
 
     let oilTemp = this.sensors.oil_temp;
     oilTemp = targetOilTemp > oilTemp
       ? this._approach(oilTemp, targetOilTemp, heatRate, dt)
       : this._approach(oilTemp, targetOilTemp, coolRate, dt);
-    changed = this._setSensor("oil_temp", oilTemp, { min: 0, max: 120 }) || changed;
+    changed = this._setSensor("oil_temp", oilTemp, { min: -50, max: 120 }) || changed;
 
     let speedTarget = 0.0;
     if (this._engineRunning && gearRatio !== 0) {
@@ -634,9 +676,8 @@ class TankState {
       }
     }
 
-    // Apply needle inertia: ~3 seconds settling time for VA-540
-    // Use slower approach rate for realistic mechanical inertia
-    const inertiaRate = 50.0; // ~3 sec full-scale (100A / 50 per sec = 2 sec, 500A / 50 = 10 sec, balanced)
+    // Apply needle inertia: slower approach rate for realistic mechanical inertia
+    const inertiaRate = 12.0; // Extremely smooth mechanical inertia for VA-540 ammeter needle
     const amperage = this._approach(this.sensors.amperage, targetAmperage, inertiaRate, dt);
     changed = this._setSensor("amperage", amperage, { min: -100, max: 500 }) || changed;
 
@@ -958,10 +999,15 @@ class TankState {
     this._emit();
   }
   toggleHingeLatch(latchId) {
-    if (latchId === "latch1") this.hingeLatch1 = !this.hingeLatch1;
-    else if (latchId === "latch2") this.hingeLatch2 = !this.hingeLatch2;
-    else if (latchId === "latch3") this.hingeLatch3 = !this.hingeLatch3;
+    if (latchId === "latch1" || latchId === "1") this.hingeLatch1 = !this.hingeLatch1;
+    else if (latchId === "latch2" || latchId === "2") this.hingeLatch2 = !this.hingeLatch2;
+    else if (latchId === "latch3" || latchId === "3") this.hingeLatch3 = !this.hingeLatch3;
     else return;
+    this._emit();
+  }
+
+  setSidePanelOpen(isOpen) {
+    this.sidePanelOpen = Boolean(isOpen);
     this._emit();
   }
 
@@ -992,6 +1038,13 @@ class TankState {
       this.exhaustCoverRemoved = true;
       this._emit();
     }
+  }
+
+  installExhaustCover() {
+    this.exhaustCoverRemoved = false;
+    this.exhaustBolt1 = false;
+    this.exhaustBolt2 = false;
+    this._emit();
   }
 
   // Новые методы:
@@ -1033,9 +1086,15 @@ class TankState {
     }
   }
 
+  removeExhaustCap() {
+    if (this.exhaustCapInstalled) {
+      this.exhaustCapInstalled = false;
+      this._emit();
+    }
+  }
+
   canTakeExhaustCap() {
-    // Козырёк доступен только после снятия крышки выхлопа
-    return this.exhaustCoverRemoved && !this.hasExhaustCap;
+    return !this.hasExhaustCap;
   }
 
   canInstallExhaustCap() {

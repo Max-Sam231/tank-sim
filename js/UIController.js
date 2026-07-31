@@ -56,10 +56,13 @@ class UIController {
     if (this.isDebug) this._ensureHitboxLabels();
     this._syncHitboxVisibility();
 
+    let prevEngineRunning = false;
     this.state.subscribe((snapshot) => {
-      if (snapshot.engineJustStarted) {
+      const isStarted = snapshot.engineRunning && snapshot.sensors.engine_rpm >= 500;
+      if (isStarted && !prevEngineRunning) {
         this._notifyAction("engine-started");
       }
+      prevEngineRunning = snapshot.engineRunning;
       this._render(snapshot);
     });
 

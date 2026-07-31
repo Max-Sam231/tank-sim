@@ -136,6 +136,47 @@ export class AudioManager {
         }
     }
 
+    stopAll() {
+        for (const name in this.sounds) {
+            const sound = this.sounds[name];
+            if (sound && typeof sound.pause === 'function') {
+                sound.pause();
+                sound.currentTime = 0;
+            }
+        }
+        this.prevState = {
+            horn: false,
+            commanderView: 'straight',
+            instrumentPanel: false,
+            isBatteryOn: false,
+            starter: 0,
+            bcn: 'off',
+            engine_rpm: 0,
+            engineRunning: false,
+            leftTank: false,
+            rightTank: false,
+            airBleedValve: false,
+            air_start_pressure: 0,
+            ammeterButton: false,
+            commanderCall: false,
+            airIntake: false,
+            emergencyHatchRotation: false,
+            oilPumpGearbox: false,
+            azr: 0,
+            bcaTca: false,
+            gpk: false,
+            lightsAll: false,
+            gabrateLights: false,
+            leftLights: false,
+            rightLights: false,
+            sparkPlug: 1,
+            engineStart: 1,
+            combined: false,
+            heating: false,
+            waterAntifreeze: false
+        };
+    }
+
     // НОВЫЙ МЕТОД: Управляет звуком прокрутки стартера на основе РЕАЛЬНЫХ оборотов
     updateStarterSound(rpm, isRunning) {
         if (!this.isInitialized) return;

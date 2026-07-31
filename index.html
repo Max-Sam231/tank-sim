@@ -17,6 +17,19 @@
         Закончить
       </button>
       <button class="test-sensors-button" id="testSensorsButton" type="button">Датчики</button>
+      
+      <!-- Панель инвентаря -->
+      <div class="inventory-bar hidden" id="inventoryBar">
+        <span class="inventory-title">СНАРЯЖЕНИЕ:</span>
+        <div class="inventory-item" id="inv-key">
+          Ключ ЗИП: <span class="status-value status-red" id="inv-key-status">нет</span>
+        </div>
+        <div class="inventory-divider">|</div>
+        <div class="inventory-item" id="inv-visor">
+          Козырек выхлопа: <span class="status-value status-red" id="inv-visor-status">нет</span>
+        </div>
+      </div>
+
       <div class="debug-console" id="debugConsole" aria-live="polite"></div>
 
       <div class="fullscreen-modal hidden" id="fullscreenModal" role="dialog" aria-labelledby="modalTitle"
@@ -52,24 +65,24 @@
             aria-hidden="true"
           >
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-hatch="driver"
-              points="1150,500 1190,500 1190,600 1150,600"
+              points="1120,520 1180,520 1180,620 1120,620"
             />
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-hatch="gunner"
-              points="860,410 820,410 820,520 860,520"
+              points="880,450 790,450 790,560 880,560"
             />
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-hatch="commander"
-              points="790,580 870,580 870,680 790,680"
+              points="790,600 900,600 900,720 790,720"
             />
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-zone="zip-box"
-              points="760,410 720,410 720,520 760,520"
+              points="1080,350 950,350 950,420 1080,420"
               title="Ящик ЗИП"
             />
           </svg>
@@ -90,7 +103,7 @@
             aria-hidden="true"
           >
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-zone="heater-rear-left"
               points="350,700 700,700 700,900 350,900"
               title="Обогреватель"
@@ -144,18 +157,13 @@
               pointer-events: none;
             ">
           <polygon class="hitbox interactive" data-zone="hinge-latch-1" points="540,540 580,540 580,580 540,580"
-            title="Шпингалет 1" style="pointer-events: auto" />
+            title="Шпингалет 1" />
           <polygon class="hitbox interactive" data-zone="hinge-latch-2" points="1660,480 1730,480 1730,560 1660,560"
-            title="Шпингалет 2" style="pointer-events: auto" />
+            title="Шпингалет 2" />
           <polygon class="hitbox interactive" data-zone="hinge-latch-3" points="1660,580 1730,580 1730,660 1660,660"
-            title="Шпингалет 3" style="pointer-events: auto" />
+            title="Шпингалет 3" />
           <polygon class="hitbox interactive" data-zone="side-panel-open" points="600,300 1640,300 1640,900 600,900"
-            title="Открыть борт" style="
-                pointer-events: auto;
-                fill: rgba(0, 255, 0, 0.1);
-                stroke: rgba(0, 255, 0, 0.5);
-                stroke-width: 2;
-              " />
+            title="Открыть борт" />
         </svg>
 
         <!-- Хитбоксы для ОТКРЫТОГО борта (скрыты по умолчанию) -->
@@ -172,64 +180,43 @@
               z-index: 50;
               pointer-events: none;
             ">
-          <!-- 🔥 Хитбокс установки козырька (скрыт по умолчанию) -->
-          <polygon class="hitbox interactive hidden" data-zone="install-exhaust-cap"
-            points="1350,620 1550,620 1550,720 1350,720" title="Установить козырёк" style="
-                pointer-events: auto;
-                fill: rgba(0, 255, 100, 0.2);
-                stroke: rgba(0, 255, 100, 0.7);
-              " />
           <polygon class="hitbox interactive" data-zone="heater-exhaust-closeup"
-            points="1400,600 1500,600 1500,700 1400,700" title="Выхлоп обогревателя (крупно)" style="
-                pointer-events: auto;
-                fill: rgba(255, 170, 0, 0.15);
-                stroke: rgba(255, 170, 0, 0.7);
-              " />
-
-          <polygon class="hitbox interactive" data-zone="side-panel-close" points="100,100 300,100 300,200 100,200"
-            title="Закрыть борт" style="
-                pointer-events: auto;
-                fill: rgba(255, 100, 0, 0.1);
-                stroke: rgba(255, 100, 0, 0.6);
-              " />
-
-          <!-- Скрыты по умолчанию, покажем только в крупном плане -->
-          <polygon class="hitbox interactive hidden" data-zone="heater-exhaust-back"
-            points="100,100 250,100 250,180 100,180" title="Назад" style="
-                pointer-events: auto;
-                fill: rgba(255, 50, 50, 0.2);
-                stroke: rgba(255, 50, 50, 0.7);
-              " />
+            points="1400,600 1500,600 1500,700 1400,700" title="Выхлоп обогревателя (крупно)" />
 
           <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-1"
-            points="1000,200 950,200 950,250 1000,250" title="Болт 1 (нужен ключ)" style="
-                pointer-events: auto;
-                fill: rgba(255, 200, 50, 0.2);
-                stroke: rgba(255, 200, 50, 0.7);
-              " />
+            points="1000,200 950,200 950,250 1000,250" title="Болт 1 (нужен ключ)" />
 
           <polygon class="hitbox interactive hidden" data-zone="exhaust-bolt-2" points="980,550 950,550 950,500 980,500"
-            title="Болт 2 (нужен ключ)" style="
-                pointer-events: auto;
-                fill: rgba(255, 200, 50, 0.2);
-                stroke: rgba(255, 200, 50, 0.7);
-              " />
+            title="Болт 2 (нужен ключ)" />
 
           <polygon class="hitbox interactive hidden" data-zone="exhaust-cover"
-            points="900,340 1000,340 1000,450 900,450" title="Крышка выхлопа" style="
-                pointer-events: auto;
-                fill: rgba(100, 200, 255, 0.15);
-                stroke: rgba(100, 200, 255, 0.6);
-              " />
+            points="900,340 1000,340 1000,450 900,450" title="Крышка выхлопа" />
         </svg>
 
         <button id="heaterBackBtn" class="view-switch-btn" style="top: 20px; left: 20px; right: auto">
           ← Назад
         </button>
+        <button id="heaterCloseupBackBtn" class="view-switch-btn hidden" style="top: 20px; left: 20px; right: auto">
+          ← Назад
+        </button>
+        <div class="heater-toolbar-right">
+          <button id="heaterClosePanelBtn" class="view-switch-btn hidden">
+            Закрыть борт
+          </button>
+          <button id="installExhaustCapBtn" class="view-switch-btn hidden">
+            🔧 Установить козырёк
+          </button>
+          <button id="removeExhaustCapBtn" class="view-switch-btn hidden">
+            ❌ Снять козырёк
+          </button>
+          <button id="screwExhaustCoverBtn" class="view-switch-btn hidden">
+            🔧 Закрутить крышку
+          </button>
+        </div>
 
         <div style="
               position: absolute;
-              bottom: 20px;
+              bottom: 80px;
               left: 50%;
               transform: translateX(-50%);
               background: rgba(0, 0, 0, 0.7);
@@ -269,20 +256,12 @@
               pointer-events: none;
             ">
           <!-- Хитбокс ключа -->
-          <polygon class="hitbox interactive" data-zone="zip-key" points="400,200 750,200 750,850 400,850"
-            title="Взять ключ" style="
-                pointer-events: auto;
-                fill: rgba(255, 215, 0, 0.2);
-                stroke: rgba(255, 215, 0, 0.7);
-              " />
+          <polygon class="hitbox" data-zone="zip-key" points="400,200 750,200 750,850 400,850"
+            title="Взять ключ" />
 
           <!-- 🔥 НОВЫЙ: Хитбокс козырька выхлопа (скрыт по умолчанию) -->
-          <polygon class="hitbox interactive hidden" data-zone="zip-exhaust-cap"
-            points="1200,300 1400,300 1400,500 1200,500" title="Взять козырёк выхлопа" style="
-                pointer-events: auto;
-                fill: rgba(100, 200, 255, 0.25);
-                stroke: rgba(100, 200, 255, 0.8);
-              " />
+          <polygon class="hitbox hidden" data-zone="zip-exhaust-cap"
+            points="1250,200 1600,200 1600,850 1250,850" title="Взять козырёк выхлопа" />
         </svg>
 
         <button id="zipBackBtn" class="view-switch-btn" style="top: 20px; left: 20px; right: auto">
@@ -291,7 +270,7 @@
 
         <div style="
               position: absolute;
-              bottom: 20px;
+              bottom: 80px;
               left: 50%;
               transform: translateX(-50%);
               background: rgba(0, 0, 0, 0.7);
@@ -553,14 +532,14 @@
 
         <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"
           aria-hidden="true">
-          <polygon class="hitbox interactive" data-action="toggle_commander_view"
+          <polygon class="hitbox" data-action="toggle_commander_view"
             points="700,700 800,700 800,800 700,800" />
-          <polygon class="hitbox interactive" data-action="enter_driver_seat"
+          <polygon class="hitbox" data-action="enter_driver_seat"
             points="900,900 1000,900 1000,1000 900,1000" />
 
             <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
             <polygon
-              class="hitbox interactive"
+              class="hitbox"
               data-action="toggle_heater_fuel_valve"
               points="1050,500 1250,500 1250,700 1050,700"
               title="Переключить подачу топлива"
@@ -720,13 +699,13 @@
 
         <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"
           aria-hidden="true">
-          <polygon class="hitbox interactive" data-action="toggle_commander_view"
+          <polygon class="hitbox" data-action="toggle_commander_view"
             points="700,700 800,700 800,800 700,800" />
-          <polygon class="hitbox interactive" data-action="enter_driver_seat"
+          <polygon class="hitbox" data-action="enter_driver_seat"
             points="900,900 1000,900 1000,1000 900,1000" />
 
           <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
-          <polygon class="hitbox interactive" data-action="toggle_heater_fuel_valve"
+          <polygon class="hitbox" data-action="toggle_heater_fuel_valve"
             points="1050,500 1250,500 1250,700 1050,700" title="Переключить подачу топлива" />
         </svg>
       </div>
