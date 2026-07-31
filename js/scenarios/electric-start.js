@@ -1,7 +1,7 @@
-function getPreparationToStart20CScenario() {
+function getElectricStart20CScenario() {
   return {
-    id: "prestart-preparation@20",
-    title: "Подготовка к пуску: +20°C, дизель",
+    id: "electric-start@20",
+    title: "Подготовка и запуск стартером: +20°C, дизель",
     stages: [
       {
         id: "stage-preparation-non-strict",
@@ -78,15 +78,69 @@ function getPreparationToStart20CScenario() {
         ]
       },
       {
-        id: "stage-signal-strict",
-        title: "Предупредительный сигнал",
+        id: "stage-start-strict",
+        title: "Пуск стартером-генератором",
         strict: true,
         steps: [
           {
             id: "warning-signal",
-            title: "Дать предупредительный сигнал",
+            title: "Дать предупредительный звуковой сигнал",
             gateKeys: ["horn"],
             completeWhen: (s) => Boolean(s.horn),
+          },
+          {
+            id: "combined-off",
+            title: "Убедиться, что тумблер КОМБИНИР. выключен",
+            auto: true,
+            completeWhen: (s) => !Boolean(s.combined),
+          },
+          {
+            id: "mzn-engine-on",
+            title: "Нажать и удерживать кнопку маслозакачивающего насоса МЗН-2",
+            gateKeys: ["mznEngine"],
+            completeWhen: (s) => Boolean(s.mznEngine),
+          },
+          {
+            id: "oil-pressure-ready",
+            title: "Дождаться давления масла в системе не ниже 2 кгс/см²",
+            auto: true,
+            completeWhen: (s) => Boolean(s.mznEngine) && s.oil_pressure_engine >= 2.0,
+          },
+          {
+            id: "mzn-engine-off",
+            title: "После создания давления масла отпустить кнопку МЗН-2",
+            gateKeys: ["mznEngine"],
+            completeWhen: (s) => !Boolean(s.mznEngine),
+          },
+          {
+            id: "manual-fuel-feed-start",
+            title: "Установить ручную подачу топлива на величину не менее 10%",
+            gateKeys: ["fuelManualFeed"],
+            completeWhen: (s) => Number(s.fuelManualFeed) >= 10,
+          },
+          {
+            id: "starter-pressed",
+            title: "Нажать кнопку СТАРТЕР для пуска двигателя",
+            gateKeys: ["starter"],
+            completeWhen: (s) => s.starter === 2,
+          },
+          {
+            id: "engine-started",
+            title: "Дождаться пуска двигателя",
+            auto: true,
+            completeWhen: (s) => Boolean(s.engineRunning),
+          },
+          {
+            id: "starter-released",
+            title: "Сразу после пуска двигателя отпустить кнопку СТАРТЕР",
+            gateKeys: ["starter"],
+            completeWhen: (s) => s.starter !== 2 && Boolean(s.engineRunning),
+          },
+          {
+            id: "min-rpm-800",
+            title: "Установить устойчивые обороты холостого хода двигателя (800–900 об/мин)",
+            auto: true,
+            completeWhen: (s) => Boolean(s.engineRunning) && s.engine_rpm >= 800,
           }
         ]
       }
@@ -94,5 +148,4 @@ function getPreparationToStart20CScenario() {
   };
 }
 
-
-export { getPreparationToStart20CScenario };
+export { getElectricStart20CScenario };

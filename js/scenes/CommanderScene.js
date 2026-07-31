@@ -7,8 +7,6 @@ export class CommanderScene {
 
     init() {
         console.log("CommanderScene init");
-        const finishBtn = document.getElementById("simFinishButton");
-        if (finishBtn) finishBtn.classList.remove("hidden");
         if (this.el) this.el.addEventListener("click", this.handleAction);
         this._syncFuelValveVisual();
     }
@@ -46,8 +44,6 @@ export class CommanderScene {
 
     dispose() {
         console.log("CommanderScene dispose");
-        const finishBtn = document.getElementById("simFinishButton");
-        if (finishBtn) finishBtn.classList.add("hidden");
         if (this.el) this.el.removeEventListener("click", this.handleAction);
     }
 }
