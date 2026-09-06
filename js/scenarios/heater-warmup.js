@@ -77,16 +77,10 @@ function getHeaterWarmupScenario(ambientTemp = -20) {
             completeWhen: (s) => Boolean(s.heaterFuelValve),
           },
           {
-            id: "heating-on",
-            title: "В кабине водителя установить переключатель ПОДОГРЕВАТЕЛЬ в положение ВКЛ",
-            gateKeys: ["heating"],
-            completeWhen: (s) => Boolean(s.heating),
-          },
-          {
             id: "spark-plug-on",
             title: "Установить переключатель СВЕЧА в положение СВЕЧА (влево)",
             gateKeys: ["sparkPlug"],
-            completeWhen: (s) => Boolean(s.heating) && s.sparkPlug === 2,
+            completeWhen: (s) => s.sparkPlug === 2,
           },
           {
             id: "heater-burning",
@@ -112,12 +106,6 @@ function getHeaterWarmupScenario(ambientTemp = -20) {
             title: "Дождаться прогрева двигателя (жидкость ≥ 40 °C, масло ≥ 30 °C)",
             auto: true,
             completeWhen: (s) => s.coolant_temp >= 40 && s.oil_temp >= 30,
-          },
-          {
-            id: "heating-off",
-            title: "Выключить подогреватель (переключатель ПОДОГРЕВАТЕЛЬ в положение ВЫКЛ)",
-            gateKeys: ["heating"],
-            completeWhen: (s) => !Boolean(s.heating),
           },
           {
             id: "valve-close",

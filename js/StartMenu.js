@@ -1,8 +1,9 @@
 class StartMenu {
-  constructor({ rootEl, onTrainingStart, onInstruction }) {
+  constructor({ rootEl, onTrainingStart, onInstruction, onFamiliarization }) {
     this.rootEl = rootEl;
     this.onTrainingStart = onTrainingStart;
     this.onInstruction = onInstruction;
+    this.onFamiliarization = onFamiliarization;
     this.currentScreen = 'main';
     this._build();
   }
@@ -15,6 +16,7 @@ class StartMenu {
     mainScreen.innerHTML = `
       <nav class="start-nav">
         <button class="start-nav-item" data-action="training">Тренировка</button>
+        <button class="start-nav-item" data-action="familiarization">Ознакомление</button>
         <button class="start-nav-item" data-action="instruction">Инструкция</button>
         <button class="start-nav-item" data-action="authors">Авторы</button>
       </nav>
@@ -80,6 +82,7 @@ class StartMenu {
           <button class="instruction-tab-btn" data-tab="inst-combined">Комбинированный</button>
           <button class="instruction-tab-btn" data-tab="inst-winter">Зимний запуск</button>
           <button class="instruction-tab-btn" data-tab="inst-warmup">Разогрев подогревателем</button>
+          <button class="instruction-tab-btn" data-tab="inst-heater">Обогреватель БО</button>
         </div>
         <div class="instruction-tabs-content">
           <div class="instruction-tab-pane active" id="inst-prep">
@@ -172,9 +175,9 @@ class StartMenu {
               <li>Войдите в крупный план выхлопа подогревателя. Возьмите гаечный ключ из ЗИП, открутите 2 болта и снимите защитную крышку.</li>
               <li>Возьмите защитный козырек из ЗИП и установите его на выхлопной патрубок подогревателя.</li>
               <li>В кабине командира наклоните взгляд вниз и откройте топливный клапан подогревателя (ручка вверх).</li>
-              <li>В кабине водителя включите выключатель батарей (<strong>Массу</strong>) и переведите тумблер <strong>«ОБОГРЕВ»</strong> в положение «ВКЛ» (вверх).</li>
+              <li>В кабине водителя включите выключатель батарей (<strong>Массу</strong>), установите переключатель <strong>СВЕЧА</strong> в положение СВЕЧА (влево) и дождитесь воспламенения топлива в подогревателе.</li>
               <li>Дождитесь разогрева охлаждающей жидкости по прибору до температуры не ниже <strong>30°C</strong> (оптимально 70-80°C).</li>
-              <li>Выключите тумблер <strong>«ОБОГРЕВ»</strong> на панели водителя и закройте топливный клапан подогревателя в кабине командира.</li>
+              <li>В кабине командира закройте топливный клапан подогревателя для остановки горения и продуйте котел.</li>
               <li>Выполните пуск двигателя выбранным методом (обычно воздухом или комбинированным).</li>
             </ol>
           </div>
@@ -187,11 +190,24 @@ class StartMenu {
               <li>В ангаре перейдите на вид сбоку слева, откройте три шпингалета лючка подогревателя и откиньте панель.</li>
               <li>Перейдите в крупный план выхлопа подогревателя, возьмите гаечный ключ из ЗИП, открутите два болта, снимите крышку и установите козырек выхлопа подогревателя.</li>
               <li>В кабине командира откройте топливный клапан подогревателя (поднимите рычаг вверх).</li>
-              <li>В кабине водителя включите переключатель <strong>ПОДОГРЕВАТЕЛЬ</strong> (ОБОГРЕВ).</li>
-              <li>Установите переключатель <strong>СВЕЧА</strong> в положение СВЕЧА (влево или вправо) и удерживайте до воспламенения топлива (появления пламени/гула).</li>
+              <li>В кабине водителя установите переключатель <strong>СВЕЧА</strong> в положение СВЕЧА (влево) и удерживайте до воспламенения топлива (появления пламени/гула).</li>
               <li>После пуска подогревателя отпустите переключатель <strong>СВЕЧА</strong> (в среднее положение).</li>
               <li>Следите за температурой охлаждающей жидкости и масла на приборной панели. Дождитесь, пока охлаждающая жидкость нагреется минимум до <strong>40°C</strong>, а масло до <strong>30°C</strong>.</li>
-              <li>Выключите переключатель <strong>ПОДОГРЕВАТЕЛЬ</strong> на панели водителя и закройте топливный клапан подогревателя в кабине командира.</li>
+              <li>В кабине командира закройте топливный клапан подогревателя для остановки горения и продуйте котел перед закрытием лючков снаружи.</li>
+            </ol>
+            <p style="margin-top: 15px; padding: 10px 14px; background: rgba(88, 166, 255, 0.1); border-left: 3px solid #58a6ff; border-radius: 4px; font-size: 13px;">
+              <strong>Примечание:</strong> Не путайте предпусковой подогреватель двигателя с тумблером <strong>«ОБОГРЕВ БО»</strong>! Предпусковой подогреватель управляется переключателями «СВЕЧА – МОТОР» и «ПУСК МОТОРА». Тумблер «ОБОГРЕВ БО» включает вентилятор отопителя боевого отделения для экипажа и используется при необходимости на ходу или при прогреве.
+            </p>
+          </div>
+          <div class="instruction-tab-pane" id="inst-heater">
+            <h3>Обогреватель боевого отделения (ОБОГРЕВ БО)</h3>
+            <p>Обогреватель боевого отделения (отопитель калориферного типа) предназначен для обогрева обитаемого отделения танка и создания нормальных условий для экипажа в холодное время года:</p>
+            <ol>
+              <li><strong>Орган управления:</strong> Двухпозиционный тумблер <strong>«ОБОГРЕВ БО»</strong> (расположен в верхнем левом углу щитка контрольных приборов механика-водителя).</li>
+              <li><strong>Принцип действия:</strong> Тумблер включает только <strong>электродвигатель вентилятора</strong> обдува калорифера. В калорифере нет электрических ТЭНов — тепло передается воздуху от горячей охлаждающей жидкости, циркулирующей через его радиатор.</li>
+              <li><strong>Включение на ходу:</strong> Включается экипажем <strong>во время движения танка</strong> при низких температурах («едем-едем, экипажу стало холодно — включили тумблер»). Горячая жидкость через радиатор прокачивается штатной водяной помпой работающего двигателя.</li>
+              <li><strong>Работа при стоянке:</strong> Может также работать при предпусковом прогреве машины, когда насос нагнетателя работающего подогревателя прокачивает нагретую жидкость через радиатор обогревателя БО.</li>
+              <li><strong>Важное правило:</strong> Включение тумблера «ОБОГРЕВ БО» <strong>НЕ запускает</strong> предпусковой подогреватель двигателя! На холодном неработающем двигателе включение тумблера приведет лишь к обдуву холодным воздухом.</li>
             </ol>
           </div>
         </div>
@@ -266,6 +282,9 @@ class StartMenu {
         case 'training':
           this.showScreen('training');
           break;
+        case 'familiarization':
+          if (this.onFamiliarization) this.onFamiliarization();
+          break;
         case 'instruction':
           this.showScreen('instruction');
           if (this.onInstruction) this.onInstruction();
@@ -303,7 +322,8 @@ class StartMenu {
     if (applyBtn) {
       applyBtn.addEventListener('click', () => {
         const startMethod = this.rootEl.querySelector('#scenarioStartMethod')?.value || 'prestart-preparation';
-        const ambientTemp = Number(this.rootEl.querySelector('#scenarioAmbientTemp')?.value) || 20;
+        const rawTemp = Number(this.rootEl.querySelector('#scenarioAmbientTemp')?.value);
+        const ambientTemp = Number.isFinite(rawTemp) ? rawTemp : 20;
         const fuelType = this.rootEl.querySelector('#scenarioFuelType')?.value || 'diesel';
         if (this.onTrainingStart) {
           this.onTrainingStart({ startMethod, ambientTemp, fuelType });

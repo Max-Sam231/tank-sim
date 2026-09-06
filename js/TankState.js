@@ -95,6 +95,10 @@ class TankState {
     this._brakeHoldTriggered = false;
 
     this._parkingBrakeHoldThresholdSec = 1.2;
+    this.hingeLatch1 = false;
+    this.hingeLatch2 = false;
+    this.hingeLatch3 = false;
+    this.sidePanelOpen = false;
     this.exhaustBolt1 = false;
     this.exhaustBolt2 = false;
     this.exhaustCoverRemoved = false;
@@ -106,6 +110,7 @@ class TankState {
     this.hasExhaustCap = false;        // Взял ли игрок козырёк из ЗИП
     this.exhaustCapInstalled = false;
     this._heaterBurning = false;
+    this.boHeatingActive = false;
     this._listeners = new Set();
 
   }
@@ -207,6 +212,7 @@ class TankState {
     this.hasExhaustCap = false;
     this.exhaustCapInstalled = false;
     this._heaterBurning = false;
+    this.boHeatingActive = false;
     this._emit();
   }
 
@@ -261,6 +267,7 @@ class TankState {
       oilPumpGearbox: this.oilPumpGearbox,
       // Note: commanderCall and airIntake are now in lamps object only
       heating: this.heating,
+      boHeatingActive: this.boHeatingActive,
       combined: this.combined,
       leftLights: this.leftLights,
       rightLights: this.rightLights,
@@ -588,14 +595,21 @@ class TankState {
     const ambient = Number.isFinite(this.scenario.ambientTempC) ? this.scenario.ambientTempC : 20.0;
     const rpmFactor = this._engineRunning ? this._clamp((rpm - 900) / 1700, 0.0, 1.0) : 0.0;
 
-    // Heater state logic
-    const isHeaterActive = isMassOn && this.heating && this.heaterFuelValve && this.exhaustCapInstalled;
-    if (isHeaterActive && this.sparkPlug === 2) {
+    // Heater state logic (engine preheater is independent of crew compartment heating toggle)
+    const prevHeaterBurning = this._heaterBurning;
+    const isHeaterReady = isMassOn && this.heaterFuelValve && this.exhaustCapInstalled;
+    if (isHeaterReady && this.sparkPlug === 2) {
       this._heaterBurning = true;
     }
-    if (!isHeaterActive) {
+    if (!this.heaterFuelValve || !isMassOn || !this.exhaustCapInstalled) {
       this._heaterBurning = false;
     }
+    if (this._heaterBurning !== prevHeaterBurning) changed = true;
+
+    // Interior heater for fighting compartment (ОБОГРЕВ БО): fan blows warm air if engine is running or preheater is burning
+    const nextBoHeating = this._calculateBoHeatingActive();
+    if (this.boHeatingActive !== nextBoHeating) changed = true;
+    this.boHeatingActive = nextBoHeating;
 
     let targetCoolant = ambient;
     let targetOilTemp = ambient;
@@ -895,10 +909,14 @@ class TankState {
     this._emit();
   }
 
-  // Note: toggleCommanderCall and toggleAirIntake removed - these are now indicator lamps only
+  _calculateBoHeatingActive() {
+    const isMassOn = Boolean(this.isBatteryOn);
+    return Boolean(isMassOn && this.heating && (this._engineRunning || this._heaterBurning || (this.sensors?.coolant_temp >= 40)));
+  }
 
   toggleHeating() {
     this.heating = !this.heating;
+    this.boHeatingActive = this._calculateBoHeatingActive();
     this._emit();
   }
 

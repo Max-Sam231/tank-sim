@@ -123,7 +123,7 @@ const CONTROL_OVERLAY_DEFS = {
 | `oil-pump-gearbox`         | boolean | oilPumpGearbox         | Откачка масла КП          |
 | `commander-call`           | boolean | commanderCall          | Вызов командира           |
 | `air-intake`               | boolean | airIntake              | ВО                        |
-| `heating`                  | boolean | heating                | Обогрев                   |
+| `heating`                  | boolean | heating                | Обогрев боевого отделения (ОБОГРЕВ БО) |
 | `combined`                 | boolean | combined               | Комбинированный           |
 | `left-lights`              | boolean | leftLights             | Левые фары                |
 | `right-lights`             | boolean | rightLights            | Правые фары               |
