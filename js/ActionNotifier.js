@@ -49,7 +49,7 @@ class ActionNotifier {
       "emergency-hatch-rotation": () => boolText(snapshot.emergencyHatchRotation, "Поворот аварийного люка включен", "Поворот аварийного люка выключен"),
       "oil-pump-gearbox": () => boolText(snapshot.oilPumpGearbox, "Маслозакачивающий насос КП включен", "Маслозакачивающий насос КП выключен"),
       // Note: commander-call and air-intake are indicator lamps only (non-interactive)
-      heating: () => boolText(snapshot.heating, "Обогрев включен", "Обогрев выключен"),
+      heating: () => boolText(snapshot.heating, "Обогрев БО включен", "Обогрев БО выключен"),
       combined: () => boolText(snapshot.combined, "Комбинированный режим включен", "Комбинированный режим выключен"),
       "left-lights": () => boolText(snapshot.leftLights, "Левые фары включены", "Левые фары выключены"),
       "right-lights": () => boolText(snapshot.rightLights, "Правые фары включены", "Правые фары выключены"),

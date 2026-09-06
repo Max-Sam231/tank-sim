@@ -11,6 +11,7 @@ import { HangarScene } from './js/scenes/HangarScene.js';
 import { DriverScene } from './js/scenes/DriverScene.js';
 import { CommanderScene } from './js/scenes/CommanderScene.js';
 import { ExhaustSmoke } from './js/smoke/ExhaustSmoke.js';
+import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
 const APP_MODE = "prod"; // "debug" или "prod"
 const IS_DEBUG = APP_MODE === "debug";
 
@@ -107,6 +108,7 @@ function bootstrap() {
     },
     onMenu: () => {
       stopLoop();
+      familiarization.stop();
       audioManager.stopAll();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
@@ -186,11 +188,21 @@ function bootstrap() {
     }
   };
 
+  const familiarization = new FamiliarizationController({
+    app,
+    onExit: () => {
+      audioManager.stopAll();
+      changeScene("hangar");
+      startMenu.show();
+    },
+  });
+
   // 5. Меню запуска (с интеграцией audioManager.init)
   const startMenu = new StartMenu({
     rootEl: startMenuContainerEl,
 
     onTrainingStart: ({ startMethod, ambientTemp, fuelType }) => {
+      familiarization.stop();
       // Разблокируем звук при первом реальном действии пользователя
       audioManager.init(); 
       audioManager.stopAll();
@@ -216,6 +228,18 @@ function bootstrap() {
       updateInventoryBar(state.getSnapshot());
       changeScene("hangar");
       startLoop();
+    },
+
+    onFamiliarization: () => {
+      audioManager.init();
+      audioManager.stopAll();
+      stopLoop();
+      state.reset();
+      startMenu.hide();
+      if (finishBtnEl) finishBtnEl.classList.add("hidden");
+      document.getElementById("inventoryBar")?.classList.add("hidden");
+      changeScene("driver");
+      familiarization.start();
     },
 
     onInstruction: () => {
