@@ -10,6 +10,7 @@ import { updateSpeed } from "./driveline.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
+import { updateOperatingLimits } from "./operatingLimits.js";
 import { updateGyroCompass } from "./navigation.js";
 import { updateLamps } from "./signalLamps.js";
 
@@ -59,6 +60,9 @@ function updatePhysics(state, dt) {
   changed = updateCooldown(state, ctx) || changed;
   changed = updateGyroCompass(state, ctx) || changed;
   changed = updateLamps(state, ctx) || changed;
+
+  // Контроль режимов — последним: сверяет уже посчитанные показания
+  updateOperatingLimits(state, ctx);
 
   return changed;
 }

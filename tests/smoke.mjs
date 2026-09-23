@@ -97,6 +97,7 @@ const { overheatLimit } = await import("../js/physics/thermalSystem.js");
 const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
 const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
+const { LIMIT_RULES, TOLERANCE_SEC } = await import("../js/physics/operatingLimits.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1156,6 +1157,11 @@ check("Двигатель не глушится сразу после нагру
 check("После выдержки на холостом ходу остановка штатная", () => {
   const { state, run } = startedEngine();
 
+  // Полный цикл без ошибок: прогрев на холостом ходу, работа, охлаждение
+  state.setShutters("4");
+  run(60);
+  assert(state.sensors.coolant_temp >= 55, "двигатель не прогрелся на холостом ходу");
+
   state.setFuelManualFeed(90);
   run(30);
   state.setFuelManualFeed(0);
@@ -1163,7 +1169,10 @@ check("После выдержки на холостом ходу останов
 
   assert(state.canStopEngine(), "выдержка на холостом ходу не засчитана");
   assert(state.stopEngine(), "двигатель не остановился");
-  assert(state.violations.length === 0, `записаны лишние нарушения: ${state.violations}`);
+  assert(
+    state.violations.length === 0,
+    `записаны лишние нарушения: ${JSON.stringify(state.violations)}`,
+  );
 });
 
 check("Газ в середине выдержки сбрасывает отсчёт охлаждения", () => {
@@ -1331,6 +1340,80 @@ check("Непотушенный пожар выводит машину из ст
   assert(
     state.violations.some((v) => v.includes("выведена из строя")),
     "не записан итог непотушенного пожара",
+  );
+});
+
+check("Каждое правило контроля режимов описано полностью", () => {
+  assert(LIMIT_RULES.length > 0, "правил контроля нет");
+
+  const ids = new Set();
+  for (const rule of LIMIT_RULES) {
+    assert(rule.id, "у правила нет идентификатора");
+    assert(!ids.has(rule.id), `повторяющийся идентификатор ${rule.id}`);
+    ids.add(rule.id);
+
+    assert(typeof rule.applies === "function", `${rule.id}: нет условия применимости`);
+    assert(typeof rule.violated === "function", `${rule.id}: нет проверки`);
+    assert(rule.message(new TankState()), `${rule.id}: пустое сообщение`);
+  }
+});
+
+check("Короткий заброс за предел не считается нарушением", () => {
+  const { state, run } = startedEngine();
+
+  // Прогреваем, чтобы не поймать нарушение о нагрузке на холодную
+  state.setFuelManualFeed(40);
+  run(200);
+  const before = state.violations.length;
+
+  state.sensors.oil_pressure_engine = 0.5;
+  run(TOLERANCE_SEC / 2);
+
+  assert(
+    state.violations.length === before,
+    `кратковременный заброс записан как нарушение: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("Удержание вне предела записывается в журнал", () => {
+  const { state, run } = startedEngine();
+
+  // Закрытые жалюзи под нагрузкой — штатный путь к перегреву
+  state.setShutters("0");
+  state.setFuelManualFeed(100);
+  run(240);
+
+  assert(state.lamps.overheat, `лампа перегрева не загорелась при ${state.sensors.coolant_temp} °C`);
+  assert(
+    state.violations.some((v) => v.includes("Перегрев")),
+    `перегрев не записан: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("Открытые жалюзи удерживают температуру в норме", () => {
+  const { state, run } = startedEngine();
+
+  state.setShutters("4");
+  state.setFuelManualFeed(100);
+  run(240);
+
+  assert(!state.lamps.overheat, `перегрев при открытых жалюзи: ${state.sensors.coolant_temp} °C`);
+  assert(
+    !state.violations.some((v) => v.includes("Перегрев")),
+    "записан перегрев при открытых жалюзи",
+  );
+});
+
+check("Нагрузка на непрогретом двигателе записывается", () => {
+  const { state, run } = startedEngine();
+
+  assert(state.sensors.coolant_temp < 55, "двигатель уже прогрет, случай не проверить");
+  state.setFuelManualFeed(90);
+  run(TOLERANCE_SEC + 1);
+
+  assert(
+    state.violations.some((v) => v.includes("непрогретом")),
+    `нагрузка на холодную не записана: ${JSON.stringify(state.violations)}`,
   );
 });
 

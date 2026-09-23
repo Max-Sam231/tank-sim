@@ -229,11 +229,23 @@ const SCENARIOS = {
     },
   },
 
-  "прогрев двигателя при закрытых жалюзи": {
+  "перегрев под нагрузкой при закрытых жалюзи": {
     durationSec: 180,
     setup: (state) => {
       prime(state, "electric-start");
       state.setShutters("0");
+    },
+    at: {
+      ...ELECTRIC_START_STEPS,
+      30: (state) => state.setFuelManualFeed(100),
+    },
+  },
+
+  "работа под нагрузкой при открытых жалюзи": {
+    durationSec: 180,
+    setup: (state) => {
+      prime(state, "electric-start");
+      state.setShutters("4");
     },
     at: {
       ...ELECTRIC_START_STEPS,

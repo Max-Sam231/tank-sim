@@ -18,6 +18,17 @@ const RATE_HEATER = 1.5; // ускорено против реального: з
 const RATE_AMBIENT_HEAT = 1.0;
 const RATE_AMBIENT_COOL = 0.7;
 
+/**
+ * Влияние жалюзи на охлаждение.
+ * Полностью открытые (положение 4) не мешают продуву, закрытые (0)
+ * добавляют к установившейся температуре тем больше, чем выше нагрузка.
+ *
+ * ВНИМАНИЕ: величины требуют сверки с РЭ Т-72.
+ */
+const SHUTTERS_FULLY_OPEN = 4;
+const SHUTTER_PENALTY_IDLE_C = 10;
+const SHUTTER_PENALTY_LOAD_C = 35;
+
 const RPM_FACTOR_MIN = 900;
 const RPM_FACTOR_SPAN = 1700;
 
@@ -70,8 +81,13 @@ function updateTemperatures(state, ctx) {
   let coolRate = RATE_AMBIENT_COOL;
 
   if (state._engineRunning) {
-    targetCoolant = RUNNING_COOLANT_C + ctx.rpmFactor * RPM_HEAT_COOLANT_C;
-    targetOil = RUNNING_OIL_C + ctx.rpmFactor * RPM_HEAT_OIL_C;
+    // Прикрытые жалюзи уменьшают продув радиаторов, и тем заметнее,
+    // чем выше нагрузка: на холостом ходу тепла мало, под нагрузкой много
+    const closed = 1 - Number(state.shutters) / SHUTTERS_FULLY_OPEN;
+    const penalty = closed * (SHUTTER_PENALTY_IDLE_C + ctx.rpmFactor * SHUTTER_PENALTY_LOAD_C);
+
+    targetCoolant = RUNNING_COOLANT_C + ctx.rpmFactor * RPM_HEAT_COOLANT_C + penalty;
+    targetOil = RUNNING_OIL_C + ctx.rpmFactor * RPM_HEAT_OIL_C + penalty;
     heatRate = RATE_ENGINE;
     coolRate = 0.0;
   } else if (state._heaterBurning) {

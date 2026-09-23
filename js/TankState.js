@@ -107,6 +107,7 @@ class TankState {
     this.ppoAuto = true;
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
+    this._limitBreachTime = {};
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -222,6 +223,7 @@ class TankState {
     this.ppoAuto = true;
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
+    this._limitBreachTime = {};
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
