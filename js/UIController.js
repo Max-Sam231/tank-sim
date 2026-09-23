@@ -1,5 +1,8 @@
 import { CONTROL_OVERLAY_DEFS } from "./ControlOverlayDefs.js";
 import { ActionModals } from "./ui/ActionModals.js";
+import { Tooltip } from "./ui/Tooltip.js";
+import { renderHitboxLabels } from "./ui/hitboxLabels.js";
+import { parsePolygonPoints, polygonBBox } from "./ui/polygonGeometry.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
@@ -22,9 +25,7 @@ class UIController {
     this._hitboxVisible = this.isDebug;
     this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
-    this._manometerTooltipEl = null;
     this._isManometerHovered = false;
-    this._gaugeTooltipEl = null;
     this._hoveredGauge = null;
     this._gaugeNames = {
       "gauge-coolant-temp": "Температура охлаждающей жидкости",
@@ -47,7 +48,7 @@ class UIController {
       "gauge-rpm": "об/мин",
     };
 
-    this._ensureManometerTooltip();
+    this._ensureTooltips();
 
     this._actionModals = new ActionModals({
       state: this.state,
@@ -58,7 +59,7 @@ class UIController {
 
     this._ensureCabinControlOverlays();
     this._ensureInstrumentPanelControlOverlays();
-    if (this.isDebug) this._ensureHitboxLabels();
+    if (this.isDebug) renderHitboxLabels(this.rootEl);
     this._syncHitboxVisibility();
 
     let prevEngineRunning = false;
@@ -79,25 +80,17 @@ class UIController {
     this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
   }
 
-  _ensureManometerTooltip() {
-    const existing = this.rootEl.querySelector(".manometer-tooltip");
-    if (existing) {
-      this._manometerTooltipEl = existing;
-      return;
-    }
-
-    const el = document.createElement("div");
-    el.className = "manometer-tooltip hidden";
-    el.setAttribute("aria-hidden", "true");
-    this.rootEl.appendChild(el);
-    this._manometerTooltipEl = el;
-  }
-
-  _renderManometerTooltip(snapshot) {
-    if (!this._manometerTooltipEl || !this._isManometerHovered) return;
-
-    const pressure = this._getManometerPressure(snapshot);
-    this._manometerTooltipEl.textContent = `${pressure.toFixed(1)} кгс/см²`;
+  _ensureTooltips() {
+    this._manometerTooltip = new Tooltip({
+      className: "manometer-tooltip",
+      parentEl: this.rootEl,
+      fallbackWidth: 300,
+      fallbackHeight: 120,
+    });
+    this._gaugeTooltip = new Tooltip({
+      className: "gauge-tooltip",
+      parentEl: document.body,
+    });
   }
 
   _getManometerPressure(snapshot) {
@@ -113,48 +106,21 @@ class UIController {
     return openPressures.length ? openPressures.reduce((a, b) => a + b, 0) / openPressures.length : 0;
   }
 
-  _moveManometerTooltip(clientX, clientY) {
-    if (!this._manometerTooltipEl) return;
-
-    const margin = 14;
-    const tooltipWidth = this._manometerTooltipEl.offsetWidth || 300;
-    const tooltipHeight = this._manometerTooltipEl.offsetHeight || 120;
-    const maxX = window.innerWidth - tooltipWidth - margin;
-    const maxY = window.innerHeight - tooltipHeight - margin;
-    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
-    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
-
-    this._manometerTooltipEl.style.left = `${x}px`;
-    this._manometerTooltipEl.style.top = `${y}px`;
+  _renderManometerTooltip(snapshot) {
+    if (!this._isManometerHovered) return;
+    this._manometerTooltip.setText(`${this._getManometerPressure(snapshot).toFixed(1)} кгс/см²`);
   }
 
   _showManometerTooltip(event, snapshot) {
-    if (!this._manometerTooltipEl) return;
-
     this._isManometerHovered = true;
-    this._manometerTooltipEl.classList.remove("hidden");
+    this._manometerTooltip.show();
     this._renderManometerTooltip(snapshot);
-    this._moveManometerTooltip(event.clientX, event.clientY);
+    this._manometerTooltip.moveTo(event.clientX, event.clientY);
   }
 
   _hideManometerTooltip() {
-    if (!this._manometerTooltipEl) return;
     this._isManometerHovered = false;
-    this._manometerTooltipEl.classList.add("hidden");
-  }
-
-  _ensureGaugeTooltip() {
-    const existing = document.querySelector(".gauge-tooltip");
-    if (existing) {
-      this._gaugeTooltipEl = existing;
-      return;
-    }
-
-    const el = document.createElement("div");
-    el.className = "gauge-tooltip hidden";
-    el.setAttribute("aria-hidden", "true");
-    document.body.appendChild(el);
-    this._gaugeTooltipEl = el;
+    this._manometerTooltip.hide();
   }
 
   _getGaugeValue(gaugeId, snapshot) {
@@ -196,135 +162,27 @@ class UIController {
   }
 
   _renderGaugeTooltip() {
-    if (!this._gaugeTooltipEl || !this._hoveredGauge) return;
+    if (!this._hoveredGauge) return;
 
-    const snapshot = this.state.getSnapshot();
-    const data = this._getGaugeValue(this._hoveredGauge, snapshot);
+    const data = this._getGaugeValue(this._hoveredGauge, this.state.getSnapshot());
     if (!data) return;
 
-    const formattedValue = Number.isFinite(data.value)
-      ? data.value.toFixed(data.unit === "л" || data.unit === "об/мин" ? 0 : 1)
-      : "-";
+    const digits = data.unit === "л" || data.unit === "об/мин" ? 0 : 1;
+    const formattedValue = Number.isFinite(data.value) ? data.value.toFixed(digits) : "-";
 
-    this._gaugeTooltipEl.innerHTML =
-      `<div class="gauge-tooltip-value">${formattedValue} ${data.unit}</div>`;
-  }
-
-  _moveGaugeTooltip(clientX, clientY) {
-    if (!this._gaugeTooltipEl) return;
-
-    const margin = 14;
-    const tooltipWidth = this._gaugeTooltipEl.offsetWidth || 200;
-    const tooltipHeight = this._gaugeTooltipEl.offsetHeight || 80;
-    const maxX = window.innerWidth - tooltipWidth - margin;
-    const maxY = window.innerHeight - tooltipHeight - margin;
-    const x = Math.min(Math.max(margin, clientX + 16), Math.max(margin, maxX));
-    const y = Math.min(Math.max(margin, clientY + 16), Math.max(margin, maxY));
-
-    this._gaugeTooltipEl.style.left = `${x}px`;
-    this._gaugeTooltipEl.style.top = `${y}px`;
+    this._gaugeTooltip.setHtml(`<div class="gauge-tooltip-value">${formattedValue} ${data.unit}</div>`);
   }
 
   _showGaugeTooltip(gaugeId, event) {
-    if (!this._gaugeTooltipEl) this._ensureGaugeTooltip();
-    if (!this._gaugeTooltipEl) return;
-
     this._hoveredGauge = gaugeId;
-    this._gaugeTooltipEl.classList.remove("hidden");
+    this._gaugeTooltip.show();
     this._renderGaugeTooltip();
-    this._moveGaugeTooltip(event.clientX, event.clientY);
+    this._gaugeTooltip.moveTo(event.clientX, event.clientY);
   }
 
   _hideGaugeTooltip() {
-    if (!this._gaugeTooltipEl) return;
     this._hoveredGauge = null;
-    this._gaugeTooltipEl.classList.add("hidden");
-  }
-
-  _ensureHitboxLabels() {
-    // Process all SVG hitbox layers
-    const svgLayers = this.rootEl.querySelectorAll("svg.hitbox-layer");
-
-    svgLayers.forEach((svgEl) => {
-      const existing = svgEl.querySelector("g.hitbox-labels");
-      if (existing) existing.remove();
-
-      const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      group.setAttribute("class", "hitbox-labels");
-
-      const hitboxes = Array.from(svgEl.querySelectorAll(".hitbox"));
-      for (const hitbox of hitboxes) {
-        const label =
-          (hitbox.dataset.label || hitbox.dataset.action || "hitbox").trim() || "hitbox";
-        const pointsAttr = hitbox.getAttribute("points") || "";
-        const points = this._parsePolygonPoints(pointsAttr);
-        if (points.length < 3) continue;
-
-        const c = this._polygonCentroid(points);
-        if (!c) continue;
-
-        const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        textEl.setAttribute("class", "hitbox-label");
-        textEl.setAttribute("x", String(c.x));
-        textEl.setAttribute("y", String(c.y));
-        textEl.setAttribute("text-anchor", "middle");
-        textEl.setAttribute("dominant-baseline", "middle");
-        textEl.textContent = label;
-        group.appendChild(textEl);
-      }
-
-      svgEl.appendChild(group);
-    });
-  }
-
-  _parsePolygonPoints(pointsAttr) {
-    return pointsAttr
-      .trim()
-      .split(/\s+/)
-      .map((pair) => pair.split(","))
-      .map(([x, y]) => ({ x: Number(x), y: Number(y) }))
-      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
-  }
-
-  _polygonCentroid(points) {
-    let area2 = 0;
-    let cx = 0;
-    let cy = 0;
-    const n = points.length;
-
-    for (let i = 0; i < n; i++) {
-      const p0 = points[i];
-      const p1 = points[(i + 1) % n];
-      const cross = p0.x * p1.y - p1.x * p0.y;
-      area2 += cross;
-      cx += (p0.x + p1.x) * cross;
-      cy += (p0.y + p1.y) * cross;
-    }
-
-    if (area2 === 0) return null;
-    const area = area2 / 2;
-    return { x: Math.round(cx / (6 * area)), y: Math.round(cy / (6 * area)) };
-  }
-
-  _polygonBBox(points) {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const p of points) {
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-    }
-    if (
-      !Number.isFinite(minX) ||
-      !Number.isFinite(minY) ||
-      !Number.isFinite(maxX) ||
-      !Number.isFinite(maxY)
-    )
-      return null;
-    return { minX, minY, maxX, maxY };
+    this._gaugeTooltip.hide();
   }
 
   _ensureCabinControlOverlays() {
@@ -357,10 +215,10 @@ class UIController {
       if (!def) continue;
 
       const pointsAttr = hitbox.getAttribute("points") || "";
-      const points = this._parsePolygonPoints(pointsAttr);
+      const points = parsePolygonPoints(pointsAttr);
       if (points.length < 3) continue;
 
-      const bbox = this._polygonBBox(points);
+      const bbox = polygonBBox(points);
       if (!bbox) continue;
 
       const bboxW = bbox.maxX - bbox.minX;
@@ -449,10 +307,10 @@ class UIController {
       if (def.kind === "gauge") continue;
 
       const pointsAttr = hitbox.getAttribute("points") || "";
-      const points = this._parsePolygonPoints(pointsAttr);
+      const points = parsePolygonPoints(pointsAttr);
       if (points.length < 3) continue;
 
-      const bbox = this._polygonBBox(points);
+      const bbox = polygonBBox(points);
       if (!bbox) continue;
 
       const bboxW = bbox.maxX - bbox.minX;

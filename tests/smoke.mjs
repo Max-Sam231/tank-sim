@@ -55,6 +55,9 @@ const window = bootDom();
 const { TankState } = await import("../js/TankState.js");
 const { UIController } = await import("../js/UIController.js");
 const { ActionModals } = await import("../js/ui/ActionModals.js");
+const { parsePolygonPoints, polygonCentroid, polygonBBox } = await import("../js/ui/polygonGeometry.js");
+const { renderHitboxLabels } = await import("../js/ui/hitboxLabels.js");
+const { Tooltip } = await import("../js/ui/Tooltip.js");
 
 check("TankState создаётся и отдаёт снимок", () => {
   const state = new TankState();
@@ -125,6 +128,58 @@ check("Выбор передачи меняет состояние", () => {
   assert(String(state.gearLever) === "3", `ожидалась передача 3, получена ${state.gearLever}`);
 
   modals.dispose();
+});
+
+check("Геометрия полигонов считает центр и габариты квадрата", () => {
+  const points = parsePolygonPoints("0,0 10,0 10,10 0,10");
+  assert(points.length === 4, `ожидалось 4 точки, получено ${points.length}`);
+
+  const center = polygonCentroid(points);
+  assert(center.x === 5 && center.y === 5, `центр квадрата должен быть (5,5), получен (${center.x},${center.y})`);
+
+  const bbox = polygonBBox(points);
+  assert(bbox.minX === 0 && bbox.minY === 0 && bbox.maxX === 10 && bbox.maxY === 10, "габариты квадрата неверны");
+});
+
+check("Геометрия отбрасывает вырожденные полигоны", () => {
+  assert(parsePolygonPoints("").length === 0, "пустая строка должна дать 0 точек");
+  assert(parsePolygonPoints("a,b 1,2").length === 1, "нечисловые точки должны отсеиваться");
+  assert(polygonCentroid(parsePolygonPoints("0,0 1,1 2,2")) === null, "полигон нулевой площади должен дать null");
+  assert(polygonBBox([]) === null, "пустой набор точек должен дать null");
+});
+
+check("Подписи хитбоксов рисуются и переотрисовываются без дублей", () => {
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+
+  renderHitboxLabels(rootEl);
+  const firstPass = rootEl.querySelectorAll("g.hitbox-labels").length;
+  assert(firstPass > 0, "не создано ни одной группы подписей");
+  assert(rootEl.querySelectorAll("text.hitbox-label").length > 0, "не создано ни одной подписи");
+
+  renderHitboxLabels(rootEl);
+  assert(
+    rootEl.querySelectorAll("g.hitbox-labels").length === firstPass,
+    "повторный вызов размножил группы подписей",
+  );
+});
+
+check("Подсказка держится в границах окна", () => {
+  const tooltip = new Tooltip({ className: "test-tooltip", parentEl: window.document.body });
+
+  tooltip.moveTo(-500, -500);
+  assert(parseInt(tooltip.el.style.left, 10) >= 14, "подсказка ушла за левый край");
+  assert(parseInt(tooltip.el.style.top, 10) >= 14, "подсказка ушла за верхний край");
+
+  tooltip.moveTo(99999, 99999);
+  assert(parseInt(tooltip.el.style.left, 10) <= window.innerWidth, "подсказка ушла за правый край");
+
+  tooltip.setText("тест");
+  assert(tooltip.el.textContent === "тест", "текст подсказки не установлен");
+
+  tooltip.show();
+  assert(!tooltip.el.classList.contains("hidden"), "подсказка не показалась");
+  tooltip.hide();
+  assert(tooltip.el.classList.contains("hidden"), "подсказка не скрылась");
 });
 
 for (const { name, fn } of checks) {
