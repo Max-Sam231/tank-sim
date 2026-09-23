@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "concurrently \"node live-reload-server.js\" \"serve -s . -l 8000\"",
     "serve": "serve -s . -l 8000",
-    "smoke": "node tests/smoke.mjs"
+    "smoke": "node tests/smoke.mjs",
+    "test:physics": "node tests/physics.mjs",
+    "test": "npm run smoke && npm run test:physics"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
