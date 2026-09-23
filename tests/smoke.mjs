@@ -86,6 +86,16 @@ const { STATE_SOUNDS, WATCHED_KEYS, INITIAL_SOUND_STATE, playStateSounds } = awa
 const { throttleOf } = await import("../js/audio/engineSound.js");
 const { StartMenu } = await import("../js/StartMenu.js");
 const { MENU_SCREENS } = await import("../js/menu/menuScreens.js");
+const { buildCard, renderedOptions, isAnswerCorrect, totalElements, shuffle } = await import(
+  "../js/familiarization/quiz.js"
+);
+const { FamiliarizationController } = await import(
+  "../js/familiarization/FamiliarizationController.js"
+);
+const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiarizationData.js");
+
+/** Предсказуемый источник случайности: всегда берёт первый элемент. */
+const firstAlways = () => 0;
 
 /** Подставной проигрыватель: записывает, что и когда просили сыграть. */
 function makeAudioSpy() {
@@ -826,6 +836,206 @@ check("Вкладки инструкции переключаются по од�
   const activePanes = rootEl.querySelectorAll(".instruction-tab-pane.active");
   assert(activePanes.length === 1, `активных страниц: ${activePanes.length}`);
   assert(activePanes[0].id === last.dataset.tab, "открыта страница другой вкладки");
+});
+
+check("База ознакомления заполнена и непротиворечива", () => {
+  const keys = Object.keys(FAMILIARIZATION_DATA);
+  assert(keys.length > 0, "база ознакомления пуста");
+  assert(totalElements() === keys.length, "счётчик элементов расходится с базой");
+
+  const problems = [];
+  for (const [key, entry] of Object.entries(FAMILIARIZATION_DATA)) {
+    if (!entry.title) problems.push(`${key}: нет названия`);
+    if (!entry.questions?.length) problems.push(`${key}: нет вопросов`);
+
+    for (const question of entry.questions || []) {
+      if (!question.text) problems.push(`${key}/${question.id}: нет текста вопроса`);
+      if (!question.explanation) problems.push(`${key}/${question.id}: нет пояснения`);
+
+      if (question.type === "choice") {
+        const count = question.options?.length ?? 0;
+        if (count < 2) problems.push(`${key}/${question.id}: меньше двух вариантов`);
+        if (!(question.correct >= 0 && question.correct < count)) {
+          problems.push(`${key}/${question.id}: неверный номер правильного ответа`);
+        }
+      } else if (question.type === "input") {
+        const hasRange = typeof question.min === "number" && typeof question.max === "number";
+        const hasExpected = typeof question.expected === "number";
+        if (!hasRange && !hasExpected) {
+          problems.push(`${key}/${question.id}: не задан ни диапазон, ни ожидаемое значение`);
+        }
+      } else {
+        problems.push(`${key}/${question.id}: неизвестный тип ${question.type}`);
+      }
+    }
+  }
+
+  assert(problems.length === 0, `${problems.length} проблем: ${problems.slice(0, 5).join("; ")}`);
+});
+
+check("Карточка берёт не больше двух вопросов", () => {
+  for (const key of Object.keys(FAMILIARIZATION_DATA)) {
+    const card = buildCard(key, firstAlways);
+    const available = FAMILIARIZATION_DATA[key].questions.length;
+
+    assert(card.questions.length > 0, `карточка ${key} пуста`);
+    assert(
+      card.questions.length <= Math.min(2, available) || available <= 2,
+      `карточка ${key}: ${card.questions.length} вопросов при ${available} доступных`,
+    );
+  }
+});
+
+check("Неизвестный орган получает запасную карточку", () => {
+  const card = buildCard("такого-органа-нет", firstAlways);
+  assert(card.questions.length === 1, "запасная карточка должна содержать один вопрос");
+  assert(card.questions[0].type === "choice", "запасной вопрос должен быть с выбором");
+  assert(card.title === "такого-органа-нет", "запасная карточка не подписана ключом");
+});
+
+check("Варианты ответа перемешиваются, но запоминаются", () => {
+  const question = {
+    type: "choice",
+    options: ["верный", "a", "b", "c"],
+    correct: 0,
+  };
+
+  const first = renderedOptions(question, firstAlways);
+  const again = renderedOptions(question, Math.random);
+  assert(first === again, "порядок вариантов не должен меняться при повторном показе");
+
+  const correct = first.filter((item) => item.isCorrect);
+  assert(correct.length === 1, `правильных вариантов: ${correct.length}`);
+  assert(correct[0].opt === "верный", "пометка правильного ответа уехала на другой вариант");
+  assert(first.length === 4, "потерялись варианты ответа");
+});
+
+check("Перемешивание сохраняет состав", () => {
+  const source = [1, 2, 3, 4, 5];
+  const mixed = shuffle([...source], Math.random);
+  assert(mixed.length === source.length, "изменилось число элементов");
+  assert(source.every((item) => mixed.includes(item)), "элементы потерялись при перемешивании");
+});
+
+check("Ответ с выбором засчитывается по помеченному варианту", () => {
+  const question = { type: "choice", options: ["a", "b"], correct: 1 };
+  renderedOptions(question, firstAlways);
+
+  const correctIdx = question._renderedOptions.findIndex((item) => item.isCorrect);
+  const wrongIdx = question._renderedOptions.findIndex((item) => !item.isCorrect);
+
+  assert(isAnswerCorrect(question, { choice: correctIdx }), "правильный ответ не засчитан");
+  assert(!isAnswerCorrect(question, { choice: wrongIdx }), "неправильный ответ засчитан");
+  assert(!isAnswerCorrect(question, {}), "пустой ответ засчитан");
+});
+
+check("Числовой ответ проверяется по диапазону и по допуску", () => {
+  const byRange = { type: "input", min: 20, max: 26 };
+  assert(isAnswerCorrect(byRange, { value: 24 }), "значение внутри диапазона не засчитано");
+  assert(isAnswerCorrect(byRange, { value: 20 }), "нижняя граница не засчитана");
+  assert(isAnswerCorrect(byRange, { value: 26 }), "верхняя граница не засчитана");
+  assert(!isAnswerCorrect(byRange, { value: 19.9 }), "значение ниже диапазона засчитано");
+
+  const byTolerance = { type: "input", expected: 5.5, tolerance: 0.5 };
+  assert(isAnswerCorrect(byTolerance, { value: 5.9 }), "значение в пределах допуска не засчитано");
+  assert(!isAnswerCorrect(byTolerance, { value: 6.1 }), "значение вне допуска засчитано");
+
+  assert(!isAnswerCorrect(byRange, { value: NaN }), "NaN засчитан");
+  assert(!isAnswerCorrect(byRange, {}), "пустой ответ засчитан");
+});
+
+check("Режим ознакомления включается и показывает объём материала", () => {
+  const window = freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+
+  controller.start();
+  assert(
+    window.document.body.classList.contains("familiarization-mode-active"),
+    "режим не включился",
+  );
+  assert(!controller.topBarEl.classList.contains("hidden"), "панель прогресса не показалась");
+
+  const total = window.document.getElementById("famTotalCount").textContent;
+  assert(Number(total) === totalElements(), `всего элементов показано ${total}`);
+  assert(window.document.getElementById("famProgressCount").textContent === "0", "прогресс не с нуля");
+
+  controller.stop();
+  assert(
+    !window.document.body.classList.contains("familiarization-mode-active"),
+    "режим не выключился",
+  );
+});
+
+check("Карточка проходится до конца и засчитывает орган", () => {
+  const window = freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+  controller.start();
+
+  const key = Object.keys(FAMILIARIZATION_DATA)[0];
+  controller.openQuiz(key, null);
+  assert(!controller.modalEl.classList.contains("hidden"), "карточка не открылась");
+
+  const click = (el) => el.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  const questionCount = controller.currentCard.questions.length;
+
+  for (let i = 0; i < questionCount; i += 1) {
+    assert(controller.submitBtn.disabled, "кнопка проверки активна до ввода ответа");
+
+    // В карточку попадают вопросы обоих типов — отвечаем по месту
+    const option = controller.modalEl.querySelector(".fam-option-card");
+    const numberInput = window.document.getElementById("famNumberInput");
+
+    if (option) {
+      click(option);
+    } else {
+      assert(numberInput, `у вопроса ${i + 1} нет ни вариантов, ни поля ввода`);
+      numberInput.value = "42";
+      numberInput.dispatchEvent(new window.Event("input", { bubbles: true }));
+    }
+
+    assert(!controller.submitBtn.disabled, "кнопка проверки не разблокировалась после ответа");
+    click(controller.submitBtn);
+
+    const feedback = window.document.getElementById("famFeedbackCard");
+    assert(!feedback.classList.contains("hidden"), "не показан отзыв на ответ");
+
+    if (option) {
+      assert(
+        controller.modalEl.querySelector(".fam-option-card.is-correct"),
+        "не подсвечен правильный вариант",
+      );
+    } else {
+      assert(numberInput.disabled, "поле ввода осталось доступным после ответа");
+    }
+
+    click(controller.nextBtn);
+  }
+
+  assert(controller.studiedKeys.has(key), `орган ${key} не засчитан как изученный`);
+  assert(controller.modalEl.classList.contains("hidden"), "карточка не закрылась после последнего вопроса");
+  assert(
+    window.document.getElementById("famProgressCount").textContent === "1",
+    "прогресс не увеличился",
+  );
+
+  controller.stop();
+});
+
+check("Изученный орган не открывает карточку повторно", () => {
+  freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+  controller.start();
+
+  const key = Object.keys(FAMILIARIZATION_DATA)[0];
+  controller.studiedKeys.add(key);
+
+  const el = window.document.querySelector(`[data-action="${key}"], [data-gauge="${key}"]`);
+  if (el) {
+    el.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    assert(controller.modalEl.classList.contains("hidden"), "карточка открылась для изученного органа");
+  }
+
+  controller.stop();
 });
 
 for (const { name, fn } of checks) {
