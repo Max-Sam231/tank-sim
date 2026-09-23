@@ -21,6 +21,36 @@ const LOAD_BCN_A = 20.0; // добавка на топливный насос
 const LOAD_MZN_A = 80.0; // маслозакачивающий насос — пиковая нагрузка
 const LOAD_CRANKING_A = 100.0; // прокрутка: стрелка упирается в левый предел
 
+/**
+ * Потребление приборов освещения, А.
+ * Складывается с базовой нагрузкой: свет виден по стрелке вольтамперметра
+ * и сажает батареи на неработающем двигателе.
+ *
+ * ВНИМАНИЕ: значения оценочные, требуют сверки с РЭ Т-72.
+ */
+const LIGHT_LOADS_A = {
+  leftLights: 3.0,
+  rightLights: 3.0,
+  gabrateLights: 1.5,
+  cabinLight: 0.5,
+};
+
+/** Суммарный ток, потребляемый включённым освещением. */
+function lightingLoad(state) {
+  let total = 0;
+
+  for (const [key, amps] of Object.entries(LIGHT_LOADS_A)) {
+    if (state[key]) total += amps;
+  }
+
+  // Выключатель «все огни» зажигает обе фары и габариты разом
+  if (state.lightsAll) {
+    total += LIGHT_LOADS_A.leftLights + LIGHT_LOADS_A.rightLights + LIGHT_LOADS_A.gabrateLights;
+  }
+
+  return total;
+}
+
 const AMMETER_INERTIA_RATE = 12.0;
 
 /**
@@ -67,7 +97,7 @@ function updateAmmeter(state, ctx) {
   let target = 0.0;
 
   if (ctx.isMassOn) {
-    let dischargeCurrent = LOAD_BASE_A;
+    let dischargeCurrent = LOAD_BASE_A + lightingLoad(state);
     if (ctx.isBcnActive) dischargeCurrent += LOAD_BCN_A;
     if (ctx.isMznActive) dischargeCurrent = LOAD_MZN_A;
 

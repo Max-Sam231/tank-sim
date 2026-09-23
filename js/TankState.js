@@ -75,6 +75,9 @@ class TankState {
       fuel_level_external: 400.0,
       is_bcn_active: false,
       is_mzn_active: false,
+      heading_deg: 0.0,
+      gyro_spin_up: 0.0,
+      is_gyro_ready: false,
     };
 
     this.lamps = {
@@ -93,6 +96,7 @@ class TankState {
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
+    this._gyroSpinUpTime = 0;
     this._timeSinceLastEmit = 0;
 
     this._brakeHoldTime = 0;
@@ -180,6 +184,9 @@ class TankState {
     this.sensors.fuel_level_external = 400.0;
     this.sensors.is_bcn_active = false;
     this.sensors.is_mzn_active = false;
+    this.sensors.heading_deg = 0.0;
+    this.sensors.gyro_spin_up = 0.0;
+    this.sensors.is_gyro_ready = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -195,6 +202,7 @@ class TankState {
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
+    this._gyroSpinUpTime = 0;
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;

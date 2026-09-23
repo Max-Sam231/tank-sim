@@ -22,6 +22,21 @@ const RPM_FACTOR_MIN = 900;
 const RPM_FACTOR_SPAN = 1700;
 
 /**
+ * Предел перегрева зависит от залитой охлаждающей жидкости:
+ * вода закипает раньше низкозамерзающей. Переключатель «вода/антифриз»
+ * этот предел и задаёт.
+ *
+ * ВНИМАНИЕ: пороги требуют сверки с РЭ Т-72.
+ */
+const OVERHEAT_WATER_C = 105.0;
+const OVERHEAT_ANTIFREEZE_C = 115.0;
+
+/** Температура, выше которой загорается лампа перегрева. */
+function overheatLimit(state) {
+  return state.waterAntifreeze ? OVERHEAT_ANTIFREEZE_C : OVERHEAT_WATER_C;
+}
+
+/**
  * Состояние подогревателя двигателя.
  * Розжиг возможен только при установленном козырьке выхлопа.
  */
@@ -79,4 +94,4 @@ function updateTemperatures(state, ctx) {
   return changed;
 }
 
-export { updateHeater, updateTemperatures };
+export { updateHeater, updateTemperatures, overheatLimit };

@@ -93,6 +93,8 @@ const { FamiliarizationController } = await import(
   "../js/familiarization/FamiliarizationController.js"
 );
 const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiarizationData.js");
+const { overheatLimit } = await import("../js/physics/thermalSystem.js");
+const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1036,6 +1038,68 @@ check("Изученный орган не открывает карточку п
   }
 
   controller.stop();
+});
+
+check("Предел перегрева зависит от охлаждающей жидкости", () => {
+  const state = new TankState();
+
+  const onWater = overheatLimit(state);
+  state.toggleWaterAntifreeze();
+  const onAntifreeze = overheatLimit(state);
+
+  assert(onAntifreeze > onWater, "низкозамерзающая должна терпеть больший нагрев");
+});
+
+check("Освещение видно по вольтамперметру", () => {
+  const run = (setup) => {
+    const state = new TankState();
+    state.toggleBattery();
+    setup(state);
+    for (let i = 0; i < 600; i += 1) state.tick(1 / 60);
+    return state.sensors.amperage;
+  };
+
+  const idle = run(() => {});
+  const withLights = run((state) => state.toggleLightsAll());
+
+  // Ток разряда отрицательный, поэтому со светом он дальше от нуля
+  assert(withLights < idle, `со светом ток ${withLights}, без света ${idle}`);
+});
+
+check("Гирополукомпас готов не сразу и теряет разгон без питания", () => {
+  const state = new TankState();
+  state.toggleBattery();
+  state.toggleGpk();
+
+  for (let i = 0; i < 60 * 60; i += 1) state.tick(1 / 60);
+  assert(!state.sensors.is_gyro_ready, "гироскоп готов через минуту, а должен раскручиваться дольше");
+  assert(state.sensors.gyro_spin_up > 0, "разгон не идёт");
+
+  const remaining = Math.ceil(SPIN_UP_SEC - 60) + 5;
+  for (let i = 0; i < remaining * 60; i += 1) state.tick(1 / 60);
+  assert(state.sensors.is_gyro_ready, "гироскоп так и не раскрутился");
+
+  // Снятие массы обесточивает прибор — разгон начинается заново
+  state.toggleBattery();
+  state.tick(1 / 60);
+  assert(!state.sensors.is_gyro_ready, "гироскоп остался готов без питания");
+  assert(state.sensors.gyro_spin_up === 0, "разгон не сбросился");
+});
+
+check("Насос прокачки даёт давление в КП до пуска двигателя", () => {
+  const state = new TankState();
+  state.toggleBattery();
+
+  for (let i = 0; i < 600; i += 1) state.tick(1 / 60);
+  assert(state.sensors.oil_pressure_gearbox === 0, "давление в КП взялось само");
+
+  state.toggleOilPumpGearbox();
+  for (let i = 0; i < 600; i += 1) state.tick(1 / 60);
+  assert(state.sensors.oil_pressure_gearbox > 1, "насос прокачки не создал давление");
+
+  state.toggleOilPumpGearbox();
+  for (let i = 0; i < 600; i += 1) state.tick(1 / 60);
+  assert(state.sensors.oil_pressure_gearbox < 0.1, "давление не упало после выключения насоса");
 });
 
 for (const { name, fn } of checks) {

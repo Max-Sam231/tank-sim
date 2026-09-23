@@ -40,6 +40,8 @@ const TRACKED_SENSORS = [
   "speed_kmh",
   "fuel_level_internal",
   "fuel_level_external",
+  "heading_deg",
+  "gyro_spin_up",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -234,6 +236,34 @@ const SCENARIOS = {
     at: {
       ...ELECTRIC_START_STEPS,
       30: (state) => state.setFuelManualFeed(100),
+    },
+  },
+
+  "освещение сажает батареи на неработающем двигателе": {
+    durationSec: 60,
+    setup: (state) => state.toggleBattery(),
+    at: {
+      10: (state) => state.toggleLightsAll(),
+      40: (state) => state.toggleLightsAll(),
+    },
+  },
+
+  "разгон гирополукомпаса": {
+    durationSec: 360,
+    setup: (state) => {
+      state.toggleBattery();
+      state.toggleGpk();
+    },
+  },
+
+  "прокачка масла КП насосом до пуска": {
+    durationSec: 40,
+    setup: (state) => {
+      state.toggleBattery();
+      state.toggleOilPumpGearbox();
+    },
+    at: {
+      25: (state) => state.toggleOilPumpGearbox(),
     },
   },
 
