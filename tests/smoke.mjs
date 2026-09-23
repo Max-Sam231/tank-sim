@@ -73,6 +73,7 @@ const { Tooltip } = await import("../js/ui/Tooltip.js");
 const { HangarScene } = await import("../js/scenes/HangarScene.js");
 const { HeaterController } = await import("../js/scenes/hangar/HeaterController.js");
 const { ZipBoxController } = await import("../js/scenes/hangar/ZipBoxController.js");
+const { CONTROL_ACTIONS, PEDAL_ACTIONS } = await import("../js/ui/controlActions.js");
 
 /** Минимальное приложение: то, чего достаточно сценам ангара. */
 function makeApp(state) {
@@ -332,6 +333,100 @@ check("Подсказка ящика ЗИП отражает состояние"
   state.takeExhaustCap();
   zip.syncDOM();
   assert(hintEl.textContent === "Козырёк у вас", `неожиданная подсказка: ${hintEl.textContent}`);
+});
+
+check("Каждое действие из таблицы имеет рабочий обработчик", () => {
+  const state = new TankState();
+  const missing = [];
+
+  for (const [action, def] of Object.entries(CONTROL_ACTIONS)) {
+    if (def.call && typeof state[def.call] !== "function") {
+      missing.push(`${action}: у TankState нет метода ${def.call}`);
+    }
+    if (!def.call && !def.modal && !def.run) {
+      missing.push(`${action}: не задано ни call, ни modal, ни run`);
+    }
+  }
+
+  assert(missing.length === 0, missing.join("; "));
+
+  for (const setter of Object.values(PEDAL_ACTIONS)) {
+    assert(typeof state[setter] === "function", `у TankState нет метода педали ${setter}`);
+  }
+});
+
+check("Клик по хитбоксу меняет состояние через таблицу действий", () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+  const notified = [];
+
+  new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+    actionNotifier: { notify: (action) => notified.push(action) },
+  });
+
+  const battery = rootEl.querySelector('[data-action="battery-toggle"]');
+  assert(battery, "не найден хитбокс массы");
+
+  battery.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert(state.isBatteryOn, "масса не включилась по клику");
+  assert(notified.includes("battery-toggle"), "не пришло уведомление о включении массы");
+
+  battery.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert(!state.isBatteryOn, "масса не выключилась повторным кликом");
+});
+
+check("Педали работают на удержание и отпускаются вместе", () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+
+  new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+
+  const brake = rootEl.querySelector('[data-action="brake-pedal"]');
+  assert(brake, "не найден хитбокс педали тормоза");
+
+  brake.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
+  assert(state.isBrakePressed, "педаль тормоза не нажалась");
+
+  window.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
+  assert(!state.isBrakePressed, "педаль тормоза не отпустилась");
+  assert(!state.gasPedal, "педаль газа должна отпускаться вместе с тормозом");
+});
+
+check("Наведение на прибор показывает и двигает подсказку", () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+
+  const ui = new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+
+  const gauge = rootEl.querySelector(`[data-gauge="gauge-rpm"]`);
+  assert(gauge, "не найден хитбокс тахометра");
+
+  gauge.dispatchEvent(new window.MouseEvent("mouseover", { bubbles: true, clientX: 100, clientY: 100 }));
+  assert(ui._hoveredGauge === "gauge-rpm", "подсказка прибора не появилась");
+
+  // Регрессия: обработчик mousemove звал удалённый метод и падал
+  rootEl.dispatchEvent(new window.MouseEvent("mousemove", { bubbles: true, clientX: 300, clientY: 300 }));
+  assert(ui._gaugeTooltip.el.style.left, "подсказка не переместилась за курсором");
+
+  gauge.dispatchEvent(new window.MouseEvent("mouseout", { bubbles: true }));
+  assert(ui._hoveredGauge === null, "подсказка прибора не скрылась");
 });
 
 for (const { name, fn } of checks) {

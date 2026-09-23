@@ -3,6 +3,7 @@ import { ActionModals } from "./ui/ActionModals.js";
 import { Tooltip } from "./ui/Tooltip.js";
 import { renderHitboxLabels } from "./ui/hitboxLabels.js";
 import { parsePolygonPoints, polygonBBox } from "./ui/polygonGeometry.js";
+import { PEDAL_ACTIONS, runControlAction } from "./ui/controlActions.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
@@ -78,6 +79,16 @@ class UIController {
   _notifyAction(action, meta = {}) {
     if (!this.actionNotifier || !action) return;
     this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
+  }
+
+  /** То, что нужно обработчику действия из таблицы controlActions. */
+  _actionContext() {
+    return {
+      state: this.state,
+      modals: this._actionModals,
+      ui: this,
+      notify: (action, meta) => this._notifyAction(action, meta),
+    };
   }
 
   _ensureTooltips() {
@@ -592,151 +603,7 @@ class UIController {
       const action = el.dataset.action;
       this._lastAction = action || null;
 
-      // Handle all cabin controls
-      switch (action) {
-        case "battery-toggle":
-          this.state.toggleBattery();
-          break;
-        case "manometer":
-          // Manometer shows value on hover, handled by mouseover event
-          break;
-        case "instrument-panel":
-          this._showInstrumentPanel();
-          this.state.setInstrumentPanelOpen(true);
-          break;
-        case "left-tank":
-          this.state.toggleLeftTank();
-          break;
-        case "bcn":
-          this._actionModals.open("bcn");
-          break;
-        case "shutters":
-          this._actionModals.open("shutters");
-          break;
-        case "right-tank":
-          this.state.toggleRightTank();
-          break;
-        case "fuel-primer-lever":
-          this.state.pumpFuelPrimerLever();
-          break;
-        case "fuel-manual-feed":
-          this._actionModals.open("fuelFeed");
-          break;
-        case "gear-lever":
-          this._actionModals.open("gear");
-          break;
-        case "air-bleed-valve":
-          this.state.toggleAirBleedValve();
-          break;
-        case "azr":
-          this.state.cycleAzr();
-          break;
-        case "epk":
-          this.state.toggleEpk();
-          break;
-        case "horn":
-          this.state.toggleHorn();
-          break;
-        case "mzn-engine":
-          this.state.toggleMznEngine();
-          break;
-        case "ammeter-button":
-          this.state.toggleAmmeterButton();
-          break;
-        case "left-right-tanks":
-          this.state.cycleLeftRightTanks();
-          break;
-        case "spark-plug":
-          this.state.cycleSparkPlug();
-          break;
-        case "engine-start":
-          this.state.cycleEngineStart();
-          break;
-        case "emergency-hatch-rotation":
-          this.state.toggleEmergencyHatchRotation();
-          break;
-        case "oil-pump-gearbox":
-          this.state.toggleOilPumpGearbox();
-          break;
-        // Note: commander-call and air-intake are indicator lamps only (non-interactive)
-        case "heating":
-          this.state.toggleHeating();
-          break;
-        case "combined":
-          this.state.toggleCombined();
-          break;
-        case "left-lights":
-          this.state.toggleLeftLights();
-          break;
-        case "right-lights":
-          this.state.toggleRightLights();
-          break;
-        case "gabrate-lights":
-          this.state.toggleGabrateLights();
-          break;
-        case "lights-all":
-          this.state.toggleLightsAll();
-          break;
-        case "water-antifreeze":
-          this.state.toggleWaterAntifreeze();
-          break;
-        case "gpk":
-          this.state.toggleGpk();
-          break;
-        case "bca-tca":
-          this.state.cycleBcaTca();
-          break;
-        case "mzn-tow":
-          this.state.cycleMznTow();
-          break;
-        case "starter":
-          this.state.cycleStarter();
-          break;
-        case "signal-lamps":
-          this.state.cycleSignalLamps();
-          break;
-        case "cabin-light":
-          this.state.toggleCabinLight();
-          break;
-        case "side-panel-open":
-          sceneManager.change(null, sceneId || "scene-side-panel-open");
-          break;
-      }
-
-      const notifyActions = new Set([
-        "battery-toggle",
-        "instrument-panel",
-        "left-tank",
-        "right-tank",
-        "fuel-primer-lever",
-        "fuel-manual-feed",
-        "air-bleed-valve",
-        "azr",
-        "epk",
-        "horn",
-        "mzn-engine",
-        "ammeter-button",
-        "left-right-tanks",
-        "spark-plug",
-        "engine-start",
-        "emergency-hatch-rotation",
-        "oil-pump-gearbox",
-        // Note: commander-call and air-intake are indicator lamps only (no notifications)
-        "heating",
-        "combined",
-        "left-lights",
-        "right-lights",
-        "gabrate-lights",
-        "lights-all",
-        "water-antifreeze",
-        "gpk",
-        "bca-tca",
-        "mzn-tow",
-        "starter",
-        "signal-lamps",
-        "cabin-light",
-      ]);
-      if (notifyActions.has(action)) this._notifyAction(action);
+      runControlAction(action, this._actionContext());
     });
 
     this.rootEl.addEventListener("mousedown", (event) => {
@@ -745,34 +612,32 @@ class UIController {
 
       const action = el.dataset.action;
       this._lastAction = action || null;
-      if (action === "brake-pedal") {
-        event.preventDefault();
-        this.state.setBrakePressed(true);
-        this._notifyAction(action);
-      } else if (action === "gas-pedal") {
-        event.preventDefault();
-        this.state.setGasPedal(true);
-        this._notifyAction(action);
-      }
+
+      const setter = PEDAL_ACTIONS[action];
+      if (!setter) return;
+
+      event.preventDefault();
+      this.state[setter](true);
+      this._notifyAction(action);
     });
 
     const releasePedals = (event) => {
       const el = event.target.closest?.(".hitbox, .overlay-control");
       const action = el?.dataset?.action;
 
-      if (action === "brake-pedal" || action === "gas-pedal") {
+      if (PEDAL_ACTIONS[action]) {
         event.preventDefault();
         this._notifyAction(action, { released: true });
       }
-      this.state.setBrakePressed(false);
-      this.state.setGasPedal(false);
+
+      // Отпускаем обе педали: курсор мог уйти с той, что была нажата
+      for (const pedalSetter of Object.values(PEDAL_ACTIONS)) this.state[pedalSetter](false);
     };
 
     window.addEventListener("mouseup", releasePedals);
 
     this.rootEl.addEventListener("mouseleave", () => {
-      this.state.setBrakePressed(false);
-      this.state.setGasPedal(false);
+      for (const pedalSetter of Object.values(PEDAL_ACTIONS)) this.state[pedalSetter](false);
     });
 
     this.rootEl.addEventListener(
@@ -785,24 +650,21 @@ class UIController {
 
         const action = el.dataset.action;
         this._lastAction = action || null;
+
+        // Касание по массе отрабатывает сразу: click на тачскрине приходит с задержкой
         if (action === "battery-toggle") {
           event.preventDefault();
-          this.state.toggleBattery();
-          this._notifyAction(action);
+          runControlAction(action, this._actionContext());
           return;
         }
 
-        if (action === "brake-pedal") {
-          event.preventDefault();
-          this._touchHeldAction = "brake-pedal";
-          this.state.setBrakePressed(true);
-          this._notifyAction(action);
-        } else if (action === "gas-pedal") {
-          event.preventDefault();
-          this._touchHeldAction = "gas-pedal";
-          this.state.setGasPedal(true);
-          this._notifyAction(action);
-        }
+        const setter = PEDAL_ACTIONS[action];
+        if (!setter) return;
+
+        event.preventDefault();
+        this._touchHeldAction = action;
+        this.state[setter](true);
+        this._notifyAction(action);
       },
       { passive: false },
     );
@@ -810,10 +672,11 @@ class UIController {
     window.addEventListener(
       "touchend",
       (event) => {
-        if (this._touchHeldAction) event.preventDefault();
-        if (this._touchHeldAction) this._notifyAction(this._touchHeldAction, { released: true });
-        this.state.setBrakePressed(false);
-        this.state.setGasPedal(false);
+        if (this._touchHeldAction) {
+          event.preventDefault();
+          this._notifyAction(this._touchHeldAction, { released: true });
+        }
+        for (const pedalSetter of Object.values(PEDAL_ACTIONS)) this.state[pedalSetter](false);
         this._touchHeldAction = null;
       },
       { passive: false },
@@ -821,10 +684,10 @@ class UIController {
 
     this.rootEl.addEventListener("mousemove", (event) => {
       if (this._isManometerHovered) {
-        this._moveManometerTooltip(event.clientX, event.clientY);
+        this._manometerTooltip.moveTo(event.clientX, event.clientY);
       }
       if (this._hoveredGauge) {
-        this._moveGaugeTooltip(event.clientX, event.clientY);
+        this._gaugeTooltip.moveTo(event.clientX, event.clientY);
       }
     });
 
@@ -1200,7 +1063,7 @@ class UIController {
     });
   }
 
-  _showInstrumentPanel() {
+  showInstrumentPanel() {
     const modal = document.getElementById("instrumentPanelModal");
     if (modal) {
       modal.classList.remove("hidden");
