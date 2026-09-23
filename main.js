@@ -13,6 +13,7 @@ import { CommanderScene } from './js/scenes/CommanderScene.js';
 import { ExhaustSmoke } from './js/smoke/ExhaustSmoke.js';
 import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
 import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
+import { AlarmOverlay } from './js/ui/AlarmOverlay.js';
 const APP_MODE = "prod"; // "debug" или "prod" — отладочные хитбоксы и подписи
 const IS_DEBUG = APP_MODE === "debug";
 
@@ -107,6 +108,9 @@ function bootstrap() {
   });
 
   // Временно: пока у новых систем нет хитбоксов, их проверяют через панель
+  // Аварийная сигнализация: лампы приборной панели пока не размечены
+  new AlarmOverlay({ state });
+
   if (SHOW_TEST_PANEL) new SystemsTestPanel({ state, ui });
 
   const training = new TrainingEngine({ state });

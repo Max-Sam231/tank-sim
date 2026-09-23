@@ -2746,3 +2746,59 @@ body.familiarization-mode-active .fam-item-inactive {
 .systems-test-panel[hidden] {
   display: none !important;
 }
+
+/* ===========================================================
+   Аварийная сигнализация поверх сцены.
+   Временно заменяет сигнальные лампы, пока они не размечены.
+   =========================================================== */
+.alarm-overlay {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.alarm-overlay[hidden] {
+  display: none !important;
+}
+
+.alarm-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 16px;
+  border-radius: 4px;
+  background: rgba(180, 30, 30, 0.92);
+  border: 1px solid rgba(255, 120, 120, 0.7);
+  color: #fff;
+  font: 600 14px/1.2 system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+  animation: alarm-pulse 1s ease-in-out infinite;
+}
+
+.alarm-item.alarm-fuel {
+  background: rgba(190, 130, 20, 0.92);
+  border-color: rgba(255, 200, 100, 0.7);
+  animation: none;
+}
+
+.alarm-detail {
+  font-weight: 400;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+@keyframes alarm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alarm-item { animation: none; }
+}

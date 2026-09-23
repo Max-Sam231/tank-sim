@@ -119,6 +119,7 @@ const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await imp
 );
 const { getScenarioDefinition } = await import("../js/scenarios/index.js");
 const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/SystemsTestPanel.js");
+const { AlarmOverlay, ALARMS, activeAlarms } = await import("../js/ui/AlarmOverlay.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1954,6 +1955,75 @@ check("Ярлык «Завести и прогреть» даёт устойчи
   assert(snapshot.engine_rpm > 700, `обороты не держатся: ${snapshot.engine_rpm}`);
   assert(snapshot.coolant_temp > 70, `двигатель не прогрет: ${snapshot.coolant_temp}`);
   assert(state.violations.length === 0, `быстрый пуск дал нарушения: ${state.violations}`);
+});
+
+check("Аварийная сигнализация показывает пожар", () => {
+  const window = freshDom();
+  const state = new TankState();
+  const overlay = new AlarmOverlay({ state, rootEl: window.document.body });
+
+  assert(overlay.rootEl.hidden, "сигнализация горит на исправной машине");
+
+  state.startFire(0.25);
+  state.tick(1 / 60);
+
+  assert(!overlay.rootEl.hidden, "пожар не показан");
+  assert(overlay.rootEl.textContent.includes("ПОЖАР"), "нет надписи о пожаре");
+  assert(overlay.rootEl.textContent.includes("баллонов"), "не показан остаток баллонов");
+
+  state.clearIncidents();
+  state.tick(1 / 60);
+  assert(overlay.rootEl.hidden, "сигнализация осталась после сброса");
+});
+
+check("Сигнализация показывает перегрев и поступление воды", () => {
+  const { state, run } = startedEngine();
+
+  state.setShutters("0");
+  state.setFuelManualFeed(100);
+  run(240);
+  assert(
+    activeAlarms(state.getSnapshot()).some((a) => a.id === "overheat"),
+    `перегрев не в списке аварий: ${state.sensors.coolant_temp} °C`,
+  );
+
+  state.setWaterDepth(2);
+  run(2);
+  assert(
+    activeAlarms(state.getSnapshot()).some((a) => a.id === "flooding"),
+    "поступление воды не в списке аварий",
+  );
+});
+
+check("Проверка ламп не выдаётся за аварию", () => {
+  const state = new TankState();
+
+  // Кнопка контроля зажигает все лампы — это исправность, а не пожар
+  state.cycleSignalLamps();
+  state.cycleSignalLamps();
+  state.tick(1 / 60);
+
+  assert(Number(state.signalLamps) === 2, "кнопка контроля ламп не нажата");
+  assert(
+    activeAlarms(state.getSnapshot()).length === 0,
+    "проверка ламп показана как авария",
+  );
+});
+
+check("Каждая авария описана полностью", () => {
+  const state = new TankState();
+  state.startFire(0.5);
+  state.setWaterDepth(2);
+  const snapshot = state.getSnapshot();
+
+  const ids = new Set();
+  for (const alarm of ALARMS) {
+    assert(alarm.id && !ids.has(alarm.id), `повторяющийся или пустой id: ${alarm.id}`);
+    ids.add(alarm.id);
+    assert(alarm.text, `у аварии ${alarm.id} нет текста`);
+    assert(typeof alarm.isActive(snapshot) === "boolean", `${alarm.id}: условие не булево`);
+    assert(alarm.detail(snapshot), `${alarm.id}: пустая расшифровка`);
+  }
 });
 
 for (const { name, fn } of checks) {
