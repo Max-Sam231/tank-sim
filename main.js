@@ -10,7 +10,7 @@ import { SceneManager } from './js/SceneManager.js';
 import { HangarScene } from './js/scenes/HangarScene.js';
 import { DriverScene } from './js/scenes/DriverScene.js';
 import { CommanderScene } from './js/scenes/CommanderScene.js';
-import { ExhaustSmoke } from './js/smoke/ExhaustSmoke.js';
+import { SmokeEmitter } from './js/smoke/SmokeEmitter.js';
 import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
 import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
 import { AlarmOverlay } from './js/ui/AlarmOverlay.js';
@@ -33,7 +33,8 @@ function bootstrap() {
   document.body.classList.toggle("app-prod", !IS_DEBUG);
 
   const state = new TankState();
-  const exhaustSmoke = new ExhaustSmoke('exhaust-smoke-container'); 
+  const exhaustSmoke = new SmokeEmitter('exhaust-smoke-container', 'exhaust');
+  const fireSmoke = new SmokeEmitter('fire-smoke-container', 'fire');
   const audioManager = new AudioManager();
   const actionNotifier = new ActionNotifier({ rootEl: document.body });
 
@@ -95,7 +96,13 @@ function bootstrap() {
 
   state.subscribe((snapshot) => {
     audioManager.onStateChange(snapshot);
-    exhaustSmoke.update(snapshot.engine_rpm, snapshot.engineRunning, snapshot.is_smoke_screen_active);
+    exhaustSmoke.update(snapshot.engineRunning, {
+      intensity: snapshot.engine_rpm / 2500,
+      style: snapshot.is_smoke_screen_active ? "smokeScreen" : "exhaust",
+    });
+
+    // Пожар в МТО виден снаружи — в ангаре над моторным отделением
+    fireSmoke.update(snapshot.is_fire_detected, { intensity: snapshot.fire_level });
     updateInventoryBar(snapshot);
   });
 

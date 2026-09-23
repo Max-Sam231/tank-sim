@@ -2802,3 +2802,14 @@ body.familiarization-mode-active .fam-item-inactive {
 @media (prefers-reduced-motion: reduce) {
   .alarm-item { animation: none; }
 }
+
+/* Дым пожара в МТО: шире и выше выхлопа — горит всё отделение */
+.fire-smoke {
+  position: absolute;
+  left: 18%;
+  top: 18%;
+  width: 180px;
+  height: 140px;
+  pointer-events: none;
+  z-index: 21;
+}

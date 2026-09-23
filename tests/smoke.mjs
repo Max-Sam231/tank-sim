@@ -120,6 +120,7 @@ const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await imp
 const { getScenarioDefinition } = await import("../js/scenarios/index.js");
 const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/SystemsTestPanel.js");
 const { AlarmOverlay, ALARMS, activeAlarms } = await import("../js/ui/AlarmOverlay.js");
+const { SmokeEmitter, SMOKE_STYLES } = await import("../js/smoke/SmokeEmitter.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -2024,6 +2025,45 @@ check("Каждая авария описана полностью", () => {
     assert(typeof alarm.isActive(snapshot) === "boolean", `${alarm.id}: условие не булево`);
     assert(alarm.detail(snapshot), `${alarm.id}: пустая расшифровка`);
   }
+});
+
+check("Дым пожара идёт над моторным отделением", () => {
+  const window = freshDom();
+  const container = window.document.getElementById("fire-smoke-container");
+  assert(container, "в разметке нет контейнера дыма пожара");
+  assert(container.classList.contains("invisible"), "дым пожара виден на исправной машине");
+
+  const smoke = new SmokeEmitter("fire-smoke-container", "fire");
+
+  smoke.update(true, { intensity: 0.5 });
+  assert(!container.classList.contains("invisible"), "дым не пошёл при пожаре");
+  assert(smoke.isRunning, "генератор не запустился");
+
+  smoke.update(false);
+  assert(container.classList.contains("invisible"), "дым не прекратился");
+  assert(container.children.length === 0, "частицы остались после остановки");
+});
+
+check("Виды дыма отличаются плотностью и цветом", () => {
+  const { exhaust, smokeScreen, fire } = SMOKE_STYLES;
+
+  assert(fire.gray < exhaust.gray, "дым пожара должен быть темнее выхлопа");
+  assert(smokeScreen.gray > exhaust.gray, "дымовая завеса должна быть светлее выхлопа");
+  assert(fire.spread > exhaust.spread, "пожар должен дымить шире выхлопа");
+  assert(fire.delayMs < exhaust.delayMs, "пожар должен дымить гуще выхлопа");
+});
+
+check("Интенсивность сгущает дым", () => {
+  freshDom();
+  const smoke = new SmokeEmitter("fire-smoke-container", "fire");
+
+  smoke.update(true, { intensity: 0 });
+  const slow = smoke.currentDelay;
+
+  smoke.update(true, { intensity: 1 });
+  assert(smoke.currentDelay < slow, `плотность не выросла: ${slow} → ${smoke.currentDelay}`);
+
+  smoke.update(false);
 });
 
 for (const { name, fn } of checks) {
