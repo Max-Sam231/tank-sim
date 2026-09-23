@@ -4,6 +4,7 @@ import { Tooltip } from "./ui/Tooltip.js";
 import { renderHitboxLabels } from "./ui/hitboxLabels.js";
 import { parsePolygonPoints, polygonBBox } from "./ui/polygonGeometry.js";
 import { PEDAL_ACTIONS, runControlAction } from "./ui/controlActions.js";
+import { renderStatusConsole } from "./ui/statusConsole.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
@@ -825,117 +826,12 @@ class UIController {
       }
     }
 
-    if (!this.consoleEl) return;
-
-    if (!this.isDebug) {
-      const safeFixed = (value, digits) => {
-        const n = Number(value);
-        if (!Number.isFinite(n)) return "-";
-        return n.toFixed(digits);
-      };
-
-      const safeInt = (value) => {
-        const n = Number(value);
-        if (!Number.isFinite(n)) return "-";
-        return String(Math.round(n));
-      };
-
-      const lines = [
-        "ПРИБОРЫ",
-        `Давление воздуха (лев.):  ${safeFixed(snapshot.air_left_cylinder, 1)} кгс/см²`,
-        `Давление воздуха (прав.): ${safeFixed(snapshot.air_right_cylinder, 1)} кгс/см²`,
-        `Давление пуска (воздух): ${safeFixed(snapshot.air_start_pressure, 1)} кгс/см²`,
-        `Обороты двигателя:        ${safeInt(snapshot.engine_rpm)} об/мин`,
-        `Давление масла (двиг.):   ${safeFixed(snapshot.oil_pressure_engine, 1)} кгс/см²`,
-        `Давление масла (КПП):     ${safeFixed(snapshot.oil_pressure_gearbox, 1)} кгс/см²`,
-        `Давление топлива:         ${safeFixed(snapshot.fuel_pressure, 1)} кгс/см²`,
-        `Температура ОЖ:           ${safeInt(snapshot.coolant_temp)} °C`,
-        `Температура масла:        ${safeInt(snapshot.oil_temp)} °C`,
-        `Напряжение бортсети:      ${safeFixed(snapshot.voltage, 1)} В`,
-        `Скорость:                ${safeFixed(snapshot.speed_kmh, 1)} км/ч`,
-        `Топливо (внутр.):         ${safeFixed(snapshot.fuel_level_internal, 0)} л`,
-        `Топливо (наруж.):         ${safeFixed(snapshot.fuel_level_external, 0)} л`,
-      ];
-
-      this.consoleEl.textContent = lines.join("\n");
-      return;
-    }
-
-    const lines = [
-      "TankState",
-      `battery: ${snapshot.isBatteryOn ? "ON" : "OFF"}`,
-      `brake:   ${snapshot.isBrakePressed ? "PRESSED" : "RELEASED"}`,
-      `gas:     ${snapshot.gasPedal ? "PRESSED" : "RELEASED"}`,
-      `last:    ${this._lastAction || "-"}`,
-      "",
-      "Controls:",
-      `manometer: ${snapshot.manometer > 0 ? snapshot.manometer + " kg/cm²" : "0 kg/cm²"}`,
-      `left tank: ${snapshot.leftTank ? "ON" : "OFF"}`,
-      `right tank: ${snapshot.rightTank ? "ON" : "OFF"}`,
-      `BCN: ${snapshot.bcn.toUpperCase()}`,
-      `shutters: ${snapshot.shutters}/4`,
-      `fuel primer pumps: ${snapshot.fuelPrimerPumps}`,
-      `fuel feed: ${snapshot.fuelManualFeed}%`,
-      `gear: ${snapshot.gearLever}`,
-      `air bleed: ${snapshot.airBleedValve ? "OPEN" : "CLOSED"}`,
-      `AZR: ${snapshot.azr}`,
-      `EPK: ${snapshot.epk ? "ON" : "OFF"}`,
-      `HORN: ${snapshot.horn ? "ON" : "OFF"}`,
-      `MZN engine: ${snapshot.mznEngine ? "ON" : "OFF"}`,
-      `ammeter button: ${snapshot.ammeterButton ? "ON" : "OFF"}`,
-      `left-right-tanks: ${snapshot.leftRightTanks}`,
-      `spark-plug: ${snapshot.sparkPlug}`,
-      `engine-start: ${snapshot.engineStart}`,
-      `emergency-hatch-rotation: ${snapshot.emergencyHatchRotation ? "ON" : "OFF"}`,
-      `oil-pump-gearbox: ${snapshot.oilPumpGearbox ? "ON" : "OFF"}`,
-      // Note: commander-call and air-intake are now in lamps section
-      `heating: ${snapshot.heating ? "ON" : "OFF"}`,
-      `combined: ${snapshot.combined ? "ON" : "OFF"}`,
-      `left-lights: ${snapshot.leftLights ? "ON" : "OFF"}`,
-      `right-lights: ${snapshot.rightLights ? "ON" : "OFF"}`,
-      `gabrate-lights: ${snapshot.gabrateLights ? "ON" : "OFF"}`,
-      `lights-all: ${snapshot.lightsAll ? "ON" : "OFF"}`,
-      `water-antifreeze: ${snapshot.waterAntifreeze ? "ON" : "OFF"}`,
-      `gpk: ${snapshot.gpk ? "ON" : "OFF"}`,
-      `bca-tca: ${snapshot.bcaTca === 0 ? "БЦН" : snapshot.bcaTca === 1 ? "OFF" : "ТДА"}`,
-      `mzn-tow: ${snapshot.mznTow}`,
-      `starter: ${snapshot.starter}`,
-      `signal-lamps: ${snapshot.signalLamps}`,
-      "",
-      "Sensors:",
-      `air L: ${snapshot.air_left_cylinder.toFixed(1)} kg/cm²`,
-      `air R: ${snapshot.air_right_cylinder.toFixed(1)} kg/cm²`,
-      `air start: ${snapshot.air_start_pressure.toFixed(1)} kg/cm²`,
-      `rpm: ${snapshot.engine_rpm}`,
-      `oil eng: ${snapshot.oil_pressure_engine.toFixed(1)} kg/cm²`,
-      `oil kpp: ${snapshot.oil_pressure_gearbox.toFixed(1)} kg/cm²`,
-      `fuel p: ${snapshot.fuel_pressure.toFixed(1)} kg/cm²`,
-      `coolant: ${snapshot.coolant_temp.toFixed(0)}°C`,
-      `oil t: ${snapshot.oil_temp.toFixed(0)}°C`,
-      `voltage: ${snapshot.voltage.toFixed(1)} V`,
-      `speed: ${snapshot.speed_kmh.toFixed(1)} km/h`,
-      "",
-      "Lamps:",
-      `charge: ${snapshot.lamp_battery_charge ? "ON" : "OFF"}`,
-      `oil alarm: ${snapshot.lamp_oil_pressure_alarm ? "ON" : "OFF"}`,
-      `overheat: ${snapshot.lamp_overheat ? "ON" : "OFF"}`,
-      `fuel reserve: ${snapshot.lamp_fuel_reserve ? "ON" : "OFF"}`,
-      `gear: ${snapshot.lamp_gear_engaged ? "ON" : "OFF"}`,
-      `cmdr call: ${snapshot.lamp_commander_call ? "ON" : "OFF"}`,
-      `air intake: ${snapshot.lamp_air_intake ? "ON" : "OFF"}`,
-      "",
-      `hitbox:  ${this._hitboxVisible ? "VISIBLE" : "HIDDEN"}`,
-      "[H] toggle",
-    ];
-
-    if (this._lastClick) {
-      lines.push("");
-      lines.push("Pointer (SVG coords)");
-      lines.push(`client: ${this._lastClick.clientX}, ${this._lastClick.clientY}`);
-      lines.push(`viewBox: ${this._lastClick.vbX}, ${this._lastClick.vbY}`);
-    }
-
-    this.consoleEl.textContent = lines.join("\n");
+    renderStatusConsole(this.consoleEl, snapshot, {
+      isDebug: this.isDebug,
+      lastAction: this._lastAction,
+      hitboxVisible: this._hitboxVisible,
+      lastClick: this._lastClick,
+    });
   }
 
   _capturePointer(event) {

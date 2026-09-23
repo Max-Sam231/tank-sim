@@ -74,6 +74,7 @@ const { HangarScene } = await import("../js/scenes/HangarScene.js");
 const { HeaterController } = await import("../js/scenes/hangar/HeaterController.js");
 const { ZipBoxController } = await import("../js/scenes/hangar/ZipBoxController.js");
 const { CONTROL_ACTIONS, PEDAL_ACTIONS } = await import("../js/ui/controlActions.js");
+const { renderStatusConsole } = await import("../js/ui/statusConsole.js");
 
 /** Минимальное приложение: то, чего достаточно сценам ангара. */
 function makeApp(state) {
@@ -427,6 +428,36 @@ check("Наведение на прибор показывает и двигае
 
   gauge.dispatchEvent(new window.MouseEvent("mouseout", { bubbles: true }));
   assert(ui._hoveredGauge === null, "подсказка прибора не скрылась");
+});
+
+check("Панель состояния рисует оба режима и переживает пустые показания", () => {
+  const window = freshDom();
+  const state = new TankState();
+  const el = window.document.createElement("div");
+
+  const options = { isDebug: false, lastAction: null, hitboxVisible: false, lastClick: null };
+
+  renderStatusConsole(el, state.getSnapshot(), options);
+  assert(el.textContent.includes("ПРИБОРЫ"), "режим курсанта не отрисовался");
+  assert(!el.textContent.includes("TankState"), "курсанту показан отладочный дамп");
+
+  renderStatusConsole(el, state.getSnapshot(), { ...options, isDebug: true, lastAction: "azr" });
+  assert(el.textContent.includes("TankState"), "отладочный режим не отрисовался");
+  assert(el.textContent.includes("last:    azr"), "не показано последнее действие");
+
+  renderStatusConsole(el, state.getSnapshot(), {
+    ...options,
+    isDebug: true,
+    lastClick: { clientX: 10, clientY: 20, vbX: 30, vbY: 40 },
+  });
+  assert(el.textContent.includes("viewBox: 30, 40"), "не показаны координаты клика");
+
+  // Показания могут отсутствовать: панель обязана подставить прочерк, а не NaN
+  renderStatusConsole(el, { ...state.getSnapshot(), engine_rpm: undefined }, options);
+  assert(!el.textContent.includes("NaN"), "в панель просочился NaN");
+
+  // Отсутствие контейнера — не повод падать
+  renderStatusConsole(null, state.getSnapshot(), options);
 });
 
 for (const { name, fn } of checks) {
