@@ -87,6 +87,13 @@ class TankState {
       is_fire_detected: false,
       air_filter_vacuum: 100.0,
       is_air_filter_clogged: false,
+      is_contaminated: false,
+      compartment_pressure: 0.0,
+      filter_life_left: 1.0,
+      is_compartment_sealed: false,
+      night_vision_range: 0.0,
+      night_vision_glare: 0.0,
+      is_night_vision_ready: false,
     };
 
     this.lamps = {
@@ -112,6 +119,14 @@ class TankState {
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
     this.airFilterClogging = 0;
+    this.pazAuto = true;
+    this.blowerOn = false;
+    this.filterMode = false;
+    this.filterLifeUsed = 0;
+    this._blowerSpinUpTime = 0;
+    this.tvneMode = 0;
+    this._tvneWarmUpTime = 0;
+    this._tvneGlare = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -209,6 +224,13 @@ class TankState {
     this.sensors.is_fire_detected = false;
     this.sensors.air_filter_vacuum = 100.0;
     this.sensors.is_air_filter_clogged = false;
+    this.sensors.is_contaminated = false;
+    this.sensors.compartment_pressure = 0.0;
+    this.sensors.filter_life_left = 1.0;
+    this.sensors.is_compartment_sealed = false;
+    this.sensors.night_vision_range = 0.0;
+    this.sensors.night_vision_glare = 0.0;
+    this.sensors.is_night_vision_ready = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -231,6 +253,14 @@ class TankState {
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
     this.airFilterClogging = 0;
+    this.pazAuto = true;
+    this.blowerOn = false;
+    this.filterMode = false;
+    this.filterLifeUsed = 0;
+    this._blowerSpinUpTime = 0;
+    this.tvneMode = 0;
+    this._tvneWarmUpTime = 0;
+    this._tvneGlare = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -327,6 +357,10 @@ class TankState {
       ppoAuto: this.ppoAuto,
       ppoCylindersUsed: this.ppoCylindersUsed,
       airFilterClogging: this.airFilterClogging,
+      pazAuto: this.pazAuto,
+      blowerOn: this.blowerOn,
+      filterMode: this.filterMode,
+      tvneMode: this.tvneMode,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -558,6 +592,32 @@ class TankState {
     if (!washFilterCassettes(this)) return false;
     this._emit();
     return true;
+  }
+
+  /** Включает нагнетатель фильтровентиляционной установки. */
+  toggleBlower() {
+    this._toggle("blowerOn");
+  }
+
+  /** Пускает воздух через фильтр-поглотитель или напрямую. */
+  toggleFilterMode() {
+    this._toggle("filterMode");
+  }
+
+  /** Переключает ПАЗ между автоматическим и ручным режимом. */
+  togglePazMode() {
+    this._toggle("pazAuto");
+  }
+
+  /** Переключает ТВНЕ: выключен, пассивный, активный. */
+  cycleNightVision() {
+    this._cycle("tvneMode", 3);
+  }
+
+  /** Задаёт заражение местности — вводная от преподавателя. */
+  setContaminated(isContaminated) {
+    this.sensors.is_contaminated = Boolean(isContaminated);
+    this._emit();
   }
 
   toggleBattery() {

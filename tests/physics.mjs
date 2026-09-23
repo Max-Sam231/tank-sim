@@ -45,6 +45,8 @@ const TRACKED_SENSORS = [
   "cooldown_progress",
   "fire_level",
   "air_filter_vacuum",
+  "compartment_pressure",
+  "night_vision_range",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -323,6 +325,27 @@ const SCENARIOS = {
     at: {
       ...ELECTRIC_START_STEPS,
       30: (state) => state.setFuelManualFeed(100),
+    },
+  },
+
+  "заражённая местность с автоматической защитой": {
+    durationSec: 60,
+    setup: (state) => state.toggleBattery(),
+    at: {
+      10: (state) => state.setContaminated(true),
+      50: (state) => state.setContaminated(false),
+    },
+  },
+
+  "прибор ночного видения и засветка фарами": {
+    durationSec: 40,
+    setup: (state) => {
+      state.toggleBattery();
+      state.cycleNightVision();
+    },
+    at: {
+      15: (state) => state.toggleLightsAll(),
+      25: (state) => state.toggleLightsAll(),
     },
   },
 

@@ -29,6 +29,14 @@ const CONTROL_ACTIONS = {
   "ppo-mode": { call: "togglePpoMode" },
   "ppo-discharge": { run: ({ state }) => state.dischargePpo() },
 
+  // Фильтровентиляционная установка и защита от ОМП
+  "blower": { call: "toggleBlower" },
+  "filter-mode": { call: "toggleFilterMode" },
+  "paz-mode": { call: "togglePazMode" },
+
+  // Прибор ночного видения механика-водителя
+  "night-vision": { call: "cycleNightVision" },
+
   "instrument-panel": {
     run: ({ state, ui }) => {
       ui.showInstrumentPanel();

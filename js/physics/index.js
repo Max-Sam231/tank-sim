@@ -11,6 +11,8 @@ import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
 import { updateAirFilter } from "./airFilter.js";
+import { updateNbcProtection } from "./nbcProtection.js";
+import { updateNightVision } from "./nightVision.js";
 import { updateOperatingLimits } from "./operatingLimits.js";
 import { updateGyroCompass } from "./navigation.js";
 import { updateLamps } from "./signalLamps.js";
@@ -60,6 +62,8 @@ function updatePhysics(state, dt) {
   changed = updateSmokeScreen(state, ctx) || changed;
   changed = updateFireSuppression(state, ctx) || changed;
   changed = updateCooldown(state, ctx) || changed;
+  changed = updateNbcProtection(state, ctx) || changed;
+  changed = updateNightVision(state, ctx) || changed;
   changed = updateGyroCompass(state, ctx) || changed;
   changed = updateLamps(state, ctx) || changed;
 

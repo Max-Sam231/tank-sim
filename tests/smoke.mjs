@@ -99,6 +99,10 @@ const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smo
 const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
 const { LIMIT_RULES, TOLERANCE_SEC } = await import("../js/physics/operatingLimits.js");
 const { SERVICE_LIMIT } = await import("../js/physics/airFilter.js");
+const { SPIN_UP_SEC: BLOWER_SPIN_UP_SEC } = await import("../js/physics/nbcProtection.js");
+const { MODE_PASSIVE, MODE_ACTIVE, WARM_UP_SEC, RANGE_PASSIVE_M, RANGE_ACTIVE_M } = await import(
+  "../js/physics/nightVision.js"
+);
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1463,6 +1467,133 @@ check("Порог обслуживания фильтра отражается �
   state.setAirFilterClogging(SERVICE_LIMIT);
   tick();
   assert(state.sensors.is_air_filter_clogged, "фильтр не помечен забитым на пороге");
+});
+
+/** Танк с включённой массой и удобным прогоном времени. */
+function poweredTank() {
+  const state = new TankState();
+  state.toggleBattery();
+  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
+  run(1);
+  return { state, run };
+}
+
+check("Нагнетатель выходит на режим не мгновенно", () => {
+  const { state, run } = poweredTank();
+
+  state.toggleBlower();
+  run(BLOWER_SPIN_UP_SEC / 2);
+  const half = state.sensors.compartment_pressure;
+  assert(half > 0, "наддув не начался");
+
+  run(BLOWER_SPIN_UP_SEC);
+  assert(state.sensors.compartment_pressure > half, "наддув не вырос до режима");
+
+  state.toggleBlower();
+  run(BLOWER_SPIN_UP_SEC);
+  assert(
+    state.sensors.compartment_pressure < 0.01,
+    `наддув не спал после выключения: ${state.sensors.compartment_pressure}`,
+  );
+});
+
+check("Отделение защищено только при наддуве через фильтр", () => {
+  const { state, run } = poweredTank();
+
+  state.toggleBlower();
+  run(BLOWER_SPIN_UP_SEC + 1);
+  assert(!state.sensors.is_compartment_sealed, "отделение защищено без фильтра");
+
+  state.toggleFilterMode();
+  run(1);
+  assert(state.sensors.is_compartment_sealed, "отделение не защищено при наддуве через фильтр");
+});
+
+check("ПАЗ в автоматическом режиме закрывает отделение сам", () => {
+  const { state, run } = poweredTank();
+
+  assert(state.pazAuto, "ПАЗ должен быть автоматическим по умолчанию");
+  state.setContaminated(true);
+  run(BLOWER_SPIN_UP_SEC + 2);
+
+  assert(state.blowerOn, "нагнетатель не включился по заражению");
+  assert(state.filterMode, "воздух не пущен через фильтр");
+  assert(state.sensors.is_compartment_sealed, "отделение не защищено");
+});
+
+check("Заражение без защиты записывается нарушением", () => {
+  const { state, run } = poweredTank();
+
+  state.togglePazMode();
+  state.setContaminated(true);
+  run(3);
+
+  assert(!state.blowerOn, "нагнетатель включился в ручном режиме сам");
+  assert(
+    state.violations.some((v) => v.includes("без защиты")),
+    `нарушение не записано: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("Ресурс фильтра расходуется только при работе через него", () => {
+  const { state, run } = poweredTank();
+
+  state.toggleBlower();
+  run(60);
+  assert(state.sensors.filter_life_left === 1, "ресурс тратится без фильтра");
+
+  state.toggleFilterMode();
+  run(60);
+  assert(state.sensors.filter_life_left < 1, "ресурс фильтра не расходуется");
+});
+
+check("ТВНЕ выходит на режим и переключает дальность", () => {
+  const { state, run } = poweredTank();
+
+  state.cycleNightVision();
+  assert(state.tvneMode === MODE_PASSIVE, "не включился пассивный режим");
+
+  run(WARM_UP_SEC / 2);
+  assert(!state.sensors.is_night_vision_ready, "прибор готов раньше времени");
+
+  run(WARM_UP_SEC);
+  assert(state.sensors.is_night_vision_ready, "прибор не вышел на режим");
+  assert(
+    Math.round(state.sensors.night_vision_range) === RANGE_PASSIVE_M,
+    `дальность пассивного режима ${state.sensors.night_vision_range}`,
+  );
+
+  state.cycleNightVision();
+  assert(state.tvneMode === MODE_ACTIVE, "не включился активный режим");
+  run(1);
+  assert(
+    Math.round(state.sensors.night_vision_range) === RANGE_ACTIVE_M,
+    `дальность активного режима ${state.sensors.night_vision_range}`,
+  );
+  assert(
+    state.violations.some((v) => v.includes("демаскирует")),
+    "работа с прожектором не отмечена",
+  );
+});
+
+check("Засветка ослепляет ТВНЕ и отпускает не сразу", () => {
+  const { state, run } = poweredTank();
+
+  state.cycleNightVision();
+  run(WARM_UP_SEC + 1);
+  const clear = state.sensors.night_vision_range;
+  assert(clear > 0, "прибор не видит в темноте");
+
+  state.toggleLightsAll();
+  run(2);
+  assert(state.sensors.night_vision_range < clear, "фары не засветили прибор");
+
+  state.toggleLightsAll();
+  run(0.5);
+  assert(state.sensors.night_vision_glare > 0, "засветка спала мгновенно");
+
+  run(5);
+  assert(state.sensors.night_vision_range > 0, "прибор не восстановился после засветки");
 });
 
 for (const { name, fn } of checks) {
