@@ -6,6 +6,8 @@
  * Любое нарушение сбрасывает отсчёт: так тренажёр не прощает пуск
  * с пропущенным шагом алгоритма.
  */
+import { airFilterPowerFactor } from "./airFilter.js";
+
 const CRANK_TIME_TO_START_SEC = 1.5;
 
 const MIN_FUEL_PRESSURE = 0.8;
@@ -111,7 +113,10 @@ function updateRpm(state, ctx) {
     const manualPart = state.fuelManualFeed / 100;
     const manualContribution = Math.pow(manualPart, MANUAL_FEED_EXPONENT) * MANUAL_FEED_RPM;
     const pedalContribution = state.gasPedal ? GAS_PEDAL_RPM : 0;
-    target = Math.min(Math.round(IDLE_RPM + manualContribution + pedalContribution), MAX_RPM);
+    // Забитый воздухоочиститель душит двигатель: обороты не доберут
+    const powerFactor = airFilterPowerFactor(state);
+    const boost = (manualContribution + pedalContribution) * powerFactor;
+    target = Math.min(Math.round(IDLE_RPM + boost), MAX_RPM);
   } else if (ctx.isCranking) {
     target = CRANKING_RPM;
   }

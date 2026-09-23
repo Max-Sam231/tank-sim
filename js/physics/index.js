@@ -10,6 +10,7 @@ import { updateSpeed } from "./driveline.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
+import { updateAirFilter } from "./airFilter.js";
 import { updateOperatingLimits } from "./operatingLimits.js";
 import { updateGyroCompass } from "./navigation.js";
 import { updateLamps } from "./signalLamps.js";
@@ -45,6 +46,7 @@ function updatePhysics(state, dt) {
   changed = updateEngineState(state, ctx) || changed;
   changed = updateRpm(state, ctx) || changed;
 
+  changed = updateAirFilter(state, ctx) || changed;
   changed = updateEngineOil(state, ctx) || changed;
   changed = updateGearboxOil(state, ctx) || changed;
 

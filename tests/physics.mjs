@@ -44,6 +44,7 @@ const TRACKED_SENSORS = [
   "gyro_spin_up",
   "cooldown_progress",
   "fire_level",
+  "air_filter_vacuum",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -309,6 +310,19 @@ const SCENARIOS = {
     },
     at: {
       5: (state) => state.startFire(0.25),
+    },
+  },
+
+  "забитый воздухоочиститель душит двигатель": {
+    durationSec: 120,
+    setup: (state) => {
+      prime(state, "electric-start");
+      state.setShutters("4");
+      state.setAirFilterClogging(0.9);
+    },
+    at: {
+      ...ELECTRIC_START_STEPS,
+      30: (state) => state.setFuelManualFeed(100),
     },
   },
 

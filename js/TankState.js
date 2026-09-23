@@ -1,6 +1,7 @@
 import { updatePhysics } from "./physics/index.js";
 import { stopEngine as shutDownEngine, isReadyToStop } from "./physics/engineShutdown.js";
 import { dischargeCylinder, canDischarge } from "./physics/fireSuppression.js";
+import { serviceAirFilter as washFilterCassettes } from "./physics/airFilter.js";
 
 const EMIT_INTERVAL_SEC = 0.25;
 
@@ -84,6 +85,8 @@ class TankState {
       is_smoke_screen_active: false,
       fire_level: 0.0,
       is_fire_detected: false,
+      air_filter_vacuum: 100.0,
+      is_air_filter_clogged: false,
     };
 
     this.lamps = {
@@ -108,6 +111,7 @@ class TankState {
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
+    this.airFilterClogging = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -203,6 +207,8 @@ class TankState {
     this.sensors.is_smoke_screen_active = false;
     this.sensors.fire_level = 0.0;
     this.sensors.is_fire_detected = false;
+    this.sensors.air_filter_vacuum = 100.0;
+    this.sensors.is_air_filter_clogged = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -224,6 +230,7 @@ class TankState {
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
+    this.airFilterClogging = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -319,6 +326,7 @@ class TankState {
       violations: [...this.violations],
       ppoAuto: this.ppoAuto,
       ppoCylindersUsed: this.ppoCylindersUsed,
+      airFilterClogging: this.airFilterClogging,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -535,6 +543,19 @@ class TankState {
   dischargePpo() {
     if (!canDischarge(this)) return false;
     dischargeCylinder(this);
+    this._emit();
+    return true;
+  }
+
+  /** Задаёт загрязнение воздухоочистителя — вводная от преподавателя. */
+  setAirFilterClogging(level) {
+    this.airFilterClogging = this._clamp(Number(level) || 0, 0, 1);
+    this._emit();
+  }
+
+  /** Промывает кассеты воздухоочистителя — нужен ключ из ЗИП. */
+  serviceAirFilter() {
+    if (!washFilterCassettes(this)) return false;
     this._emit();
     return true;
   }

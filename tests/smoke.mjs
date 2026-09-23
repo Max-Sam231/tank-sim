@@ -98,6 +98,7 @@ const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
 const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
 const { LIMIT_RULES, TOLERANCE_SEC } = await import("../js/physics/operatingLimits.js");
+const { SERVICE_LIMIT } = await import("../js/physics/airFilter.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1415,6 +1416,53 @@ check("Нагрузка на непрогретом двигателе запи�
     state.violations.some((v) => v.includes("непрогретом")),
     `нагрузка на холодную не записана: ${JSON.stringify(state.violations)}`,
   );
+});
+
+check("Забитый воздухоочиститель виден по разрежению и срезает обороты", () => {
+  const rpmWith = (clogging) => {
+    const { state, run } = startedEngine();
+    state.setShutters("4");
+    state.setAirFilterClogging(clogging);
+    state.setFuelManualFeed(100);
+    run(40);
+    return { rpm: state.sensors.engine_rpm, vacuum: state.sensors.air_filter_vacuum, state };
+  };
+
+  const clean = rpmWith(0);
+  const clogged = rpmWith(0.9);
+
+  assert(clogged.rpm < clean.rpm, `забитый фильтр не срезал обороты: ${clogged.rpm} против ${clean.rpm}`);
+  assert(clogged.vacuum > clean.vacuum, "разрежение не выросло на забитом фильтре");
+  assert(clogged.state.sensors.is_air_filter_clogged, "фильтр не помечен требующим обслуживания");
+  assert(
+    clogged.state.violations.some((v) => v.includes("воздухоочистителем")),
+    "работа с забитым фильтром не записана",
+  );
+});
+
+check("Кассеты фильтра промываются только с ключом из ЗИП", () => {
+  const state = new TankState();
+  state.setAirFilterClogging(0.9);
+
+  assert(!state.serviceAirFilter(), "фильтр обслужен без ключа");
+  assert(state.airFilterClogging === 0.9, "загрязнение изменилось без обслуживания");
+
+  state.takeZipKey();
+  assert(state.serviceAirFilter(), "фильтр не обслужен при наличии ключа");
+  assert(state.airFilterClogging === 0, "загрязнение не сброшено");
+});
+
+check("Порог обслуживания фильтра отражается в признаке", () => {
+  const state = new TankState();
+  const tick = () => state.tick(1 / 60);
+
+  state.setAirFilterClogging(SERVICE_LIMIT - 0.01);
+  tick();
+  assert(!state.sensors.is_air_filter_clogged, "фильтр помечен забитым до порога");
+
+  state.setAirFilterClogging(SERVICE_LIMIT);
+  tick();
+  assert(state.sensors.is_air_filter_clogged, "фильтр не помечен забитым на пороге");
 });
 
 for (const { name, fn } of checks) {
