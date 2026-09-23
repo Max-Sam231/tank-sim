@@ -9,6 +9,7 @@ import { updateHeater, updateTemperatures } from "./thermalSystem.js";
 import { updateSpeed } from "./driveline.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
+import { updateFireSuppression } from "./fireSuppression.js";
 import { updateGyroCompass } from "./navigation.js";
 import { updateLamps } from "./signalLamps.js";
 
@@ -54,6 +55,7 @@ function updatePhysics(state, dt) {
   changed = updateFuelLevels(state, ctx) || changed;
 
   changed = updateSmokeScreen(state, ctx) || changed;
+  changed = updateFireSuppression(state, ctx) || changed;
   changed = updateCooldown(state, ctx) || changed;
   changed = updateGyroCompass(state, ctx) || changed;
   changed = updateLamps(state, ctx) || changed;

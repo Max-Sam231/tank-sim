@@ -25,6 +25,10 @@ const CONTROL_ACTIONS = {
   // Механизм остановки двигателя: глушить снятием массы нельзя
   "engine-stop": { run: ({ state }) => state.stopEngine() },
 
+  // Противопожарное оборудование
+  "ppo-mode": { call: "togglePpoMode" },
+  "ppo-discharge": { run: ({ state }) => state.dischargePpo() },
+
   "instrument-panel": {
     run: ({ state, ui }) => {
       ui.showInstrumentPanel();

@@ -96,6 +96,7 @@ const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiariza
 const { overheatLimit } = await import("../js/physics/thermalSystem.js");
 const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
+const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1244,6 +1245,93 @@ check("Завеса гаснет на малых оборотах и трати�
   state.setFuelManualFeed(0);
   run(10);
   assert(!state.sensors.is_smoke_screen_active, "завеса осталась на холостом ходу");
+});
+
+check("Автоматическое ППО тушит пожар само", () => {
+  const state = new TankState();
+  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
+
+  assert(state.ppoAuto, "ППО должно быть в автоматическом режиме по умолчанию");
+  state.startFire(0.2);
+  run(10);
+
+  assert(state.ppoCylindersUsed > 0, "баллон не сработал");
+  assert(state.sensors.fire_level < 0.2, "пожар не убавился");
+});
+
+check("В ручном режиме пожар разгорается без команды", () => {
+  const state = new TankState();
+  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
+
+  state.togglePpoMode();
+  assert(!state.ppoAuto, "ППО не переключилось в ручной режим");
+
+  state.startFire(0.2);
+  run(10);
+  assert(state.ppoCylindersUsed === 0, "баллон сработал без команды");
+  assert(state.sensors.fire_level > 0.2, "пожар не разгорается");
+
+  assert(state.dischargePpo(), "баллон не разрядился по команде");
+  run(5);
+  assert(state.ppoCylindersUsed === 1, "израсходован не один баллон");
+});
+
+check("Баллоны ППО кончаются", () => {
+  const state = new TankState();
+  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
+  state.togglePpoMode();
+
+  for (let i = 0; i < CYLINDER_COUNT; i += 1) {
+    assert(state.dischargePpo(), `баллон ${i + 1} не разрядился`);
+    run(4);
+  }
+
+  assert(state.ppoCylindersUsed === CYLINDER_COUNT, "израсходовано не всё");
+  assert(!state.dischargePpo(), "разрядился баллон сверх имеющихся");
+});
+
+check("Открытые жалюзи раздувают пожар", () => {
+  const burn = (shutters) => {
+    const state = new TankState();
+    state.togglePpoMode();
+    state.setShutters(shutters);
+    state.startFire(0.2);
+    for (let i = 0; i < 10 * 60; i += 1) state.tick(1 / 60);
+    return state.sensors.fire_level;
+  };
+
+  assert(burn("4") > burn("0"), "приток воздуха через жалюзи не ускоряет пожар");
+});
+
+check("Пожар при работающем двигателе и открытых жалюзи — нарушения", () => {
+  const { state, run } = startedEngine();
+  state.togglePpoMode();
+  state.setShutters("4");
+  state.startFire(0.2);
+  run(3);
+
+  assert(
+    state.violations.some((v) => v.includes("Двигатель не остановлен при пожаре")),
+    `не записано нарушение по двигателю: ${JSON.stringify(state.violations)}`,
+  );
+  assert(
+    state.violations.some((v) => v.includes("Жалюзи не закрыты")),
+    "не записано нарушение по жалюзи",
+  );
+});
+
+check("Непотушенный пожар выводит машину из строя", () => {
+  const state = new TankState();
+  state.togglePpoMode();
+  state.setShutters("4");
+  state.startFire(0.3);
+  for (let i = 0; i < 120 * 60; i += 1) state.tick(1 / 60);
+
+  assert(state.sensors.fire_level >= CRITICAL_LEVEL, `пожар не дорос: ${state.sensors.fire_level}`);
+  assert(
+    state.violations.some((v) => v.includes("выведена из строя")),
+    "не записан итог непотушенного пожара",
+  );
 });
 
 for (const { name, fn } of checks) {

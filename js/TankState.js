@@ -1,5 +1,6 @@
 import { updatePhysics } from "./physics/index.js";
 import { stopEngine as shutDownEngine, isReadyToStop } from "./physics/engineShutdown.js";
+import { dischargeCylinder, canDischarge } from "./physics/fireSuppression.js";
 
 const EMIT_INTERVAL_SEC = 0.25;
 
@@ -81,6 +82,8 @@ class TankState {
       is_gyro_ready: false,
       cooldown_progress: 0.0,
       is_smoke_screen_active: false,
+      fire_level: 0.0,
+      is_fire_detected: false,
     };
 
     this.lamps = {
@@ -101,6 +104,9 @@ class TankState {
     this._oilPrimed = false;
     this._gyroSpinUpTime = 0;
     this._idleCooldownTime = 0;
+    this.ppoAuto = true;
+    this.ppoCylindersUsed = 0;
+    this._ppoDischargeTime = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -194,6 +200,8 @@ class TankState {
     this.sensors.is_gyro_ready = false;
     this.sensors.cooldown_progress = 0.0;
     this.sensors.is_smoke_screen_active = false;
+    this.sensors.fire_level = 0.0;
+    this.sensors.is_fire_detected = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -211,6 +219,9 @@ class TankState {
     this._oilPrimed = false;
     this._gyroSpinUpTime = 0;
     this._idleCooldownTime = 0;
+    this.ppoAuto = true;
+    this.ppoCylindersUsed = 0;
+    this._ppoDischargeTime = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -304,6 +315,8 @@ class TankState {
       sensors: { ...this.sensors },
       lamps: { ...this.lamps },
       violations: [...this.violations],
+      ppoAuto: this.ppoAuto,
+      ppoCylindersUsed: this.ppoCylindersUsed,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -501,6 +514,25 @@ class TankState {
     if (!stopped) return false;
 
     this.recordViolation(violation);
+    this._emit();
+    return true;
+  }
+
+  /** Зажигает пожар в МТО — вводная от преподавателя. */
+  startFire(level = 0.1) {
+    this.sensors.fire_level = this._clamp(level, 0, 1);
+    this._emit();
+  }
+
+  /** Переключает ППО между автоматическим и ручным режимом. */
+  togglePpoMode() {
+    this._toggle("ppoAuto");
+  }
+
+  /** Разряжает баллон ППО вручную. */
+  dischargePpo() {
+    if (!canDischarge(this)) return false;
+    dischargeCylinder(this);
     this._emit();
     return true;
   }

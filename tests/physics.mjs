@@ -43,6 +43,7 @@ const TRACKED_SENSORS = [
   "heading_deg",
   "gyro_spin_up",
   "cooldown_progress",
+  "fire_level",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -276,6 +277,26 @@ const SCENARIOS = {
       40: (state) => state.setFuelManualFeed(90),
       80: (state) => state.setFuelManualFeed(0),
       230: (state) => state.stopEngine(),
+    },
+  },
+
+  "пожар в МТО тушится автоматически": {
+    durationSec: 30,
+    setup: (state) => state.toggleBattery(),
+    at: {
+      5: (state) => state.startFire(0.25),
+    },
+  },
+
+  "пожар в МТО при открытых жалюзи без тушения": {
+    durationSec: 60,
+    setup: (state) => {
+      state.toggleBattery();
+      state.togglePpoMode();
+      state.setShutters("4");
+    },
+    at: {
+      5: (state) => state.startFire(0.25),
     },
   },
 
