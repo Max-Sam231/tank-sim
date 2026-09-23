@@ -8,6 +8,7 @@ import { updateEngineOil, updateGearboxOil } from "./lubrication.js";
 import { updateHeater, updateTemperatures } from "./thermalSystem.js";
 import { updateSpeed } from "./driveline.js";
 import { updateSteering } from "./steering.js";
+import { updateUnderwaterDriving } from "./underwaterDriving.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
@@ -58,6 +59,7 @@ function updatePhysics(state, dt) {
 
   changed = updateSpeed(state, ctx) || changed;
   changed = updateSteering(state, ctx) || changed;
+  changed = updateUnderwaterDriving(state, ctx) || changed;
   changed = updateAmmeter(state, ctx) || changed;
   changed = updateFuelLevels(state, ctx) || changed;
 

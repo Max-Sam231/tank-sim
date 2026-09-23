@@ -41,6 +41,13 @@ const CONTROL_ACTIONS = {
   "left-lever": { call: "cycleLeftLever" },
   "right-lever": { call: "cycleRightLever" },
 
+  // Оборудование подводного вождения
+  "opvt-seal": { call: "toggleOpvtSealed" },
+  "opvt-pipe": { call: "toggleOpvtPipe" },
+  "opvt-exhaust-seal": { call: "toggleOpvtExhaustSeal" },
+  "opvt-pump-check": { call: "toggleOpvtPumpCheck" },
+  "opvt-pump": { call: "toggleOpvtPump" },
+
   "instrument-panel": {
     run: ({ state, ui }) => {
       ui.showInstrumentPanel();

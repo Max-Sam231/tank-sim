@@ -96,6 +96,9 @@ class TankState {
       is_night_vision_ready: false,
       gyro_heading_deg: 0.0,
       yaw_rate_deg: 0.0,
+      water_depth_m: 0.0,
+      water_level: 0.0,
+      is_flooding: false,
     };
 
     this.lamps = {
@@ -132,6 +135,11 @@ class TankState {
     this._gyroDrift = 0;
     this.leftLever = 0;
     this.rightLever = 0;
+    this.opvtSealed = false;
+    this.opvtPipeInstalled = false;
+    this.opvtExhaustSealed = false;
+    this.opvtPumpChecked = false;
+    this.opvtPumpOn = false;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -238,6 +246,9 @@ class TankState {
     this.sensors.is_night_vision_ready = false;
     this.sensors.gyro_heading_deg = 0.0;
     this.sensors.yaw_rate_deg = 0.0;
+    this.sensors.water_depth_m = 0.0;
+    this.sensors.water_level = 0.0;
+    this.sensors.is_flooding = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -271,6 +282,11 @@ class TankState {
     this._gyroDrift = 0;
     this.leftLever = 0;
     this.rightLever = 0;
+    this.opvtSealed = false;
+    this.opvtPipeInstalled = false;
+    this.opvtExhaustSealed = false;
+    this.opvtPumpChecked = false;
+    this.opvtPumpOn = false;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -373,6 +389,11 @@ class TankState {
       tvneMode: this.tvneMode,
       leftLever: this.leftLever,
       rightLever: this.rightLever,
+      opvtSealed: this.opvtSealed,
+      opvtPipeInstalled: this.opvtPipeInstalled,
+      opvtExhaustSealed: this.opvtExhaustSealed,
+      opvtPumpChecked: this.opvtPumpChecked,
+      opvtPumpOn: this.opvtPumpOn,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -645,6 +666,35 @@ class TankState {
   setLever(side, position) {
     const key = side === "left" ? "leftLever" : "rightLever";
     this[key] = this._clamp(Number(position) || 0, 0, 2);
+    this._emit();
+  }
+
+  // --- Оборудование подводного вождения ---------------------------------
+
+  toggleOpvtSealed() {
+    this._toggle("opvtSealed");
+  }
+
+  toggleOpvtPipe() {
+    this._toggle("opvtPipeInstalled");
+  }
+
+  toggleOpvtExhaustSeal() {
+    this._toggle("opvtExhaustSealed");
+  }
+
+  toggleOpvtPumpCheck() {
+    this._toggle("opvtPumpChecked");
+  }
+
+  /** Водооткачивающий насос. */
+  toggleOpvtPump() {
+    this._toggle("opvtPumpOn");
+  }
+
+  /** Заводит машину в воду на заданную глубину — вводная от преподавателя. */
+  setWaterDepth(meters) {
+    this.sensors.water_depth_m = Math.max(0, Number(meters) || 0);
     this._emit();
   }
 

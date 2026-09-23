@@ -48,6 +48,7 @@ const TRACKED_SENSORS = [
   "night_vision_range",
   "heading_deg",
   "yaw_rate_deg",
+  "water_level",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -369,6 +370,33 @@ const SCENARIOS = {
       170: (state) => {
         state.setLever("left", 2);
         state.setLever("right", 2);
+      },
+    },
+  },
+
+  "вход в воду без подготовки": {
+    durationSec: 40,
+    setup: (state) => prime(state, "electric-start"),
+    at: {
+      ...ELECTRIC_START_STEPS,
+      30: (state) => state.setWaterDepth(2),
+    },
+  },
+
+  "вход в воду подготовленной машины": {
+    durationSec: 40,
+    setup: (state) => {
+      prime(state, "electric-start");
+      state.toggleOpvtSealed();
+      state.toggleOpvtPipe();
+      state.toggleOpvtExhaustSeal();
+      state.toggleOpvtPumpCheck();
+    },
+    at: {
+      ...ELECTRIC_START_STEPS,
+      30: (state) => {
+        state.toggleOpvtPump();
+        state.setWaterDepth(2);
       },
     },
   },

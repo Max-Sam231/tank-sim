@@ -105,6 +105,10 @@ const { MODE_PASSIVE, MODE_ACTIVE, WARM_UP_SEC, RANGE_PASSIVE_M, RANGE_ACTIVE_M 
 );
 const { LEVER_FIRST, LEVER_SECOND, SHARP_TURN_SPEED_LIMIT, turnDirection, isBrakingWithLevers } =
   await import("../js/physics/steering.js");
+const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await import(
+  "../js/physics/underwaterDriving.js"
+);
+const { getScenarioDefinition } = await import("../js/scenarios/index.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1690,6 +1694,126 @@ check("Гирополукомпас показывает курс со свое�
     "показания прибора не уходят со временем",
   );
   assert(state.sensors.heading_deg === 0, "истинный курс изменился у стоящей машины");
+});
+
+/** Полностью подготовленная к воде машина. */
+function preparedForWater() {
+  const { state, run } = startedEngine();
+  state.toggleOpvtSealed();
+  state.toggleOpvtPipe();
+  state.toggleOpvtExhaustSeal();
+  state.toggleOpvtPumpCheck();
+  state.setShutters("0");
+  return { state, run };
+}
+
+check("Подготовка к воде требует всех шагов", () => {
+  const state = new TankState();
+
+  assert(!isPrepared(state), "неподготовленная машина считается готовой");
+  assert(
+    missingSteps(state).length === PREPARATION_STEPS.length,
+    "перечислены не все невыполненные шаги",
+  );
+
+  state.toggleOpvtSealed();
+  state.toggleOpvtPipe();
+  state.toggleOpvtExhaustSeal();
+  assert(!isPrepared(state), "машина готова без проверки насоса");
+
+  state.toggleOpvtPumpCheck();
+  assert(isPrepared(state), "все шаги выполнены, а машина не готова");
+  assert(missingSteps(state).length === 0, "остались невыполненные шаги");
+});
+
+check("Неподготовленная машина набирает воду", () => {
+  const { state, run } = startedEngine();
+
+  state.setWaterDepth(2);
+  run(5);
+
+  assert(state.sensors.is_flooding, "вода не поступает в негерметичную машину");
+  assert(state.sensors.water_level > 0, "уровень воды не растёт");
+  assert(
+    state.violations.some((v) => v.includes("без подготовки")),
+    `нарушения подготовки не записаны: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("Подготовленная машина воду не набирает", () => {
+  const { state, run } = preparedForWater();
+
+  state.setWaterDepth(2);
+  run(10);
+
+  assert(!state.sensors.is_flooding, "подготовленная машина течёт");
+  assert(state.sensors.water_level === 0, "уровень воды вырос в герметичной машине");
+});
+
+check("Открытые жалюзи топят машину даже подготовленную", () => {
+  const { state, run } = preparedForWater();
+
+  state.setShutters("4");
+  state.setWaterDepth(2);
+  run(5);
+
+  assert(state.sensors.is_flooding, "вода не пошла через открытые жалюзи");
+  assert(
+    state.violations.some((v) => v.includes("открытыми жалюзи")),
+    "не записан вход в воду с открытыми жалюзи",
+  );
+});
+
+check("Насос откачивает воду медленнее, чем она поступает", () => {
+  const { state, run } = startedEngine();
+
+  state.setWaterDepth(2);
+  state.toggleOpvtPump();
+  run(10);
+
+  assert(state.sensors.water_level > 0, "вода не поступает при работающем насосе");
+  assert(state.sensors.is_flooding, "насос перекрыл течь полностью");
+});
+
+check("Превышение глубины и остановка под водой записываются", () => {
+  const { state, run } = preparedForWater();
+
+  state.setWaterDepth(PIPE_HEIGHT_M + 1);
+  run(3);
+  assert(
+    state.violations.some((v) => v.includes("глубина брода")),
+    "превышение глубины не записано",
+  );
+
+  state.stopEngine();
+  run(3);
+  assert(
+    state.violations.some((v) => v.includes("остановлен под водой")),
+    "остановка под водой не записана",
+  );
+});
+
+check("Сценарий ОПВТ собирается и описан полностью", () => {
+  const scenario = getScenarioDefinition({ startMethod: "underwater-driving" });
+
+  assert(scenario, "сценарий ОПВТ не найден");
+  assert(scenario.stages.length > 0, "в сценарии нет этапов");
+
+  const ids = new Set();
+  for (const stage of scenario.stages) {
+    assert(stage.title, `этап ${stage.id} без названия`);
+    assert(stage.steps.length > 0, `этап ${stage.id} без шагов`);
+
+    for (const step of stage.steps) {
+      assert(step.title, `шаг ${step.id} без названия`);
+      assert(typeof step.completeWhen === "function", `шаг ${step.id} без условия`);
+      assert(!ids.has(step.id), `повторяющийся шаг ${step.id}`);
+      ids.add(step.id);
+
+      // Шаг засчитывается либо автоматически, либо по взведению
+      assert(step.auto || step.gateKeys?.length, `шаг ${step.id} нельзя ни взвести, ни засчитать`);
+    }
+  }
 });
 
 for (const { name, fn } of checks) {
