@@ -109,6 +109,7 @@ const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await imp
   "../js/physics/underwaterDriving.js"
 );
 const { getScenarioDefinition } = await import("../js/scenarios/index.js");
+const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/SystemsTestPanel.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1814,6 +1815,60 @@ check("Сценарий ОПВТ собирается и описан полно
       assert(step.auto || step.gateKeys?.length, `шаг ${step.id} нельзя ни взвести, ни засчитать`);
     }
   }
+});
+
+check("Панель проверки систем ссылается только на существующие действия", () => {
+  for (const group of GROUPS) {
+    assert(group.title, "у группы нет названия");
+    for (const item of group.items) {
+      assert(
+        CONTROL_ACTIONS[item.action],
+        `кнопка «${item.label}» ссылается на неизвестное действие ${item.action}`,
+      );
+      assert(item.label, `у действия ${item.action} нет подписи`);
+    }
+  }
+
+  const state = new TankState();
+  for (const input of SCENARIO_INPUTS) {
+    assert(input.label, "у вводной нет подписи");
+    input.apply(state); // не должно падать
+  }
+});
+
+check("Кнопки панели меняют состояние танка", () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+
+  const ui = new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+  const panel = new SystemsTestPanel({ state, ui });
+
+  const click = (action) => {
+    const btn = panel.rootEl.querySelector(`[data-test-action="${action}"]`);
+    assert(btn, `не найдена кнопка ${action}`);
+    btn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  };
+
+  click("blower");
+  assert(state.blowerOn, "нагнетатель не включился с панели");
+
+  click("night-vision");
+  assert(state.tvneMode === 1, "ТВНЕ не переключился с панели");
+
+  click("opvt-pipe");
+  assert(state.opvtPipeInstalled, "труба не установлена с панели");
+
+  // Сводка обновляется по состоянию
+  assert(
+    panel.rootEl.querySelector("[data-test-readout]").innerHTML.includes("ТВНЕ"),
+    "сводка не отрисовалась",
+  );
 });
 
 for (const { name, fn } of checks) {

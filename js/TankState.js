@@ -327,6 +327,11 @@ class TankState {
 
   getSnapshot() {
     return {
+      // Датчики кладутся и вложенно, и плоско: исторически потребители
+      // читают их по короткому имени. Раскладка автоматическая, иначе
+      // новый датчик молча оказывается undefined у всех читателей.
+      ...this.sensors,
+
       commanderView: this.commanderView,
       isBatteryOn: this.isBatteryOn,
       isBrakePressed: this.isBrakePressed,

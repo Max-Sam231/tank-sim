@@ -12,7 +12,8 @@ import { DriverScene } from './js/scenes/DriverScene.js';
 import { CommanderScene } from './js/scenes/CommanderScene.js';
 import { ExhaustSmoke } from './js/smoke/ExhaustSmoke.js';
 import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
-const APP_MODE = "prod"; // "debug" или "prod"
+import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
+const APP_MODE = "debug"; // "debug" или "prod"
 const IS_DEBUG = APP_MODE === "debug";
 
 function bootstrap() {
@@ -100,6 +101,9 @@ function bootstrap() {
     isDebug: IS_DEBUG,
     actionNotifier
   });
+
+  // Временно: пока у новых систем нет хитбоксов, их проверяют через панель
+  if (IS_DEBUG) new SystemsTestPanel({ state, ui });
 
   const training = new TrainingEngine({ state });
   const reportModal = new FinishReportModal({

@@ -2640,3 +2640,100 @@ body.familiarization-mode-active .fam-item-inactive {
   pointer-events: none !important;
   cursor: default !important;
 }
+/* ===========================================================
+   Временная панель проверки систем (только режим отладки).
+   Удаляется вместе с SystemsTestPanel, когда появятся хитбоксы.
+   =========================================================== */
+.systems-test-panel {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3000;
+  width: 250px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(18, 20, 24, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: #e8e8e8;
+  font: 11px/1.4 system-ui, sans-serif;
+}
+
+.systems-test-panel .stp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.systems-test-panel .stp-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.systems-test-panel.is-collapsed .stp-body {
+  display: none;
+}
+
+.systems-test-panel .stp-body {
+  padding: 6px 8px 8px;
+}
+
+.systems-test-panel .stp-group {
+  margin-bottom: 7px;
+}
+
+.systems-test-panel .stp-group-title {
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  margin-bottom: 3px;
+}
+
+.systems-test-panel .stp-btn {
+  display: inline-block;
+  margin: 0 3px 3px 0;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.systems-test-panel .stp-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.systems-test-panel .stp-input {
+  background: rgba(200, 120, 40, 0.28);
+  border-color: rgba(220, 150, 70, 0.5);
+}
+
+.systems-test-panel .stp-readout {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.82);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.systems-test-panel .stp-violations {
+  margin-top: 6px;
+  padding: 5px 6px;
+  background: rgba(200, 60, 60, 0.2);
+  border-radius: 3px;
+  color: #ffc9c9;
+}
