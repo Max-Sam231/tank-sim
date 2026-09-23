@@ -56,8 +56,42 @@ const GROUPS = [
   },
 ];
 
+/**
+ * Ставит машину в «двигатель работает и прогрет» одним нажатием.
+ *
+ * Обычный пуск занимает минуты: прокачка масла, топлива, прокрутка.
+ * Для проверки систем это лишнее ожидание, поэтому здесь состояние
+ * выставляется напрямую. Только для панели отладки — в занятии
+ * двигатель запускают по алгоритму.
+ */
+function quickStartEngine(state) {
+  state.setScenario({ startMethod: "electric-start", ambientTempC: 20, fuelType: "diesel" });
+  state.setGearLever("neutral");
+
+  if (!state.isBatteryOn) state.toggleBattery();
+  if (!state.leftTank) state.toggleLeftTank();
+  if (!state.rightTank) state.toggleRightTank();
+  state.setBcnMode("on");
+  state.setShutters("4");
+
+  for (let i = 0; i < 4; i += 1) state.pumpFuelPrimerLever();
+  state.setFuelManualFeed(30);
+
+  // Прогретый двигатель на холостом ходу
+  state._engineRunning = true;
+  state._engineRunTime = 60;
+  state._oilPrimed = true;
+  state.sensors.fuel_pressure = 1.8;
+  state.sensors.oil_pressure_engine = 5.5;
+  state.sensors.coolant_temp = 85;
+  state.sensors.oil_temp = 90;
+
+  state._emit();
+}
+
 /** Вводные преподавателя — обстановка для отработки аварийных действий. */
 const SCENARIO_INPUTS = [
+  { label: "Завести и прогреть", apply: quickStartEngine },
   { label: "Пожар в МТО", apply: (state) => state.startFire(0.25) },
   { label: "Забить фильтр", apply: (state) => state.setAirFilterClogging(0.9) },
   { label: "Заражение", apply: (state) => state.setContaminated(true) },
@@ -99,7 +133,7 @@ class SystemsTestPanel {
     ).join("");
 
     const inputs = SCENARIO_INPUTS.map(
-      (input, idx) => `<button class="stp-btn ${input.label.startsWith("Сброс") ? "stp-reset" : "stp-input"}" data-test-input="${idx}">${input.label}</button>`,
+      (input, idx) => `<button class="stp-btn ${/^(Сброс|Завести)/.test(input.label) ? "stp-reset" : "stp-input"}" data-test-input="${idx}">${input.label}</button>`,
     ).join("");
 
     return `
@@ -166,7 +200,12 @@ class SystemsTestPanel {
     if (!readout) return;
 
     const tvne = ["выкл", "пассивный", "активный"][snapshot.tvneMode] || "?";
+    const engine = snapshot.engineRunning
+      ? `работает ${snapshot.engine_rpm.toFixed(0)} об/мин`
+      : "не работает";
+
     const lines = [
+      `Двигатель: ${engine}  ОЖ ${snapshot.coolant_temp.toFixed(0)} °C  скорость ${snapshot.speed_kmh.toFixed(0)} км/ч`,
       `Пожар: ${(snapshot.fire_level * 100).toFixed(0)}%  баллонов: ${3 - snapshot.ppoCylindersUsed}`,
       `Наддув: ${snapshot.compartment_pressure.toFixed(0)} мм  ТВНЕ: ${tvne} ${snapshot.night_vision_range.toFixed(0)} м`,
       `Фильтр: ${(snapshot.airFilterClogging * 100).toFixed(0)}%  разрежение ${snapshot.air_filter_vacuum.toFixed(0)}`,

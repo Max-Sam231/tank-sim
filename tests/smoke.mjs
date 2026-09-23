@@ -1941,6 +1941,21 @@ check("Панель не перекрывает стартовое меню", as
   assert(panel.rootEl.hidden, "панель не спряталась при повторном открытии меню");
 });
 
+check("Ярлык «Завести и прогреть» даёт устойчиво работающий двигатель", () => {
+  const state = new TankState();
+  const quickStart = SCENARIO_INPUTS.find((input) => input.label.startsWith("Завести"));
+  assert(quickStart, "в панели нет ярлыка быстрого пуска");
+
+  quickStart.apply(state);
+  for (let i = 0; i < 10 * 60; i += 1) state.tick(1 / 60);
+
+  const snapshot = state.getSnapshot();
+  assert(snapshot.engineRunning, "двигатель заглох после быстрого пуска");
+  assert(snapshot.engine_rpm > 700, `обороты не держатся: ${snapshot.engine_rpm}`);
+  assert(snapshot.coolant_temp > 70, `двигатель не прогрет: ${snapshot.coolant_temp}`);
+  assert(state.violations.length === 0, `быстрый пуск дал нарушения: ${state.violations}`);
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();
