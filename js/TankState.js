@@ -94,6 +94,8 @@ class TankState {
       night_vision_range: 0.0,
       night_vision_glare: 0.0,
       is_night_vision_ready: false,
+      gyro_heading_deg: 0.0,
+      yaw_rate_deg: 0.0,
     };
 
     this.lamps = {
@@ -127,6 +129,9 @@ class TankState {
     this.tvneMode = 0;
     this._tvneWarmUpTime = 0;
     this._tvneGlare = 0;
+    this._gyroDrift = 0;
+    this.leftLever = 0;
+    this.rightLever = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -231,6 +236,8 @@ class TankState {
     this.sensors.night_vision_range = 0.0;
     this.sensors.night_vision_glare = 0.0;
     this.sensors.is_night_vision_ready = false;
+    this.sensors.gyro_heading_deg = 0.0;
+    this.sensors.yaw_rate_deg = 0.0;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -261,6 +268,9 @@ class TankState {
     this.tvneMode = 0;
     this._tvneWarmUpTime = 0;
     this._tvneGlare = 0;
+    this._gyroDrift = 0;
+    this.leftLever = 0;
+    this.rightLever = 0;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -361,6 +371,8 @@ class TankState {
       blowerOn: this.blowerOn,
       filterMode: this.filterMode,
       tvneMode: this.tvneMode,
+      leftLever: this.leftLever,
+      rightLever: this.rightLever,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -617,6 +629,22 @@ class TankState {
   /** Задаёт заражение местности — вводная от преподавателя. */
   setContaminated(isContaminated) {
     this.sensors.is_contaminated = Boolean(isContaminated);
+    this._emit();
+  }
+
+  /** Переводит рычаг управления: отпущен, первое положение, второе. */
+  cycleLeftLever() {
+    this._cycle("leftLever", 3);
+  }
+
+  cycleRightLever() {
+    this._cycle("rightLever", 3);
+  }
+
+  /** Прямая установка положения рычага — для удержания мышью. */
+  setLever(side, position) {
+    const key = side === "left" ? "leftLever" : "rightLever";
+    this[key] = this._clamp(Number(position) || 0, 0, 2);
     this._emit();
   }
 

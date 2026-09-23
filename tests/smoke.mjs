@@ -103,6 +103,8 @@ const { SPIN_UP_SEC: BLOWER_SPIN_UP_SEC } = await import("../js/physics/nbcProte
 const { MODE_PASSIVE, MODE_ACTIVE, WARM_UP_SEC, RANGE_PASSIVE_M, RANGE_ACTIVE_M } = await import(
   "../js/physics/nightVision.js"
 );
+const { LEVER_FIRST, LEVER_SECOND, SHARP_TURN_SPEED_LIMIT, turnDirection, isBrakingWithLevers } =
+  await import("../js/physics/steering.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1594,6 +1596,100 @@ check("Засветка ослепляет ТВНЕ и отпускает не �
 
   run(5);
   assert(state.sensors.night_vision_range > 0, "прибор не восстановился после засветки");
+});
+
+/** Заведённый и прогретый танк, идущий на передаче. */
+function movingTank() {
+  const { state, run } = startedEngine();
+  state.setShutters("4");
+  run(60);
+  state.setGearLever("3");
+  state.toggleOilPumpGearbox();
+  state.setFuelManualFeed(100);
+  state.setGasPedal(true);
+  run(30);
+
+  assert(state.sensors.speed_kmh > 1, `машина не поехала: ${state.sensors.speed_kmh} км/ч`);
+  return { state, run };
+}
+
+check("Сторона поворота определяется рычагами", () => {
+  const state = new TankState();
+
+  assert(turnDirection(state) === 0, "без рычагов машина должна идти прямо");
+
+  state.setLever("left", LEVER_FIRST);
+  assert(turnDirection(state) === -1, "левый рычаг не даёт поворот влево");
+
+  state.setLever("left", 0);
+  state.setLever("right", LEVER_FIRST);
+  assert(turnDirection(state) === 1, "правый рычаг не даёт поворот вправо");
+
+  // Оба рычага на себя — это торможение, а не поворот
+  state.setLever("left", LEVER_SECOND);
+  assert(turnDirection(state) === 0, "два рычага дали поворот вместо торможения");
+  assert(isBrakingWithLevers(state), "два рычага не считаются торможением");
+});
+
+check("Поворот меняет курс и срезает скорость", () => {
+  const { state, run } = movingTank();
+
+  const straightSpeed = state.sensors.speed_kmh;
+  const startHeading = state.sensors.heading_deg;
+
+  state.setLever("right", LEVER_FIRST);
+  run(5);
+
+  assert(state.sensors.heading_deg !== startHeading, "курс не изменился в повороте");
+  assert(state.sensors.yaw_rate_deg > 0, "поворот вправо должен давать положительную скорость");
+  assert(state.sensors.speed_kmh < straightSpeed, "поворот не срезал скорость");
+});
+
+check("Резкий поворот круче плавного", () => {
+  const yawAt = (position) => {
+    const { state, run } = movingTank();
+    state.setLever("left", position);
+    run(3);
+    return Math.abs(state.sensors.yaw_rate_deg);
+  };
+
+  assert(yawAt(LEVER_SECOND) > yawAt(LEVER_FIRST), "второе положение не круче первого");
+});
+
+check("Оба рычага останавливают машину", () => {
+  const { state, run } = movingTank();
+
+  state.setLever("left", LEVER_SECOND);
+  state.setLever("right", LEVER_SECOND);
+  run(10);
+
+  assert(state.sensors.speed_kmh < 1, `машина не остановилась: ${state.sensors.speed_kmh} км/ч`);
+});
+
+check("Стоящая машина рычагами не разворачивается", () => {
+  const state = new TankState();
+  state.setLever("right", LEVER_SECOND);
+  state.tick(1 / 60);
+
+  assert(state.sensors.yaw_rate_deg === 0, "стоящая машина развернулась");
+});
+
+check("Гирополукомпас показывает курс со своей ошибкой", () => {
+  const state = new TankState();
+  state.toggleBattery();
+  state.toggleGpk();
+  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
+
+  run(SPIN_UP_SEC + 2);
+  assert(state.sensors.is_gyro_ready, "гироскоп не раскрутился");
+
+  const before = state.sensors.gyro_heading_deg;
+  run(120);
+  assert(
+    state.sensors.gyro_heading_deg !== before,
+    "показания прибора не уходят со временем",
+  );
+  assert(state.sensors.heading_deg === 0, "истинный курс изменился у стоящей машины");
 });
 
 for (const { name, fn } of checks) {

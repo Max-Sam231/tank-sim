@@ -37,6 +37,10 @@ const CONTROL_ACTIONS = {
   // Прибор ночного видения механика-водителя
   "night-vision": { call: "cycleNightVision" },
 
+  // Рычаги управления поворотом
+  "left-lever": { call: "cycleLeftLever" },
+  "right-lever": { call: "cycleRightLever" },
+
   "instrument-panel": {
     run: ({ state, ui }) => {
       ui.showInstrumentPanel();
