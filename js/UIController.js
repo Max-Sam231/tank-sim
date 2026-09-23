@@ -1,4 +1,5 @@
 import { CONTROL_OVERLAY_DEFS } from "./ControlOverlayDefs.js";
+import { ActionModals } from "./ui/ActionModals.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
@@ -46,9 +47,13 @@ class UIController {
       "gauge-rpm": "об/мин",
     };
 
-    this._handleDocumentPointerDown = null;
-
     this._ensureManometerTooltip();
+
+    this._actionModals = new ActionModals({
+      state: this.state,
+      onAction: (action) => this._notifyAction(action),
+    });
+
     this._wireEvents();
 
     this._ensureCabinControlOverlays();
@@ -745,10 +750,10 @@ class UIController {
           this.state.toggleLeftTank();
           break;
         case "bcn":
-          this._showBcnModal();
+          this._actionModals.open("bcn");
           break;
         case "shutters":
-          this._showShuttersModal();
+          this._actionModals.open("shutters");
           break;
         case "right-tank":
           this.state.toggleRightTank();
@@ -757,10 +762,10 @@ class UIController {
           this.state.pumpFuelPrimerLever();
           break;
         case "fuel-manual-feed":
-          this._showFuelFeedModal();
+          this._actionModals.open("fuelFeed");
           break;
         case "gear-lever":
-          this._showGearModal();
+          this._actionModals.open("gear");
           break;
         case "air-bleed-valve":
           this.state.toggleAirBleedValve();
@@ -1056,147 +1061,6 @@ class UIController {
         this.state._emit();
       });
     }
-
-    // BCN Modal events
-    this._bcnModalEl = document.getElementById("bcnModal");
-    this._bcnModalImageEl = document.getElementById("bcnModalImage");
-
-    const bcnCloseBtn = document.getElementById("bcnModalClose");
-    if (bcnCloseBtn) {
-      bcnCloseBtn.addEventListener("click", () => this._hideBcnModal());
-    }
-
-    if (this._bcnModalEl) {
-      this._bcnModalEl.addEventListener("click", (event) => {
-        const btn = event.target.closest(".bcn-modal-btn");
-        if (btn) {
-          const mode = btn.dataset.bcnMode;
-          if (mode) {
-            this.state.setBcnMode(mode);
-            this._updateBcnModalButtons(mode);
-            this._updateBcnModalImage(mode);
-            this._notifyAction("bcn");
-          }
-        }
-      });
-    }
-
-    // Shutters Modal events
-    this._shuttersModalEl = document.getElementById("shuttersModal");
-    this._shuttersModalImageEl = document.getElementById("shuttersModalImage");
-
-    const shuttersCloseBtn = document.getElementById("shuttersModalClose");
-    if (shuttersCloseBtn) {
-      shuttersCloseBtn.addEventListener("click", () => this._hideShuttersModal());
-    }
-
-    if (this._shuttersModalEl) {
-      this._shuttersModalEl.addEventListener("click", (event) => {
-        const btn = event.target.closest(".bcn-modal-btn");
-        if (btn) {
-          const position = btn.dataset.shuttersPosition;
-          if (position !== undefined) {
-            this.state.setShutters(position);
-            this._updateShuttersModalButtons(position);
-            this._updateShuttersModalImage(position);
-            this._notifyAction("shutters");
-          }
-        }
-      });
-    }
-
-    // Gear Modal events
-    this._gearModalEl = document.getElementById("gearModal");
-    this._gearModalImageEl = document.getElementById("gearModalImage");
-
-    const gearCloseBtn = document.getElementById("gearModalClose");
-    if (gearCloseBtn) {
-      gearCloseBtn.addEventListener("click", () => this._hideGearModal());
-    }
-
-    if (this._gearModalEl) {
-      this._gearModalEl.addEventListener("click", (event) => {
-        const btn = event.target.closest(".bcn-modal-btn");
-        if (btn) {
-          const gear = btn.dataset.gearMode;
-          if (gear) {
-            this.state.setGearLever(gear);
-            this._updateGearModalButtons(gear);
-            this._updateGearModalImage(gear);
-            this._notifyAction("gear-lever");
-          }
-        }
-      });
-    }
-
-    // Fuel Feed Modal events
-    this._fuelFeedModalEl = document.getElementById("fuelFeedModal");
-    this._fuelFeedPercentageEl = document.getElementById("fuelFeedPercentage");
-    this._fuelFeedSliderTrackEl = document.getElementById("fuelFeedSliderTrack");
-    this._fuelFeedSliderFillEl = document.getElementById("fuelFeedSliderFill");
-    this._fuelFeedSliderThumbEl = document.getElementById("fuelFeedSliderThumb");
-    this._fuelFeedModalImageEl = document.getElementById("fuelFeedModalImage");
-
-    const fuelFeedCloseBtn = document.getElementById("fuelFeedModalClose");
-    if (fuelFeedCloseBtn) {
-      fuelFeedCloseBtn.addEventListener("click", () => this._hideFuelFeedModal());
-    }
-
-    // Fuel feed slider drag handling
-    this._fuelFeedDragging = false;
-    if (this._fuelFeedSliderTrackEl) {
-      const updateFuelFeedFromPosition = (clientY) => {
-        const rect = this._fuelFeedSliderTrackEl.getBoundingClientRect();
-        const relativeY = rect.bottom - clientY;
-        const percentage = Math.max(0, Math.min(100, Math.round((relativeY / rect.height) * 100)));
-        this.state.setFuelManualFeed(percentage);
-        this._updateFuelFeedModalUI(percentage);
-        this._notifyAction("fuel-manual-feed");
-      };
-
-      this._fuelFeedSliderTrackEl.addEventListener("pointerdown", (event) => {
-        this._fuelFeedDragging = true;
-        this._fuelFeedSliderTrackEl.setPointerCapture(event.pointerId);
-        updateFuelFeedFromPosition(event.clientY);
-      });
-
-      this._fuelFeedSliderTrackEl.addEventListener("pointermove", (event) => {
-        if (!this._fuelFeedDragging) return;
-        event.preventDefault();
-        updateFuelFeedFromPosition(event.clientY);
-      });
-
-      this._fuelFeedSliderTrackEl.addEventListener("pointerup", (event) => {
-        if (this._fuelFeedDragging) {
-          this._fuelFeedDragging = false;
-          this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
-        }
-      });
-
-      this._fuelFeedSliderTrackEl.addEventListener("pointercancel", (event) => {
-        this._fuelFeedDragging = false;
-        this._fuelFeedSliderTrackEl.releasePointerCapture(event.pointerId);
-      });
-    }
-
-    this._handleDocumentPointerDown = (event) => {
-      const openModals = [this._bcnModalEl, this._shuttersModalEl, this._gearModalEl, this._fuelFeedModalEl].filter(
-        Boolean,
-      );
-      const isAnyOpen = openModals.some((el) => !el.classList.contains("hidden"));
-      if (!isAnyOpen) return;
-
-      const target = event.target;
-      const insideContent =
-        target && typeof target.closest === "function" && target.closest(".bcn-modal-content");
-      if (insideContent) return;
-
-      this._hideAllActionModals();
-      event.preventDefault();
-      event.stopPropagation();
-      if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
-    };
-    document.addEventListener("pointerdown", this._handleDocumentPointerDown, true);
   }
 
   _render(snapshot) {
@@ -1239,6 +1103,8 @@ class UIController {
         driverSection.classList.remove("cabin-lights-on");
       }
     }
+
+    if (!this.consoleEl) return;
 
     if (!this.isDebug) {
       const safeFixed = (value, digits) => {
@@ -1484,175 +1350,6 @@ class UIController {
       // Re-sync hitbox visibility for instrument panel gauge hitboxes
       this._syncHitboxVisibility();
     }
-  }
-
-  _showBcnModal() {
-    if (!this._bcnModalEl) return;
-    this._bcnModalEl.classList.remove("hidden");
-    const snapshot = this.state.getSnapshot();
-    this._updateBcnModalButtons(snapshot.bcn);
-    this._updateBcnModalImage(snapshot.bcn);
-  }
-
-  _hideBcnModal() {
-    if (!this._bcnModalEl) return;
-    this._bcnModalEl.classList.add("hidden");
-  }
-
-  _updateBcnModalButtons(currentMode) {
-    if (!this._bcnModalEl) return;
-    const buttons = this._bcnModalEl.querySelectorAll(".bcn-modal-btn");
-    buttons.forEach((btn) => {
-      const mode = btn.dataset.bcnMode;
-      btn.classList.toggle("is-active", mode === currentMode);
-    });
-  }
-
-  _updateBcnModalImage(mode) {
-    if (!this._bcnModalImageEl) return;
-    const labels = {
-      off: "./img/8/кран-выкл.png",
-      on: "./img/8/кран-вкл.png",
-      pump: "./img/8/кран-откач.png",
-    };
-    this._bcnModalImageEl.innerHTML = `<img src="${labels[mode] || ""}" alt="БЦН" />`;
-  }
-
-  _hideAllActionModals() {
-    this._hideBcnModal();
-    this._hideShuttersModal();
-    this._hideGearModal();
-    this._hideFuelFeedModal();
-  }
-
-  _showShuttersModal() {
-    if (!this._shuttersModalEl) return;
-    this._shuttersModalEl.classList.remove("hidden");
-    const snapshot = this.state.getSnapshot();
-    const position = String(snapshot.shutters);
-    this._updateShuttersModalButtons(position);
-    this._updateShuttersModalImage(position);
-  }
-
-  _hideShuttersModal() {
-    if (!this._shuttersModalEl) return;
-    this._shuttersModalEl.classList.add("hidden");
-  }
-
-  _updateShuttersModalButtons(position) {
-    if (!this._shuttersModalEl) return;
-    const buttons = this._shuttersModalEl.querySelectorAll(".bcn-modal-btn");
-    buttons.forEach((btn) => {
-      const btnPosition = btn.dataset.shuttersPosition;
-      btn.classList.toggle("is-active", btnPosition === position);
-    });
-  }
-
-  _updateShuttersModalImage(position) {
-    if (!this._shuttersModalImageEl) return;
-    const labels = {
-      0: "ЗАКРЫТО",
-      1: "ПОЛУЗАКРЫТО",
-      2: "ПОСЕРЕДИНЕ",
-      3: "ПОЛУОТКРЫТО",
-      4: "ОТКРЫТО",
-    };
-    const imagePath = "./img/2/жалюзи.png";
-    const topPercent =
-      {
-        0: 72,
-        1: 60,
-        2: 48,
-        3: 36,
-        4: 24,
-      }[String(position)] || 50;
-    this._shuttersModalImageEl.innerHTML = `
-      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-        <img src="${imagePath}" alt="Жалюзи" style="width: 100%; height: 100%; object-fit: contain;" />
-        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 14px);; width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
-        <div style="position: absolute; top: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ОТКРЫТО</div>
-        <div style="position: absolute; bottom: 12px; right: 12px; color: rgba(255,255,255,0.9); font-size: 13px;">ЗАКРЫТО</div>
-      </div>
-      <div style="position: absolute; left: -9999px;">${labels[position] || "—"}</div>
-    `;
-  }
-
-  _showGearModal() {
-    if (!this._gearModalEl) return;
-    this._gearModalEl.classList.remove("hidden");
-    const snapshot = this.state.getSnapshot();
-    this._updateGearModalButtons(snapshot.gearLever);
-    this._updateGearModalImage(snapshot.gearLever);
-  }
-
-  _hideGearModal() {
-    if (!this._gearModalEl) return;
-    this._gearModalEl.classList.add("hidden");
-  }
-
-  _updateGearModalButtons(currentGear) {
-    if (!this._gearModalEl) return;
-    const buttons = this._gearModalEl.querySelectorAll(".bcn-modal-btn");
-    buttons.forEach((btn) => {
-      const gear = btn.dataset.gearMode;
-      btn.classList.toggle("is-active", gear === currentGear);
-    });
-  }
-
-  _updateGearModalImage(gear) {
-    if (!this._gearModalImageEl) return;
-    const labels = {
-      neutral: "НЕЙТРАЛЬ",
-      1: "1-Я ПЕРЕДАЧА",
-      2: "2-Я ПЕРЕДАЧА",
-      3: "3-Я ПЕРЕДАЧА",
-      4: "4-Я ПЕРЕДАЧА",
-      5: "5-Я ПЕРЕДАЧА",
-      6: "6-Я ПЕРЕДАЧА",
-      7: "7-Я ПЕРЕДАЧА",
-      R: "ЗАДНЯЯ (3X)",
-    };
-    const imagePath = "./img/1/привод.png";
-    const topPercent =
-      {
-        neutral: 73,
-        1: 62,
-        2: 51,
-        3: 41,
-        4: 31,
-        5: 22,
-        6: 15,
-        7: 7,
-        R: 85,
-      }[String(gear)] || 50;
-    const labelText = labels[gear] || "—";
-    this._gearModalImageEl.innerHTML = `
-      <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-        <img src="${imagePath}" alt="Привод" style="width: 100%; height: 100%; object-fit: contain;" />
-        <div style="position: absolute; top: ${topPercent}%; left: calc(50% - 8px); width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 100, 100, 0.95); box-shadow: 0 0 8px rgba(255, 100, 100, 0.65); transform: translateY(-50%);"></div>
-      </div>
-    `;
-  }
-
-  // Fuel Feed Modal methods
-  _showFuelFeedModal() {
-    if (!this._fuelFeedModalEl) return;
-    this._fuelFeedModalEl.classList.remove("hidden");
-    const snapshot = this.state.getSnapshot();
-    this._updateFuelFeedModalUI(snapshot.fuelManualFeed);
-  }
-
-  _hideFuelFeedModal() {
-    if (!this._fuelFeedModalEl) return;
-    this._fuelFeedModalEl.classList.add("hidden");
-  }
-
-  _updateFuelFeedModalUI(percentage) {
-    if (!this._fuelFeedPercentageEl || !this._fuelFeedSliderFillEl || !this._fuelFeedSliderThumbEl) return;
-    this._fuelFeedPercentageEl.textContent = `${percentage}%`;
-    this._fuelFeedSliderFillEl.style.height = `${percentage}%`;
-    // Thumb height is 16px, keep it within track bounds
-    this._fuelFeedSliderThumbEl.style.bottom = `calc(${percentage}% - ${percentage * 0.16}px)`;
   }
 }
 
