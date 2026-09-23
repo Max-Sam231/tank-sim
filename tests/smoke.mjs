@@ -4,7 +4,7 @@
  *
  * Запуск: npm run smoke
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 import { JSDOM } from "jsdom";
@@ -79,6 +79,23 @@ const { OverlayRenderer } = await import("../js/ui/OverlayRenderer.js");
 const { GaugeArrows } = await import("../js/ui/GaugeArrows.js");
 const { getControlOverlayFrame } = await import("../js/ui/controlOverlayFrame.js");
 const { CONTROL_OVERLAY_DEFS } = await import("../js/ControlOverlayDefs.js");
+const { SOUND_DEFS } = await import("../js/audio/soundDefs.js");
+const { STATE_SOUNDS, WATCHED_KEYS, INITIAL_SOUND_STATE, playStateSounds } = await import(
+  "../js/audio/stateSounds.js"
+);
+const { throttleOf } = await import("../js/audio/engineSound.js");
+
+/** Подставной проигрыватель: записывает, что и когда просили сыграть. */
+function makeAudioSpy() {
+  const played = [];
+  const stopped = [];
+  return {
+    played,
+    stopped,
+    play: (name) => played.push(name),
+    stop: (name) => stopped.push(name),
+  };
+}
 
 /** Минимальное приложение: то, чего достаточно сценам ангара. */
 function makeApp(state) {
@@ -589,6 +606,113 @@ check("Кадр спрайта выбирается по виду органа �
 
   assert(getControlOverlayFrame(null, {}) === null, "описание отсутствует — должен быть null");
   assert(getControlOverlayFrame({ kind: "gauge" }, {}) === null, "у прибора нет кадра спрайта");
+});
+
+check("Все звуки из таблиц существуют и описаны", () => {
+  for (const [name, def] of Object.entries(SOUND_DEFS)) {
+    assert(def.file, `у звука ${name} не задан файл`);
+    assert(
+      existsSync(resolve(ROOT, "sounds", def.file)),
+      `файл звука ${name} отсутствует: sounds/${def.file}`,
+    );
+  }
+
+  for (const rule of STATE_SOUNDS) {
+    for (const field of ["change", "enter", "exit", "stopOnExit"]) {
+      const sound = rule[field];
+      if (!sound) continue;
+      assert(SOUND_DEFS[sound], `правило ${rule.key}.${field} ссылается на неизвестный звук ${sound}`);
+    }
+  }
+});
+
+check("Наблюдаемые поля звука есть в снимке состояния", () => {
+  const snapshot = new TankState().getSnapshot();
+  const missing = WATCHED_KEYS.filter((key) => !(key in snapshot));
+  assert(missing.length === 0, `звук следит за несуществующими полями: ${missing.join(", ")}`);
+
+  for (const key of Object.keys(INITIAL_SOUND_STATE)) {
+    assert(WATCHED_KEYS.includes(key), `в исходном состоянии лишнее поле ${key}`);
+  }
+});
+
+check("Щелчки и тумблеры звучат на изменение", () => {
+  const audio = makeAudioSpy();
+  const before = { ...INITIAL_SOUND_STATE };
+
+  playStateSounds(audio, { ...before, isBatteryOn: true }, before);
+  assert(audio.played.includes("click"), "масса не щёлкнула");
+
+  audio.played.length = 0;
+  playStateSounds(audio, { ...before, gpk: true }, before);
+  assert(audio.played.includes("switch"), "тумблер ГПК не щёлкнул");
+
+  audio.played.length = 0;
+  playStateSounds(audio, before, before);
+  assert(audio.played.length === 0, "звук сыграл без изменения состояния");
+});
+
+check("Баллоны звучат открытием и закрытием", () => {
+  const audio = makeAudioSpy();
+  const closed = { ...INITIAL_SOUND_STATE };
+  const open = { ...closed, leftTank: true };
+
+  playStateSounds(audio, open, closed);
+  assert(audio.played.includes("valveOpen"), "открытие баллона не озвучено");
+
+  audio.played.length = 0;
+  playStateSounds(audio, closed, open);
+  assert(audio.played.includes("valveClose"), "закрытие баллона не озвучено");
+});
+
+check("Шипение воздуха только при давлении в открытом баллоне", () => {
+  const closed = { ...INITIAL_SOUND_STATE };
+
+  const noPressure = makeAudioSpy();
+  playStateSounds(noPressure, { ...closed, airBleedValve: true, leftTank: true }, closed);
+  assert(noPressure.played.includes("valveOpen"), "кран не озвучен");
+  assert(!noPressure.played.includes("airHiss"), "шипение без давления");
+
+  const noTank = makeAudioSpy();
+  playStateSounds(noTank, { ...closed, airBleedValve: true, air_start_pressure: 90 }, closed);
+  assert(!noTank.played.includes("airHiss"), "шипение при закрытых баллонах");
+
+  const hissing = makeAudioSpy();
+  const open = { ...closed, airBleedValve: true, leftTank: true, air_start_pressure: 90 };
+  playStateSounds(hissing, open, closed);
+  assert(hissing.played.includes("airHiss"), "шипение не пошло при давлении в открытом баллоне");
+
+  const closing = makeAudioSpy();
+  playStateSounds(closing, { ...open, airBleedValve: false }, open);
+  assert(closing.played.includes("valveClose"), "закрытие крана не озвучено");
+  assert(closing.stopped.includes("airHiss"), "шипение не остановлено");
+});
+
+check("БЦН гудит только в режиме откачки", () => {
+  const off = { ...INITIAL_SOUND_STATE };
+
+  const toPump = makeAudioSpy();
+  playStateSounds(toPump, { ...off, bcn: "pump" }, off);
+  assert(toPump.played.includes("fuel_pump"), "насос не загудел");
+
+  // Переход off → on не режим откачки, гудеть не должен
+  const toOn = makeAudioSpy();
+  playStateSounds(toOn, { ...off, bcn: "on" }, off);
+  assert(!toOn.played.includes("fuel_pump"), "насос загудел не в том режиме");
+
+  const fromPump = makeAudioSpy();
+  playStateSounds(fromPump, { ...off, bcn: "on" }, { ...off, bcn: "pump" });
+  assert(fromPump.stopped.includes("fuel_pump"), "насос не замолк");
+});
+
+check("Подача топлива складывается из педали и ручного рычага", () => {
+  assert(throttleOf({ engineRunning: false, gasPedal: true, fuelManualFeed: 100 }) === 0,
+    "на заглушенном двигателе подачи быть не должно");
+  assert(throttleOf({ engineRunning: true, gasPedal: false, fuelManualFeed: 0 }) === 0, "нулевая подача");
+  assert(throttleOf({ engineRunning: true, gasPedal: true, fuelManualFeed: 0 }) === 0.7, "только педаль");
+  assert(throttleOf({ engineRunning: true, gasPedal: false, fuelManualFeed: 100 }) === 0.5, "только рычаг");
+  assert(throttleOf({ engineRunning: true, gasPedal: true, fuelManualFeed: 100 }) === 1.0,
+    "суммарная подача должна ограничиваться единицей");
 });
 
 for (const { name, fn } of checks) {
