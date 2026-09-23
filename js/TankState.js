@@ -1,4 +1,5 @@
 import { updatePhysics } from "./physics/index.js";
+import { stopEngine as shutDownEngine, isReadyToStop } from "./physics/engineShutdown.js";
 
 const EMIT_INTERVAL_SEC = 0.25;
 
@@ -78,6 +79,7 @@ class TankState {
       heading_deg: 0.0,
       gyro_spin_up: 0.0,
       is_gyro_ready: false,
+      cooldown_progress: 0.0,
     };
 
     this.lamps = {
@@ -97,6 +99,8 @@ class TankState {
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
     this._gyroSpinUpTime = 0;
+    this._idleCooldownTime = 0;
+    this.violations = [];
     this._timeSinceLastEmit = 0;
 
     this._brakeHoldTime = 0;
@@ -187,6 +191,7 @@ class TankState {
     this.sensors.heading_deg = 0.0;
     this.sensors.gyro_spin_up = 0.0;
     this.sensors.is_gyro_ready = false;
+    this.sensors.cooldown_progress = 0.0;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -203,6 +208,8 @@ class TankState {
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
     this._gyroSpinUpTime = 0;
+    this._idleCooldownTime = 0;
+    this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
     this._brakeHoldTriggered = false;
@@ -294,6 +301,7 @@ class TankState {
 
       sensors: { ...this.sensors },
       lamps: { ...this.lamps },
+      violations: [...this.violations],
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -465,6 +473,34 @@ class TankState {
       this._timeSinceLastEmit = 0;
       this._emit();
     }
+  }
+
+  /**
+   * Записывает нарушение для разбора занятия.
+   * Повторы не копятся: одно и то же нарушение отмечается один раз.
+   */
+  recordViolation(text) {
+    if (!text || this.violations.includes(text)) return false;
+    this.violations.push(text);
+    return true;
+  }
+
+  /** Можно ли сейчас штатно заглушить двигатель. */
+  canStopEngine() {
+    return isReadyToStop(this);
+  }
+
+  /**
+   * Останавливает двигатель механизмом остановки.
+   * Остановка без охлаждения на холостом ходу засчитывается как нарушение.
+   */
+  stopEngine() {
+    const { stopped, violation } = shutDownEngine(this);
+    if (!stopped) return false;
+
+    this.recordViolation(violation);
+    this._emit();
+    return true;
   }
 
   toggleBattery() {

@@ -22,6 +22,9 @@ const CONTROL_ACTIONS = {
   "air-bleed-valve": { call: "toggleAirBleedValve" },
   "cabin-light": { call: "toggleCabinLight" },
 
+  // Механизм остановки двигателя: глушить снятием массы нельзя
+  "engine-stop": { run: ({ state }) => state.stopEngine() },
+
   "instrument-panel": {
     run: ({ state, ui }) => {
       ui.showInstrumentPanel();

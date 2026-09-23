@@ -83,6 +83,11 @@ function updateEngineState(state, ctx) {
   const fuelOk = ctx.fuelPressure >= MIN_FUEL_PRESSURE;
   const starved = !fuelOk || !ctx.isMassOn;
   if (state._engineRunning && starved && state.sensors.engine_rpm <= STALL_RPM) {
+    // Глушить двигатель снятием массы нельзя: для этого есть механизм остановки
+    if (!ctx.isMassOn) {
+      state.recordViolation?.("Двигатель заглушен снятием массы вместо механизма остановки");
+    }
+
     state._engineRunning = false;
     state._engineRunTime = 0;
     state._oilPrimed = false;

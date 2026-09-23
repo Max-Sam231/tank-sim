@@ -1102,6 +1102,111 @@ check("Насос прокачки даёт давление в КП до пус
   assert(state.sensors.oil_pressure_gearbox < 0.1, "давление не упало после выключения насоса");
 });
 
+/** Заводит двигатель стартером и возвращает прогретое состояние. */
+function startedEngine() {
+  const state = new TankState();
+  state.setScenario({ startMethod: "electric-start", ambientTempC: 20, fuelType: "diesel" });
+  state.setGearLever("neutral");
+  state.toggleLeftTank();
+  state.toggleRightTank();
+  state.setBcnMode("on");
+  state.toggleBattery();
+  state.toggleAirBleedValve();
+  for (let i = 0; i < 4; i += 1) state.pumpFuelPrimerLever();
+
+  const run = (seconds) => {
+    for (let i = 0; i < seconds * 60; i += 1) state.tick(1 / 60);
+  };
+
+  state.toggleAirBleedValve();
+  state.toggleMznEngine();
+  run(12);
+  state.toggleMznEngine();
+  state.setFuelManualFeed(30);
+  state.setStarterPressed(true);
+  run(6);
+  state.setStarterPressed(false);
+  run(10);
+
+  assert(state.getSnapshot().engineRunning, "двигатель не запустился в подготовке теста");
+  return { state, run };
+}
+
+check("Двигатель не глушится сразу после нагрузки", () => {
+  const { state, run } = startedEngine();
+
+  state.setFuelManualFeed(90);
+  run(40);
+  assert(!state.canStopEngine(), "прогретый двигатель разрешено глушить без охлаждения");
+
+  state.setFuelManualFeed(0);
+  run(10);
+  assert(!state.canStopEngine(), "охлаждение засчитано слишком рано");
+
+  assert(state.stopEngine(), "двигатель не остановился");
+  assert(!state.getSnapshot().engineRunning, "двигатель продолжил работать");
+  assert(
+    state.violations.some((v) => v.includes("охлаждения")),
+    `нарушение не записано: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("После выдержки на холостом ходу остановка штатная", () => {
+  const { state, run } = startedEngine();
+
+  state.setFuelManualFeed(90);
+  run(30);
+  state.setFuelManualFeed(0);
+  run(150);
+
+  assert(state.canStopEngine(), "выдержка на холостом ходу не засчитана");
+  assert(state.stopEngine(), "двигатель не остановился");
+  assert(state.violations.length === 0, `записаны лишние нарушения: ${state.violations}`);
+});
+
+check("Газ в середине выдержки сбрасывает отсчёт охлаждения", () => {
+  const { state, run } = startedEngine();
+
+  state.setFuelManualFeed(90);
+  run(30);
+  state.setFuelManualFeed(0);
+  run(100);
+
+  const before = state.sensors.cooldown_progress;
+  assert(before > 0.5, `отсчёт не набрался: ${before}`);
+
+  state.setGasPedal(true);
+  run(2);
+  state.setGasPedal(false);
+
+  assert(state.sensors.cooldown_progress < before, "отсчёт охлаждения не сбросился после газа");
+});
+
+check("Остановка снятием массы засчитывается нарушением", () => {
+  const { state, run } = startedEngine();
+
+  state.toggleBattery();
+  run(5);
+
+  assert(!state.getSnapshot().engineRunning, "двигатель не заглох после снятия массы");
+  assert(
+    state.violations.some((v) => v.includes("снятием массы")),
+    `нарушение не записано: ${JSON.stringify(state.violations)}`,
+  );
+});
+
+check("Нарушения не дублируются и попадают в снимок", () => {
+  const state = new TankState();
+
+  assert(state.recordViolation("перегрев"), "нарушение не записалось");
+  assert(!state.recordViolation("перегрев"), "нарушение записалось повторно");
+  assert(state.violations.length === 1, `нарушений в списке: ${state.violations.length}`);
+  assert(state.getSnapshot().violations.includes("перегрев"), "нарушения не видны в снимке");
+
+  state.reset();
+  assert(state.violations.length === 0, "нарушения пережили сброс состояния");
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();

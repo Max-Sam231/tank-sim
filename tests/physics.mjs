@@ -42,6 +42,7 @@ const TRACKED_SENSORS = [
   "fuel_level_external",
   "heading_deg",
   "gyro_spin_up",
+  "cooldown_progress",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -264,6 +265,17 @@ const SCENARIOS = {
     },
     at: {
       25: (state) => state.toggleOilPumpGearbox(),
+    },
+  },
+
+  "штатная остановка после охлаждения на холостом ходу": {
+    durationSec: 260,
+    setup: (state) => prime(state, "electric-start"),
+    at: {
+      ...ELECTRIC_START_STEPS,
+      40: (state) => state.setFuelManualFeed(90),
+      80: (state) => state.setFuelManualFeed(0),
+      230: (state) => state.stopEngine(),
     },
   },
 
