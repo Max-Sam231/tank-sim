@@ -84,6 +84,8 @@ const { STATE_SOUNDS, WATCHED_KEYS, INITIAL_SOUND_STATE, playStateSounds } = awa
   "../js/audio/stateSounds.js"
 );
 const { throttleOf } = await import("../js/audio/engineSound.js");
+const { StartMenu } = await import("../js/StartMenu.js");
+const { MENU_SCREENS } = await import("../js/menu/menuScreens.js");
 
 /** Подставной проигрыватель: записывает, что и когда просили сыграть. */
 function makeAudioSpy() {
@@ -713,6 +715,117 @@ check("Подача топлива складывается из педали и
   assert(throttleOf({ engineRunning: true, gasPedal: false, fuelManualFeed: 100 }) === 0.5, "только рычаг");
   assert(throttleOf({ engineRunning: true, gasPedal: true, fuelManualFeed: 100 }) === 1.0,
     "суммарная подача должна ограничиваться единицей");
+});
+
+/** Строит меню на чистом контейнере и собирает вызовы колбэков. */
+function buildMenu() {
+  const window = freshDom();
+  const rootEl = window.document.createElement("div");
+  window.document.body.appendChild(rootEl);
+
+  const calls = { training: [], instruction: 0, familiarization: 0 };
+  const menu = new StartMenu({
+    rootEl,
+    onTrainingStart: (scenario) => calls.training.push(scenario),
+    onInstruction: () => (calls.instruction += 1),
+    onFamiliarization: () => (calls.familiarization += 1),
+  });
+
+  const click = (selector) => {
+    const el = rootEl.querySelector(selector);
+    assert(el, `не найден элемент ${selector}`);
+    el.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    return el;
+  };
+
+  return { menu, rootEl, calls, click, window };
+}
+
+check("Стартовое меню строит все экраны и открывается на главном", () => {
+  const { menu, rootEl } = buildMenu();
+
+  for (const screen of MENU_SCREENS) {
+    assert(
+      rootEl.querySelector(`[data-screen="${screen.name}"]`),
+      `экран ${screen.name} не построен`,
+    );
+  }
+
+  assert(menu.currentScreen === "main", `меню открылось на экране ${menu.currentScreen}`);
+  assert(
+    rootEl.querySelector('[data-screen="main"]').classList.contains("is-active"),
+    "главный экран не активен",
+  );
+});
+
+check("Кнопки меню переключают экраны и зовут обработчики", () => {
+  const { menu, calls, click } = buildMenu();
+
+  click('[data-action="training"]');
+  assert(menu.currentScreen === "training", "не открылся экран тренировки");
+
+  click('[data-action="back"]');
+  assert(menu.currentScreen === "main", "кнопка «Назад» не вернула в главное меню");
+
+  click('[data-action="instruction"]');
+  assert(menu.currentScreen === "instruction", "не открылся экран инструкции");
+  assert(calls.instruction === 1, "обработчик инструкции не вызван");
+
+  click('[data-action="authors"]');
+  assert(menu.currentScreen === "authors", "не открылся экран авторов");
+
+  click('[data-action="familiarization"]');
+  assert(calls.familiarization === 1, "обработчик ознакомления не вызван");
+  // Ознакомление не экран меню, а отдельный режим — меню остаётся где было
+  assert(menu.currentScreen === "authors", "ознакомление не должно менять экран меню");
+});
+
+check("Только один экран меню активен одновременно", () => {
+  const { rootEl, click } = buildMenu();
+
+  click('[data-action="training"]');
+  const active = rootEl.querySelectorAll(".start-screen.is-active");
+  assert(active.length === 1, `активных экранов: ${active.length}`);
+  assert(active[0].dataset.screen === "training", "активен не тот экран");
+});
+
+check("Условия тренировки собираются с экрана настройки", () => {
+  const { rootEl, calls, click } = buildMenu();
+
+  click('[data-action="training"]');
+  click("#scenarioApply");
+
+  assert(calls.training.length === 1, "тренировка не запущена");
+  const scenario = calls.training[0];
+  assert(scenario.startMethod, "не выбран способ пуска");
+  assert(Number.isFinite(scenario.ambientTemp), `температура не число: ${scenario.ambientTemp}`);
+  assert(scenario.fuelType, "не выбран вид топлива");
+
+  // Меняем выбор — он должен доехать до обработчика
+  const tempSelect = rootEl.querySelector("#scenarioAmbientTemp");
+  tempSelect.value = "-20";
+  click("#scenarioApply");
+  assert(calls.training[1].ambientTemp === -20, `температура не подхватилась: ${calls.training[1].ambientTemp}`);
+});
+
+check("Вкладки инструкции переключаются по одной", () => {
+  const { rootEl, click } = buildMenu();
+
+  click('[data-action="instruction"]');
+
+  const tabs = rootEl.querySelectorAll(".instruction-tab-btn");
+  assert(tabs.length > 1, "во вкладках инструкции нечего переключать");
+
+  const last = tabs[tabs.length - 1];
+  last.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+  const activeTabs = rootEl.querySelectorAll(".instruction-tab-btn.active");
+  assert(activeTabs.length === 1, `активных вкладок: ${activeTabs.length}`);
+  assert(activeTabs[0] === last, "активна не та вкладка");
+
+  const activePanes = rootEl.querySelectorAll(".instruction-tab-pane.active");
+  assert(activePanes.length === 1, `активных страниц: ${activePanes.length}`);
+  assert(activePanes[0].id === last.dataset.tab, "открыта страница другой вкладки");
 });
 
 for (const { name, fn } of checks) {
