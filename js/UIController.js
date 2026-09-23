@@ -5,6 +5,8 @@ import { renderHitboxLabels } from "./ui/hitboxLabels.js";
 import { parsePolygonPoints, polygonBBox } from "./ui/polygonGeometry.js";
 import { PEDAL_ACTIONS, runControlAction } from "./ui/controlActions.js";
 import { renderStatusConsole } from "./ui/statusConsole.js";
+import { OverlayRenderer } from "./ui/OverlayRenderer.js";
+import { GaugeArrows } from "./ui/GaugeArrows.js";
 
 class UIController {
   constructor({ rootEl, consoleEl, state, isDebug = true, actionNotifier = null }) {
@@ -15,17 +17,11 @@ class UIController {
 
     this.isDebug = Boolean(isDebug);
 
-    this._overlayLayerEl = this.rootEl.querySelector(".overlay-layer");
-    this._overlayEls = Array.from(this.rootEl.querySelectorAll(".overlay[data-action][data-when]"));
-    this._controlOverlayEls = new Map();
-    this._controlOverlayMeta = new Map();
-    this._gaugeArrowEls = new Map();
     this._svgEl = this.rootEl.querySelector("svg.hitbox-layer");
     this._lastClick = null;
     this._lastAction = null;
     this._touchHeldAction = null;
     this._hitboxVisible = this.isDebug;
-    this._labelGroup = null;
     this._controlOverlayDefs = CONTROL_OVERLAY_DEFS;
     this._isManometerHovered = false;
     this._hoveredGauge = null;
@@ -50,6 +46,12 @@ class UIController {
       "gauge-rpm": "об/мин",
     };
 
+    this._overlays = new OverlayRenderer({
+      rootEl: this.rootEl,
+      defs: this._controlOverlayDefs,
+      isDebug: this.isDebug,
+    });
+
     this._ensureTooltips();
 
     this._actionModals = new ActionModals({
@@ -59,8 +61,8 @@ class UIController {
 
     this._wireEvents();
 
-    this._ensureCabinControlOverlays();
-    this._ensureInstrumentPanelControlOverlays();
+    this._overlays.buildCabinOverlays();
+    this._overlays.buildInstrumentPanelOverlays();
     if (this.isDebug) renderHitboxLabels(this.rootEl);
     this._syncHitboxVisibility();
 
@@ -146,7 +148,7 @@ class UIController {
     // Dual gauges: voltammeter (amperage / voltage), fuel (internal / external)
     if (def.switchKey && def.secondarySensorKey) {
       const sw = snapshot[def.switchKey];
-      if (this._shouldUseSecondaryGauge(gaugeId, sw)) {
+      if (GaugeArrows.usesSecondaryScale(gaugeId, sw)) {
         value =
           Number(
             snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey],
@@ -195,401 +197,6 @@ class UIController {
   _hideGaugeTooltip() {
     this._hoveredGauge = null;
     this._gaugeTooltip.hide();
-  }
-
-  _ensureCabinControlOverlays() {
-    if (!this._overlayLayerEl || !this._svgEl) return;
-
-    // Ensure overlay-container exists for proportional scaling
-    let container = this._overlayLayerEl.querySelector(".overlay-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.className = "overlay-container";
-      this._overlayLayerEl.appendChild(container);
-    }
-    this._overlayContainerEl = container;
-
-    for (const [, el] of this._controlOverlayEls) el.remove();
-    this._controlOverlayEls.clear();
-    this._controlOverlayMeta.clear();
-
-    const vb = this._svgEl.viewBox.baseVal;
-    const vbW = vb?.width || 1920;
-    const vbH = vb?.height || 1080;
-
-    const cabinSvg = this.rootEl.querySelector("svg.cabin-hitbox-layer") || this._svgEl;
-    const hitboxes = Array.from(cabinSvg.querySelectorAll(".hitbox[data-action]"));
-
-    for (const hitbox of hitboxes) {
-      const action = hitbox.dataset.action;
-      if (!action) continue;
-      const def = this._controlOverlayDefs[action];
-      if (!def) continue;
-
-      const pointsAttr = hitbox.getAttribute("points") || "";
-      const points = parsePolygonPoints(pointsAttr);
-      if (points.length < 3) continue;
-
-      const bbox = polygonBBox(points);
-      if (!bbox) continue;
-
-      const bboxW = bbox.maxX - bbox.minX;
-      const bboxH = bbox.maxY - bbox.minY;
-      const cx = bbox.minX + bboxW / 2;
-      const cy = bbox.minY + bboxH / 2;
-      const inflate = Number.isFinite(def.inflate) ? def.inflate : 1.6;
-      const targetW = Math.max(1, bboxW * inflate);
-      const targetH = Math.max(1, bboxH * inflate);
-
-      const offsetX = Number.isFinite(def.offsetX) ? def.offsetX : 0;
-      const offsetY = Number.isFinite(def.offsetY) ? def.offsetY : 0;
-      const left = cx - targetW / 2 + offsetX;
-      const top = cy - targetH / 2 + offsetY;
-
-      const x = (left / vbW) * 100;
-      const y = (top / vbH) * 100;
-      const w = (targetW / vbW) * 100;
-      const h = (targetH / vbH) * 100;
-
-      const img = document.createElement("img");
-      img.className = "overlay overlay-control is-visible";
-      img.setAttribute("data-action", action);
-      img.setAttribute("alt", "");
-      img.setAttribute("draggable", "false");
-      img.style.setProperty("--x", String(x));
-      img.style.setProperty("--y", String(y));
-      img.style.setProperty("--w", String(w));
-      img.style.setProperty("--h", String(h));
-      img.style.setProperty("--rot", "0");
-      img.style.setProperty("--z", String(def.z ?? 50));
-
-      this._overlayContainerEl.appendChild(img);
-      this._controlOverlayEls.set(action, img);
-      this._controlOverlayMeta.set(action, {
-        vbW,
-        vbH,
-        cx,
-        cy,
-        bboxW,
-        bboxH,
-      });
-    }
-  }
-
-  _ensureInstrumentPanelControlOverlays() {
-    const panelStageEl = this.rootEl.querySelector(".instrument-panel-stage");
-    if (!panelStageEl) return;
-
-    const overlayLayerEl =
-      Array.from(panelStageEl.children).find((el) => el.classList?.contains("overlay-layer")) ||
-      null;
-    const panelSvg = panelStageEl.querySelector("svg.instrument-panel-hitbox-layer");
-    if (!overlayLayerEl || !panelSvg) return;
-
-    // Ensure overlay-container exists for proportional scaling
-    let panelContainer = overlayLayerEl.querySelector(".overlay-container");
-    if (!panelContainer) {
-      panelContainer = document.createElement("div");
-      panelContainer.className = "overlay-container";
-      overlayLayerEl.appendChild(panelContainer);
-    }
-
-    // Clean old overlays for the panel
-    for (const [action, el] of this._controlOverlayEls) {
-      if (el.closest(".instrument-panel-stage")) el.remove();
-    }
-
-    // Clean old gauge arrows
-    for (const [action, el] of this._gaugeArrowEls || []) {
-      el.remove();
-    }
-    this._gaugeArrowEls = new Map();
-
-    const vb = panelSvg.viewBox.baseVal;
-    const vbW = vb?.width || 1920;
-    const vbH = vb?.height || 1080;
-
-    const hitboxes = Array.from(panelSvg.querySelectorAll(".hitbox[data-action]"));
-    for (const hitbox of hitboxes) {
-      const action = hitbox.dataset.action;
-      if (!action) continue;
-      const def = this._controlOverlayDefs[action];
-      if (!def) continue;
-
-      if (def.kind === "gauge") continue;
-
-      const pointsAttr = hitbox.getAttribute("points") || "";
-      const points = parsePolygonPoints(pointsAttr);
-      if (points.length < 3) continue;
-
-      const bbox = polygonBBox(points);
-      if (!bbox) continue;
-
-      const bboxW = bbox.maxX - bbox.minX;
-      const bboxH = bbox.maxY - bbox.minY;
-      const cx = bbox.minX + bboxW / 2;
-      const cy = bbox.minY + bboxH / 2;
-      const inflate = Number.isFinite(def.inflate) ? def.inflate : 1.6;
-      const targetW = Math.max(1, bboxW * inflate);
-      const targetH = Math.max(1, bboxH * inflate);
-
-      const offsetX = Number.isFinite(def.offsetX) ? def.offsetX : 0;
-      const offsetY = Number.isFinite(def.offsetY) ? def.offsetY : 0;
-      const left = cx - targetW / 2 + offsetX;
-      const top = cy - targetH / 2 + offsetY;
-
-      const x = (left / vbW) * 100;
-      const y = (top / vbH) * 100;
-      const w = (targetW / vbW) * 100;
-      const h = (targetH / vbH) * 100;
-
-      const img = document.createElement("img");
-      img.className = "overlay overlay-control is-visible";
-      img.setAttribute("data-action", action);
-      img.setAttribute("alt", "");
-      img.setAttribute("draggable", "false");
-      img.style.setProperty("--x", String(x));
-      img.style.setProperty("--y", String(y));
-      img.style.setProperty("--w", String(w));
-      img.style.setProperty("--h", String(h));
-      img.style.setProperty("--rot", "0");
-      img.style.setProperty("--z", String(def.z ?? 50));
-
-      panelContainer.appendChild(img);
-      this._controlOverlayEls.set(action, img);
-      this._controlOverlayMeta.set(action, {
-        vbW,
-        vbH,
-        cx,
-        cy,
-        bboxW,
-        bboxH,
-      });
-    }
-
-    // Create gauge arrows from defs (they have no hitbox polygons)
-    for (const [action, def] of Object.entries(this._controlOverlayDefs)) {
-      if (def.kind !== "gauge") continue;
-      this._ensureGaugeArrow(action, def, panelContainer, vbW, vbH);
-    }
-  }
-
-  _ensureGaugeArrow(action, def, overlayLayerEl, vbW, vbH) {
-    if (!this._gaugeArrowEls) this._gaugeArrowEls = new Map();
-
-    const img = document.createElement("img");
-    img.className = "overlay gauge-arrow is-visible";
-    img.setAttribute("data-action", action);
-    img.setAttribute("alt", "");
-    img.setAttribute("draggable", "false");
-    img.src = def.arrowImage || "./img/12/14_0003_Фигура-1.png";
-
-    const aw = def.arrowW || 70;
-    const ah = def.arrowH || 70;
-
-    // Center the arrow image on (cx, cy)
-    const left = def.cx - aw / 2;
-    const top = def.cy - ah / 2;
-
-    const x = (left / vbW) * 100;
-    const y = (top / vbH) * 100;
-    const w = (aw / vbW) * 100;
-    const h = (ah / vbH) * 100;
-
-    img.style.setProperty("--x", String(x));
-    img.style.setProperty("--y", String(y));
-    img.style.setProperty("--w", String(w));
-    img.style.setProperty("--h", String(h));
-    img.style.setProperty("--rot", String(def.startAngle));
-    img.style.setProperty("--z", String(def.z ?? 75));
-    img.style.setProperty("--pivot-x", String(def.pivotX ?? 50) + "%");
-    img.style.setProperty("--pivot-y", String(def.pivotY ?? 100) + "%");
-
-    overlayLayerEl.appendChild(img);
-    this._gaugeArrowEls.set(action, img);
-
-    // Add pivot point indicator (yellow dot) for debugging
-    const pivotX = def.pivotX ?? 50;
-    const pivotY = def.pivotY ?? 100;
-    const pivotAbsX = left + (pivotX / 100) * aw;
-    const pivotAbsY = top + (pivotY / 100) * ah;
-
-    const pivotDot = document.createElement("div");
-    pivotDot.className = "pivot-indicator";
-    pivotDot.style.position = "absolute";
-    pivotDot.style.left = ((pivotAbsX / vbW) * 100) + "%";
-    pivotDot.style.top = ((pivotAbsY / vbH) * 100) + "%";
-    pivotDot.style.width = "8px";
-    pivotDot.style.height = "8px";
-    pivotDot.style.backgroundColor = "yellow";
-    pivotDot.style.borderRadius = "50%";
-    pivotDot.style.border = "1px solid black";
-    pivotDot.style.zIndex = "100";
-    pivotDot.style.transform = "translate(-50%, -50%)";
-    pivotDot.style.pointerEvents = "none";
-
-    overlayLayerEl.appendChild(pivotDot);
-  }
-
-  _updateGaugeArrows(snapshot) {
-    if (!this._gaugeArrowEls || this._gaugeArrowEls.size === 0) return;
-
-    for (const [action, img] of this._gaugeArrowEls) {
-      const def = this._controlOverlayDefs[action];
-      if (!def || def.kind !== "gauge") continue;
-
-      // Read sensor value from snapshot.sensors
-      let value = Number(snapshot.sensors?.[def.sensorKey] ?? snapshot[def.sensorKey]) || 0;
-      let min = def.min;
-      let max = def.max;
-
-      // Dual gauges: voltammeter (amperage / voltage), fuel (internal / external)
-      if (def.switchKey && def.secondarySensorKey) {
-        const sw = snapshot[def.switchKey];
-        if (this._shouldUseSecondaryGauge(action, sw)) {
-          value =
-            Number(
-              snapshot.sensors?.[def.secondarySensorKey] ?? snapshot[def.secondarySensorKey],
-            ) || 0;
-          min = def.secondaryMin;
-          max = def.secondaryMax;
-        }
-      }
-
-      // Normalize value → angle
-      // Support asymmetric scales (e.g., VA-540: 100-0-500 A with zero offset left)
-      let normalized;
-      if (typeof def.zeroOffset === "number") {
-        // Asymmetric scale: map negative and positive separately
-        if (value < 0) {
-          // Left of zero: map [min, 0] → [0, zeroOffset]
-          const leftRange = 0 - min; // e.g., 0 - (-100) = 100
-          normalized = def.zeroOffset * (1 - Math.abs(value) / leftRange);
-        } else {
-          // Right of zero: map [0, max] → [zeroOffset, 1]
-          const rightRange = max; // e.g., 500
-          normalized = def.zeroOffset + (1 - def.zeroOffset) * (value / rightRange);
-        }
-        normalized = Math.max(0, Math.min(1, normalized));
-      } else {
-        // Standard linear scale
-        normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
-      }
-
-      const angleRange = def.endAngle - def.startAngle;
-      const angle = def.startAngle + normalized * angleRange;
-
-      img.style.setProperty("--rot", String(angle));
-    }
-  }
-
-  _shouldUseSecondaryGauge(action, switchValue) {
-    if (action === "gauge-voltammeter") {
-      return Boolean(switchValue); // ammeterButton pressed → show voltage
-    }
-    if (action === "gauge-fuel") {
-      // leftRightTanks: 0 = right/external, 2 = left/internal
-      return switchValue === 0;
-    }
-    return false;
-  }
-
-  _getControlOverlayFrame(action, snapshot) {
-    const def = this._controlOverlayDefs[action];
-    if (!def) return null;
-
-    if (def.kind === "boolean") {
-      const value = Boolean(snapshot[def.stateKey]);
-      const src = value ? def.on : def.off;
-      if (!src) return null;
-      return {
-        src,
-        inflate: def.inflate,
-        offsetX: def.offsetX,
-        offsetY: def.offsetY,
-        z: def.z,
-      };
-    }
-
-    if (def.kind === "enum") {
-      const key = snapshot[def.stateKey];
-      const frame = def.frames?.[key] ?? def.frames?.neutral;
-      if (!frame) return null;
-
-      const src = typeof frame === "string" ? frame : frame.src;
-      if (!src) return null;
-
-      const inflate = Number.isFinite(frame.inflate) ? frame.inflate : def.inflate;
-      const offsetX = Number.isFinite(frame.offsetX) ? frame.offsetX : def.offsetX;
-      const offsetY = Number.isFinite(frame.offsetY) ? frame.offsetY : def.offsetY;
-      const z = Number.isFinite(frame.z) ? frame.z : def.z;
-
-      return { src, inflate, offsetX, offsetY, z };
-    }
-
-    if (def.kind === "range") {
-      const value = Number(snapshot[def.stateKey]);
-      if (!Array.isArray(def.frames) || def.frames.length === 0) return null;
-
-      let best = def.frames[0];
-      if (Number.isFinite(value)) {
-        let bestDist = Infinity;
-        for (const frame of def.frames) {
-          const d = Math.abs(value - frame.at);
-          if (d < bestDist) {
-            bestDist = d;
-            best = frame;
-          }
-        }
-      }
-
-      const src = typeof best === "string" ? best : best.src;
-      if (!src) return null;
-
-      const inflate = Number.isFinite(best.inflate) ? best.inflate : def.inflate;
-      const offsetX = Number.isFinite(best.offsetX) ? best.offsetX : def.offsetX;
-      const offsetY = Number.isFinite(best.offsetY) ? best.offsetY : def.offsetY;
-      const z = Number.isFinite(best.z) ? best.z : def.z;
-
-      return { src, inflate, offsetX, offsetY, z };
-    }
-
-    return null;
-  }
-
-  _getControlOverlaySrc(action, snapshot) {
-    const def = this._controlOverlayDefs[action];
-    if (!def) return null;
-
-    if (def.kind === "boolean") {
-      const value = Boolean(snapshot[def.stateKey]);
-      return value ? def.on : def.off;
-    }
-
-    if (def.kind === "enum") {
-      const key = snapshot[def.stateKey];
-      const frame = def.frames?.[key] ?? def.frames?.neutral;
-      if (!frame) return null;
-      return typeof frame === "string" ? frame : frame.src;
-    }
-
-    if (def.kind === "range") {
-      const value = Number(snapshot[def.stateKey]);
-      if (!Number.isFinite(value)) return def.frames[0]?.src || null;
-
-      let best = def.frames[0];
-      let bestDist = Infinity;
-      for (const frame of def.frames) {
-        const d = Math.abs(value - frame.at);
-        if (d < bestDist) {
-          bestDist = d;
-          best = frame;
-        }
-      }
-      return best?.src || null;
-    }
-
-    return null;
   }
 
   _wireEvents() {
@@ -714,7 +321,7 @@ class UIController {
 
       // Highlight corresponding overlay-control
       if (action) {
-        const overlayControl = this._controlOverlayEls.get(action);
+        const overlayControl = this._overlays.getElement(action);
         if (overlayControl) {
           overlayControl.classList.add("hitbox-hovered");
         }
@@ -741,7 +348,7 @@ class UIController {
 
       // Remove highlight from corresponding overlay-control
       if (action) {
-        const overlayControl = this._controlOverlayEls.get(action);
+        const overlayControl = this._overlays.getElement(action);
         if (overlayControl) {
           overlayControl.classList.remove("hitbox-hovered");
         }
@@ -786,8 +393,7 @@ class UIController {
   }
 
   _render(snapshot) {
-    this._renderOverlays(snapshot);
-    this._updateGaugeArrows(snapshot);
+    this._overlays.render(snapshot);
     this._renderManometerTooltip(snapshot);
     this._renderGaugeTooltip();
 
@@ -866,71 +472,6 @@ class UIController {
     };
 
     this._render(this.state.getSnapshot());
-  }
-
-  _renderOverlays(snapshot) {
-    // --- Для командира ---
-    const commanderSection = document.getElementById("scene-commander");
-
-    // Проверяем, активна ли сейчас сцена командира (она не скрыта)
-    if (commanderSection && !commanderSection.classList.contains("hidden")) {
-      if (snapshot.commanderView === "tilted") {
-        commanderSection.classList.add("commander-view-tilted");
-      } else {
-        commanderSection.classList.remove("commander-view-tilted");
-      }
-    }
-
-    const panelModal = document.getElementById("instrumentPanelModal");
-    if (panelModal) {
-      panelModal.classList.toggle("hidden", !snapshot.instrumentPanel);
-      this.rootEl.classList.toggle("instrument-panel-open", Boolean(snapshot.instrumentPanel));
-    }
-    for (const el of this._overlayEls) {
-      const action = el.dataset.action;
-      const when = el.dataset.when;
-
-      let shouldShow = false;
-
-      if (action === "battery-toggle") {
-        if (snapshot.isBatteryOn && when === "on") shouldShow = true;
-        if (!snapshot.isBatteryOn && when === "off") shouldShow = true;
-      }
-
-      el.classList.toggle("is-visible", shouldShow);
-    }
-
-    for (const [action, el] of this._controlOverlayEls) {
-      const frame = this._getControlOverlayFrame(action, snapshot);
-      if (!frame) continue;
-
-      if (el.getAttribute("src") !== frame.src) el.setAttribute("src", frame.src);
-      el.classList.add("is-visible");
-
-      const meta = this._controlOverlayMeta.get(action);
-      if (!meta) continue;
-
-      const inflate = Number.isFinite(frame.inflate) ? frame.inflate : 1.6;
-      const targetW = Math.max(1, meta.bboxW * inflate);
-      const targetH = Math.max(1, meta.bboxH * inflate);
-
-      const offsetX = Number.isFinite(frame.offsetX) ? frame.offsetX : 0;
-      const offsetY = Number.isFinite(frame.offsetY) ? frame.offsetY : 0;
-
-      const left = meta.cx - targetW / 2 + offsetX;
-      const top = meta.cy - targetH / 2 + offsetY;
-
-      const x = (left / meta.vbW) * 100;
-      const y = (top / meta.vbH) * 100;
-      const w = (targetW / meta.vbW) * 100;
-      const h = (targetH / meta.vbH) * 100;
-
-      el.style.setProperty("--x", String(x));
-      el.style.setProperty("--y", String(y));
-      el.style.setProperty("--w", String(w));
-      el.style.setProperty("--h", String(h));
-      if (Number.isFinite(frame.z)) el.style.setProperty("--z", String(frame.z));
-    }
   }
 
   _toggleHitboxVisibility() {

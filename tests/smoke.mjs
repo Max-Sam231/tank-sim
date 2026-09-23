@@ -75,6 +75,10 @@ const { HeaterController } = await import("../js/scenes/hangar/HeaterController.
 const { ZipBoxController } = await import("../js/scenes/hangar/ZipBoxController.js");
 const { CONTROL_ACTIONS, PEDAL_ACTIONS } = await import("../js/ui/controlActions.js");
 const { renderStatusConsole } = await import("../js/ui/statusConsole.js");
+const { OverlayRenderer } = await import("../js/ui/OverlayRenderer.js");
+const { GaugeArrows } = await import("../js/ui/GaugeArrows.js");
+const { getControlOverlayFrame } = await import("../js/ui/controlOverlayFrame.js");
+const { CONTROL_OVERLAY_DEFS } = await import("../js/ControlOverlayDefs.js");
 
 /** Минимальное приложение: то, чего достаточно сценам ангара. */
 function makeApp(state) {
@@ -458,6 +462,133 @@ check("Панель состояния рисует оба режима и пе�
 
   // Отсутствие контейнера — не повод падать
   renderStatusConsole(null, state.getSnapshot(), options);
+});
+
+/** Строит оверлеи на свежей разметке. */
+function buildOverlays(isDebug = false) {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+
+  const overlays = new OverlayRenderer({ rootEl, defs: CONTROL_OVERLAY_DEFS, isDebug });
+  overlays.buildCabinOverlays();
+  overlays.buildInstrumentPanelOverlays();
+
+  return { window, rootEl, overlays };
+}
+
+check("Спрайты органов управления создаются по хитбоксам", () => {
+  const { overlays } = buildOverlays();
+
+  assert(overlays.elements.size > 0, "не создано ни одного спрайта");
+  assert(
+    overlays.metrics.size === overlays.elements.size,
+    "геометрия посчитана не для всех спрайтов",
+  );
+
+  for (const [action, el] of overlays.elements) {
+    assert(el.dataset.action === action, `спрайт ${action} помечен чужим действием`);
+    assert(el.style.getPropertyValue("--w") !== "", `у спрайта ${action} не задана ширина`);
+  }
+});
+
+check("Спрайт меняет картинку вслед за состоянием", () => {
+  const { overlays } = buildOverlays();
+  const state = new TankState();
+
+  const battery = overlays.getElement("battery-toggle");
+  assert(battery, "не создан спрайт выключателя массы");
+
+  overlays.render(state.getSnapshot());
+  const off = battery.getAttribute("src");
+
+  state.toggleBattery();
+  overlays.render(state.getSnapshot());
+  const on = battery.getAttribute("src");
+
+  assert(off && on && off !== on, `картинка не сменилась: ${off} → ${on}`);
+});
+
+check("Стрелки приборов создаются и поворачиваются по показаниям", () => {
+  const { overlays } = buildOverlays();
+  const state = new TankState();
+
+  const arrows = overlays.gaugeArrows.arrows;
+  assert(arrows.size > 0, "не создано ни одной стрелки прибора");
+
+  const rpmArrow = arrows.get("gauge-rpm");
+  assert(rpmArrow, "не создана стрелка тахометра");
+
+  overlays.render(state.getSnapshot());
+  const atZero = rpmArrow.style.getPropertyValue("--rot");
+
+  state.sensors.engine_rpm = 2000;
+  overlays.render(state.getSnapshot());
+  const atSpeed = rpmArrow.style.getPropertyValue("--rot");
+
+  assert(atZero !== atSpeed, `стрелка не повернулась: ${atZero} → ${atSpeed}`);
+});
+
+check("Метки осей стрелок рисуются только в режиме отладки", () => {
+  const production = buildOverlays(false);
+  assert(
+    production.rootEl.querySelectorAll(".pivot-indicator").length === 0,
+    "отладочные метки осей показаны курсанту",
+  );
+
+  const debug = buildOverlays(true);
+  assert(
+    debug.rootEl.querySelectorAll(".pivot-indicator").length > 0,
+    "в режиме отладки метки осей не появились",
+  );
+});
+
+check("Шкала ВА-540 несимметрична относительно нуля", () => {
+  const def = { zeroOffset: 0.2, startAngle: 0, endAngle: 100 };
+
+  assert(GaugeArrows.normalize(def, -100, -100, 500) === 0, "левый предел не даёт 0");
+  assert(GaugeArrows.normalize(def, 0, -100, 500) === 0.2, "ноль не попадает в свою отметку");
+  assert(GaugeArrows.normalize(def, 500, -100, 500) === 1, "правый предел не даёт 1");
+
+  // Выход за шкалу прижимает стрелку к пределу, а не уводит за него
+  assert(GaugeArrows.normalize(def, -500, -100, 500) === 0, "стрелка ушла левее предела");
+  assert(GaugeArrows.normalize(def, 9000, -100, 500) === 1, "стрелка ушла правее предела");
+});
+
+check("Сдвоенные приборы переключают шкалу", () => {
+  assert(GaugeArrows.usesSecondaryScale("gauge-voltammeter", true), "вольтамперметр не дал вольты");
+  assert(!GaugeArrows.usesSecondaryScale("gauge-voltammeter", false), "вольтамперметр не дал амперы");
+  assert(GaugeArrows.usesSecondaryScale("gauge-fuel", 0), "топливомер не переключился на наружные баки");
+  assert(!GaugeArrows.usesSecondaryScale("gauge-fuel", 2), "топливомер не показал внутренние баки");
+  assert(!GaugeArrows.usesSecondaryScale("gauge-rpm", 1), "у тахометра не должно быть второй шкалы");
+});
+
+check("Кадр спрайта выбирается по виду органа управления", () => {
+  const booleanDef = { kind: "boolean", stateKey: "flag", on: "on.png", off: "off.png" };
+  assert(getControlOverlayFrame(booleanDef, { flag: true }).src === "on.png", "boolean: не тот кадр");
+  assert(getControlOverlayFrame(booleanDef, { flag: false }).src === "off.png", "boolean: не тот кадр");
+
+  const enumDef = { kind: "enum", stateKey: "mode", frames: { a: "a.png", neutral: "n.png" } };
+  assert(getControlOverlayFrame(enumDef, { mode: "a" }).src === "a.png", "enum: не тот кадр");
+  assert(getControlOverlayFrame(enumDef, { mode: "нет" }).src === "n.png", "enum: нет отката к neutral");
+
+  // range берёт ближайший кадр по значению
+  const rangeDef = {
+    kind: "range",
+    stateKey: "level",
+    inflate: 2,
+    frames: [
+      { at: 0, src: "0.png" },
+      { at: 50, src: "50.png", inflate: 3 },
+      { at: 100, src: "100.png" },
+    ],
+  };
+  assert(getControlOverlayFrame(rangeDef, { level: 40 }).src === "50.png", "range: не ближайший кадр");
+  assert(getControlOverlayFrame(rangeDef, { level: 90 }).src === "100.png", "range: не ближайший кадр");
+  assert(getControlOverlayFrame(rangeDef, { level: 40 }).inflate === 3, "кадр не перекрыл размер органа");
+  assert(getControlOverlayFrame(rangeDef, { level: 0 }).inflate === 2, "кадр не унаследовал размер органа");
+
+  assert(getControlOverlayFrame(null, {}) === null, "описание отсутствует — должен быть null");
+  assert(getControlOverlayFrame({ kind: "gauge" }, {}) === null, "у прибора нет кадра спрайта");
 });
 
 for (const { name, fn } of checks) {
