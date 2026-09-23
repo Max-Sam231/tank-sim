@@ -24,6 +24,8 @@ function updateLamps(state, ctx) {
     gear_engaged: state.gearLever !== "neutral",
     commander_call: false,
     air_intake: false,
+    // Пожар в МТО из кабины не виден — только по этой лампе
+    fire: Boolean(state.sensors.is_fire_detected),
   };
 
   let changed = false;

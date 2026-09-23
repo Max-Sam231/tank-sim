@@ -109,6 +109,7 @@ class TankState {
       gear_engaged: false,
       commander_call: false,
       air_intake: false,
+      fire: false,
     };
 
     this._engineRunning = false;
@@ -257,6 +258,7 @@ class TankState {
     this.lamps.gear_engaged = false;
     this.lamps.commander_call = false;
     this.lamps.air_intake = false;
+    this.lamps.fire = false;
 
     this._engineRunning = false;
     this._engineJustStarted = false;
@@ -424,6 +426,7 @@ class TankState {
       lamp_gear_engaged: this.lamps.gear_engaged,
       lamp_commander_call: this.lamps.commander_call,
       lamp_air_intake: this.lamps.air_intake,
+      lamp_fire: this.lamps.fire,
       hingeLatch1: this.hingeLatch1,
       hingeLatch2: this.hingeLatch2,
       hingeLatch3: this.hingeLatch3,

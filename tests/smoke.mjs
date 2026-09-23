@@ -2066,6 +2066,47 @@ check("Интенсивность сгущает дым", () => {
   smoke.update(false);
 });
 
+check("Сигнальные лампы размечены на щитке и зажигаются", () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+
+  const LAMPS = [
+    ["lamp-fire", "lamp_fire"],
+    ["lamp-oil-alarm", "lamp_oil_pressure_alarm"],
+    ["lamp-overheat", "lamp_overheat"],
+    ["lamp-fuel-reserve", "lamp_fuel_reserve"],
+    ["lamp-battery", "lamp_battery_charge"],
+  ];
+
+  for (const [action, stateKey] of LAMPS) {
+    assert(
+      window.document.querySelector(`[data-action="${action}"]`),
+      `на щитке нет хитбокса лампы ${action}`,
+    );
+    const def = CONTROL_OVERLAY_DEFS[action];
+    assert(def, `нет описания оверлея ${action}`);
+    assert(def.stateKey === stateKey, `${action} смотрит не на то состояние: ${def.stateKey}`);
+    assert(def.on && def.off, `${action}: нет картинок включённого и выключенного состояния`);
+  }
+
+  const overlays = new OverlayRenderer({ rootEl, defs: CONTROL_OVERLAY_DEFS, isDebug: false });
+  overlays.buildCabinOverlays();
+  overlays.buildInstrumentPanelOverlays();
+
+  const state = new TankState();
+  overlays.render(state.getSnapshot());
+
+  const fireLamp = overlays.getElement("lamp-fire");
+  assert(fireLamp, "спрайт лампы пожара не создан");
+  const off = fireLamp.getAttribute("src");
+
+  state.startFire(0.3);
+  state.tick(1 / 60);
+  overlays.render(state.getSnapshot());
+
+  assert(fireLamp.getAttribute("src") !== off, "лампа пожара не загорелась");
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();

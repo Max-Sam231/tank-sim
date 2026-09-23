@@ -264,6 +264,58 @@ const CONTROL_OVERLAY_DEFS = {
     on: "./img/12/лампа-актив.png",
   },
 
+  // Сигнальные лампы: считались всегда, но на щитке показаны не были
+  "lamp-fire": {
+    kind: "boolean",
+    stateKey: "lamp_fire",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-oil-alarm": {
+    kind: "boolean",
+    stateKey: "lamp_oil_pressure_alarm",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-overheat": {
+    kind: "boolean",
+    stateKey: "lamp_overheat",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-fuel-reserve": {
+    kind: "boolean",
+    stateKey: "lamp_fuel_reserve",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-battery": {
+    kind: "boolean",
+    stateKey: "lamp_battery_charge",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+
   // Remaining instrument panel toggles (tmb1/tmb2)
   heating: {
     kind: "boolean",
