@@ -38,7 +38,16 @@ function bootDom() {
   window.HTMLMediaElement.prototype.play = () => Promise.resolve();
   window.HTMLMediaElement.prototype.pause = () => {};
 
-  for (const key of ["window", "document", "navigator", "HTMLElement", "Element", "Node", "getComputedStyle"]) {
+  for (const key of [
+    "window",
+    "document",
+    "navigator",
+    "HTMLElement",
+    "Element",
+    "Node",
+    "getComputedStyle",
+    "MutationObserver",
+  ]) {
     const value = key === "window" ? window : window[key];
     if (value === undefined) continue;
     // navigator в Node 24 — геттер без сеттера, обходим через defineProperty
@@ -1897,6 +1906,39 @@ check("Сброс обстановки возвращает машину в ис
   // Двигатель сбросом не трогаем: обстановка и машина — разные вещи
   state.clearIncidents();
   assert(state.violations.length === 0, "повторный сброс что-то сломал");
+});
+
+check("Панель не перекрывает стартовое меню", async () => {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+
+  const ui = new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+
+  const menuEl = window.document.getElementById("startMenuContainer");
+  assert(menuEl, "не найден контейнер стартового меню");
+
+  menuEl.classList.remove("is-hidden");
+  const panel = new SystemsTestPanel({ state, ui });
+
+  assert(panel.rootEl.hidden, "панель показана поверх открытого меню");
+  assert(panel.rootEl.classList.contains("is-collapsed"), "панель развёрнута по умолчанию");
+
+  // MutationObserver срабатывает асинхронно — ждём микрозадачу
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  menuEl.classList.add("is-hidden");
+  await settle();
+  assert(!panel.rootEl.hidden, "панель не вернулась после закрытия меню");
+
+  menuEl.classList.remove("is-hidden");
+  await settle();
+  assert(panel.rootEl.hidden, "панель не спряталась при повторном открытии меню");
 });
 
 for (const { name, fn } of checks) {

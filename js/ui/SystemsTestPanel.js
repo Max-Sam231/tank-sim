@@ -72,11 +72,13 @@ class SystemsTestPanel {
     this.ui = ui;
 
     this.rootEl = document.createElement("div");
-    this.rootEl.className = "systems-test-panel";
+    // Свёрнута по умолчанию: панель вспомогательная и не должна мешать сцене
+    this.rootEl.className = "systems-test-panel is-collapsed";
     this.rootEl.innerHTML = this._buildHtml();
     document.body.appendChild(this.rootEl);
 
     this._wireEvents();
+    this._followStartMenu();
     this.state.subscribe((snapshot) => this._render(snapshot));
     this._render(this.state.getSnapshot());
   }
@@ -114,6 +116,28 @@ class SystemsTestPanel {
         <div class="stp-readout" data-test-readout></div>
       </div>
     `;
+  }
+
+  /**
+   * Прячет панель, пока открыто стартовое меню: там свои кнопки, и
+   * перекрывать их нечем. Слежение за классом, а не вызовы из main.js —
+   * меню показывают и скрывают из полудюжины мест.
+   */
+  _followStartMenu() {
+    const menuEl = document.getElementById("startMenuContainer");
+    if (!menuEl) return;
+
+    const sync = () => {
+      const isMenuOpen = !menuEl.classList.contains("is-hidden");
+      this.rootEl.hidden = isMenuOpen;
+    };
+
+    new MutationObserver(sync).observe(menuEl, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    sync();
   }
 
   _wireEvents() {

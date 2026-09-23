@@ -2742,3 +2742,7 @@ body.familiarization-mode-active .fam-item-inactive {
   background: rgba(70, 130, 180, 0.35);
   border-color: rgba(110, 170, 220, 0.55);
 }
+
+.systems-test-panel[hidden] {
+  display: none !important;
+}
