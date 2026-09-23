@@ -89,7 +89,7 @@ function bootstrap() {
 
   state.subscribe((snapshot) => {
     audioManager.onStateChange(snapshot);
-    exhaustSmoke.update(snapshot.engine_rpm, snapshot.engineRunning);
+    exhaustSmoke.update(snapshot.engine_rpm, snapshot.engineRunning, snapshot.is_smoke_screen_active);
     updateInventoryBar(snapshot);
   });
 

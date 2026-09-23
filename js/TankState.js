@@ -80,6 +80,7 @@ class TankState {
       gyro_spin_up: 0.0,
       is_gyro_ready: false,
       cooldown_progress: 0.0,
+      is_smoke_screen_active: false,
     };
 
     this.lamps = {
@@ -192,6 +193,7 @@ class TankState {
     this.sensors.gyro_spin_up = 0.0;
     this.sensors.is_gyro_ready = false;
     this.sensors.cooldown_progress = 0.0;
+    this.sensors.is_smoke_screen_active = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;

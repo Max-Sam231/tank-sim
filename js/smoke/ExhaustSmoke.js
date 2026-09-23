@@ -5,6 +5,7 @@ export class ExhaustSmoke {
     this.container = null;
     this.isRunning = false;
     this.rpm = 0;
+    this.isSmokeScreen = false;
     this.spawnTimer = null;
     // ✅ УВЕЛИЧИЛИ ЛИМИТ ЧАСТИЦ (было 25)
     this.maxParticles = 50; 
@@ -16,8 +17,9 @@ export class ExhaustSmoke {
     this.container = document.getElementById(this.containerId);
   }
 
-  update(rpm, isRunning) {
+  update(rpm, isRunning, isSmokeScreen = false) {
     this.rpm = rpm;
+    this.isSmokeScreen = Boolean(isSmokeScreen);
     if (!this.container) {
       this._findContainer();
       return; 
@@ -32,7 +34,8 @@ export class ExhaustSmoke {
     if (this.isRunning) {
       // ✅ БОЛЕЕ АГРЕССИВНАЯ ФОРМУЛА ЧАСТОТЫ
       // От 150мс (холостые) до 30мс (максимальные обороты)
-      const newDelay = Math.max(30, 150 - (rpm / 2500) * 120);
+      const baseDelay = Math.max(30, 150 - (rpm / 2500) * 120);
+      const newDelay = this.isSmokeScreen ? baseDelay / 3 : baseDelay;
       
       if (Math.abs(newDelay - this.currentDelay) > 15) {
         clearInterval(this.spawnTimer);
@@ -75,16 +78,20 @@ export class ExhaustSmoke {
       particle.className = 'smoke-particle';
       
       // ✅ УВЕЛИЧЕННЫЙ РАЗМЕР И ВАРИАТИВНОСТЬ
-      const size = 35 + Math.random() * 25; // От 35px до 60px
-      const offsetX = (Math.random() - 0.5) * 40; // Шире разброс по горизонтали
+      // Завеса ТДА гуще и шире обычного выхлопа
+      const spread = this.isSmokeScreen ? 120 : 40;
+      const baseSize = this.isSmokeScreen ? 70 : 35;
+      const size = baseSize + Math.random() * 25;
+      const offsetX = (Math.random() - 0.5) * spread;
       
       particle.style.width = `${size}px`;
       particle.style.height = `${size}px`;
       particle.style.left = `calc(50% + ${offsetX}px)`;
       
       // ✅ БОЛЕЕ ТЕМНЫЙ ДЫМ ПРИ ВЫСОКИХ ОБОРОТАХ
+      // Дымовая завеса белёсая, обычный выхлоп тем темнее, чем выше обороты
       const darkness = Math.min(1.0, 0.6 + (this.rpm / 2500) * 0.4);
-      const gray = Math.round(60 * darkness); // Темнее база (было 80)
+      const gray = this.isSmokeScreen ? 210 : Math.round(60 * darkness);
       particle.style.background = `radial-gradient(circle, rgba(${gray},${gray},${gray},0.95) 0%, transparent 75%)`;
 
       this.container.appendChild(particle);

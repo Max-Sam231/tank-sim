@@ -95,6 +95,7 @@ const { FamiliarizationController } = await import(
 const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiarizationData.js");
 const { overheatLimit } = await import("../js/physics/thermalSystem.js");
 const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
+const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -1205,6 +1206,44 @@ check("Нарушения не дублируются и попадают в с�
 
   state.reset();
   assert(state.violations.length === 0, "нарушения пережили сброс состояния");
+});
+
+check("Дымовая завеса ставится только на прогретом двигателе", () => {
+  const { state, run } = startedEngine();
+
+  // ТДА — третье положение переключателя БЦА/ТДА
+  while (!isTcaEngaged(state)) state.cycleBcaTca();
+
+  state.setFuelManualFeed(100);
+  run(5);
+  assert(!state.sensors.is_smoke_screen_active, "завеса пошла на непрогретом двигателе");
+  assert(
+    state.violations.some((v) => v.includes("непрогретом")),
+    "не записано нарушение о включении ТДА на холодную",
+  );
+
+  run(120);
+  assert(state.sensors.coolant_temp >= MIN_COOLANT_C, "двигатель не прогрелся за отведённое время");
+  assert(state.sensors.engine_rpm >= MIN_RPM, "оборотов не хватает для завесы");
+  assert(state.sensors.is_smoke_screen_active, "завеса не пошла на прогретом двигателе");
+});
+
+check("Завеса гаснет на малых оборотах и тратит топливо", () => {
+  const { state, run } = startedEngine();
+  while (!isTcaEngaged(state)) state.cycleBcaTca();
+
+  state.setFuelManualFeed(100);
+  run(150);
+  assert(state.sensors.is_smoke_screen_active, "завеса не запустилась");
+
+  const before = state.sensors.fuel_level_internal;
+  run(30);
+  const spent = before - state.sensors.fuel_level_internal;
+  assert(spent > 0, "завеса не расходует топливо");
+
+  state.setFuelManualFeed(0);
+  run(10);
+  assert(!state.sensors.is_smoke_screen_active, "завеса осталась на холостом ходу");
 });
 
 for (const { name, fn } of checks) {
