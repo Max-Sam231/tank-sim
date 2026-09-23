@@ -407,6 +407,18 @@ class TankState {
    * @param {number} dischargeLoad - current consumption in A (to cover)
    * @returns {number} charge current in A (positive = charging)
    */
+  /** Переключает булев орган управления и уведомляет подписчиков. */
+  _toggle(field) {
+    this[field] = !this[field];
+    this._emit();
+  }
+
+  /** Переводит многопозиционный орган управления в следующее положение по кругу. */
+  _cycle(field, positions) {
+    this[field] = (this[field] + 1) % positions;
+    this._emit();
+  }
+
   _calculateChargeCurrent(runTime, dischargeLoad) {
     // Initial peak charge after start: +200 to +300 A
     // Settles over several minutes to +20 to +40 A (covering consumption + trickle charge)
@@ -729,8 +741,7 @@ class TankState {
   }
 
   toggleBattery() {
-    this.isBatteryOn = !this.isBatteryOn;
-    this._emit();
+    this._toggle("isBatteryOn");
   }
 
   setBrakePressed(isPressed) {
@@ -773,8 +784,7 @@ class TankState {
   }
 
   toggleLeftTank() {
-    this.leftTank = !this.leftTank;
-    this._emit();
+    this._toggle("leftTank");
   }
 
   setBcnMode(mode) {
@@ -808,8 +818,7 @@ class TankState {
   }
 
   toggleRightTank() {
-    this.rightTank = !this.rightTank;
-    this._emit();
+    this._toggle("rightTank");
   }
 
   pumpFuelPrimerLever() {
@@ -850,8 +859,7 @@ class TankState {
   }
 
   toggleAirBleedValve() {
-    this.airBleedValve = !this.airBleedValve;
-    this._emit();
+    this._toggle("airBleedValve");
   }
 
   cycleAzr() {
@@ -866,13 +874,11 @@ class TankState {
   }
 
   toggleEpk() {
-    this.epk = !this.epk;
-    this._emit();
+    this._toggle("epk");
   }
 
   toggleHorn() {
-    this.horn = !this.horn;
-    this._emit();
+    this._toggle("horn");
   }
 
   toggleMznEngine() {
@@ -880,8 +886,7 @@ class TankState {
   }
 
   toggleAmmeterButton() {
-    this.ammeterButton = !this.ammeterButton;
-    this._emit();
+    this._toggle("ammeterButton");
   }
 
   cycleLeftRightTanks() {
@@ -890,23 +895,19 @@ class TankState {
   }
 
   cycleSparkPlug() {
-    this.sparkPlug = (this.sparkPlug + 1) % 3;
-    this._emit();
+    this._cycle("sparkPlug", 3);
   }
 
   cycleEngineStart() {
-    this.engineStart = (this.engineStart + 1) % 3;
-    this._emit();
+    this._cycle("engineStart", 3);
   }
 
   toggleEmergencyHatchRotation() {
-    this.emergencyHatchRotation = !this.emergencyHatchRotation;
-    this._emit();
+    this._toggle("emergencyHatchRotation");
   }
 
   toggleOilPumpGearbox() {
-    this.oilPumpGearbox = !this.oilPumpGearbox;
-    this._emit();
+    this._toggle("oilPumpGearbox");
   }
 
   _calculateBoHeatingActive() {
@@ -921,38 +922,31 @@ class TankState {
   }
 
   toggleCombined() {
-    this.combined = !this.combined;
-    this._emit();
+    this._toggle("combined");
   }
 
   toggleLeftLights() {
-    this.leftLights = !this.leftLights;
-    this._emit();
+    this._toggle("leftLights");
   }
 
   toggleRightLights() {
-    this.rightLights = !this.rightLights;
-    this._emit();
+    this._toggle("rightLights");
   }
 
   toggleGabrateLights() {
-    this.gabrateLights = !this.gabrateLights;
-    this._emit();
+    this._toggle("gabrateLights");
   }
 
   toggleLightsAll() {
-    this.lightsAll = !this.lightsAll;
-    this._emit();
+    this._toggle("lightsAll");
   }
 
   toggleWaterAntifreeze() {
-    this.waterAntifreeze = !this.waterAntifreeze;
-    this._emit();
+    this._toggle("waterAntifreeze");
   }
 
   toggleGpk() {
-    this.gpk = !this.gpk;
-    this._emit();
+    this._toggle("gpk");
   }
 
   cycleBcaTca() {
@@ -1013,8 +1007,7 @@ class TankState {
     this._emit();
   }
   toggleCabinLight() {
-    this.cabinLight = !this.cabinLight;
-    this._emit();
+    this._toggle("cabinLight");
   }
   toggleHingeLatch(latchId) {
     if (latchId === "latch1" || latchId === "1") this.hingeLatch1 = !this.hingeLatch1;
@@ -1083,8 +1076,7 @@ class TankState {
   }
 
   toggleHeaterFuelValve() {
-    this.heaterFuelValve = !this.heaterFuelValve;
-    this._emit();
+    this._toggle("heaterFuelValve");
   }
 
   isHeaterFuelFlowing() {
