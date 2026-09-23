@@ -1871,6 +1871,34 @@ check("Кнопки панели меняют состояние танка", ()
   );
 });
 
+check("Сброс обстановки возвращает машину в исходное", () => {
+  const state = new TankState();
+
+  state.startFire(0.3);
+  state.setAirFilterClogging(0.9);
+  state.setContaminated(true);
+  state.setWaterDepth(3);
+  state.dischargePpo();
+  for (let i = 0; i < 300; i += 1) state.tick(1 / 60);
+
+  assert(state.violations.length > 0, "нарушения не накопились");
+  assert(state.ppoCylindersUsed > 0, "баллоны не израсходованы");
+
+  state.clearIncidents();
+
+  assert(state.sensors.fire_level === 0, "пожар не потушен сбросом");
+  assert(state.sensors.water_depth_m === 0, "машина осталась в воде");
+  assert(state.sensors.water_level === 0, "вода осталась внутри");
+  assert(!state.sensors.is_contaminated, "заражение не снято");
+  assert(state.airFilterClogging === 0, "фильтр остался забитым");
+  assert(state.ppoCylindersUsed === 0, "баллоны не восстановлены");
+  assert(state.violations.length === 0, "журнал нарушений не очищен");
+
+  // Двигатель сбросом не трогаем: обстановка и машина — разные вещи
+  state.clearIncidents();
+  assert(state.violations.length === 0, "повторный сброс что-то сломал");
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();

@@ -2737,3 +2737,8 @@ body.familiarization-mode-active .fam-item-inactive {
   border-radius: 3px;
   color: #ffc9c9;
 }
+
+.systems-test-panel .stp-reset {
+  background: rgba(70, 130, 180, 0.35);
+  border-color: rgba(110, 170, 220, 0.55);
+}

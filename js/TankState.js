@@ -600,6 +600,24 @@ class TankState {
     return true;
   }
 
+  /** Снимает все вводные и очищает журнал — подготовка к новой попытке. */
+  clearIncidents() {
+    this.sensors.fire_level = 0;
+    this.sensors.is_fire_detected = false;
+    this.sensors.water_depth_m = 0;
+    this.sensors.water_level = 0;
+    this.sensors.is_contaminated = false;
+
+    this.ppoCylindersUsed = 0;
+    this._ppoDischargeTime = 0;
+    this.airFilterClogging = 0;
+    this.filterLifeUsed = 0;
+    this.violations = [];
+    this._limitBreachTime = {};
+
+    this._emit();
+  }
+
   /** Зажигает пожар в МТО — вводная от преподавателя. */
   startFire(level = 0.1) {
     this.sensors.fire_level = this._clamp(level, 0, 1);

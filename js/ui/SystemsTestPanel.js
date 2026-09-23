@@ -9,8 +9,9 @@ import { CONTROL_ACTIONS, runControlAction } from "./controlActions.js";
  * панель даёт кнопки на те же действия, чтобы поведение можно было
  * проверить в приложении, а не только в тестах.
  *
- * Показывается только в отладочном режиме. Удаляется одной строкой в
- * main.js, как только появятся настоящие хитбоксы.
+ * Управляется флагом SHOW_TEST_PANEL в main.js и не зависит от режима
+ * отладки: включать ради неё отрисовку хитбоксов не нужно. Удаляется
+ * одной строкой, как только появятся настоящие полигоны.
  */
 const GROUPS = [
   {
@@ -62,6 +63,7 @@ const SCENARIO_INPUTS = [
   { label: "Заражение", apply: (state) => state.setContaminated(true) },
   { label: "В воду (2 м)", apply: (state) => state.setWaterDepth(2) },
   { label: "На берег", apply: (state) => state.setWaterDepth(0) },
+  { label: "Сброс обстановки", apply: (state) => state.clearIncidents() },
 ];
 
 class SystemsTestPanel {
@@ -95,7 +97,7 @@ class SystemsTestPanel {
     ).join("");
 
     const inputs = SCENARIO_INPUTS.map(
-      (input, idx) => `<button class="stp-btn stp-input" data-test-input="${idx}">${input.label}</button>`,
+      (input, idx) => `<button class="stp-btn ${input.label.startsWith("Сброс") ? "stp-reset" : "stp-input"}" data-test-input="${idx}">${input.label}</button>`,
     ).join("");
 
     return `
@@ -149,11 +151,16 @@ class SystemsTestPanel {
       `Охлаждение перед остановкой: ${(snapshot.cooldown_progress * 100).toFixed(0)}%`,
     ];
 
+    const noCylinders = snapshot.ppoCylindersUsed >= 3 && snapshot.fire_level > 0;
+    const warning = noCylinders
+      ? `<div class="stp-violations">Баллоны израсходованы — пожар не потушить. «Сброс обстановки».</div>`
+      : "";
+
     const violations = snapshot.violations.length
       ? `<div class="stp-violations"><b>Нарушения (${snapshot.violations.length}):</b><br>${snapshot.violations.join("<br>")}</div>`
       : "";
 
-    readout.innerHTML = `${lines.join("<br>")}${violations}`;
+    readout.innerHTML = `${lines.join("<br>")}${warning}${violations}`;
   }
 }
 
