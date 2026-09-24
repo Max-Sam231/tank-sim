@@ -37,9 +37,7 @@ const CONTROL_ACTIONS = {
   // Прибор ночного видения механика-водителя
   "night-vision": { call: "cycleNightVision" },
 
-  // Рычаги управления поворотом
-  "left-lever": { call: "cycleLeftLever" },
-  "right-lever": { call: "cycleRightLever" },
+  // Рычаги управления поворотом работают на удержание — см. LEVER_ACTIONS
 
   // Оборудование подводного вождения
   "opvt-seal": { call: "toggleOpvtSealed" },
@@ -89,6 +87,30 @@ const CONTROL_ACTIONS = {
 };
 
 /**
+ * Рычаги управления поворотом. Как и педали, работают на удержание:
+ * отпустил — машина идёт прямо.
+ *
+ * Первое положение отключает бортовой фрикцион (плавный поворот),
+ * второе подтормаживает гусеницу (резкий). Второе берётся удержанием
+ * с Shift — на рычаге это «дотянуть на себя».
+ */
+const LEVER_ACTIONS = {
+  "left-lever": "left",
+  "right-lever": "right",
+};
+
+const LEVER_FIRST_NOTCH = 1;
+const LEVER_SECOND_NOTCH = 2;
+
+/** Клавиши управления рычагами: слева и справа от механика-водителя. */
+const LEVER_KEYS = {
+  KeyA: "left-lever",
+  ArrowLeft: "left-lever",
+  KeyD: "right-lever",
+  ArrowRight: "right-lever",
+};
+
+/**
  * Педали: работают на удержание, а не на клик.
  * Отпускаются вместе, когда курсор уходит со сцены или отпускается кнопка.
  */
@@ -113,4 +135,12 @@ function runControlAction(action, ctx) {
   return true;
 }
 
-export { CONTROL_ACTIONS, PEDAL_ACTIONS, runControlAction };
+export {
+  CONTROL_ACTIONS,
+  PEDAL_ACTIONS,
+  LEVER_ACTIONS,
+  LEVER_KEYS,
+  LEVER_FIRST_NOTCH,
+  LEVER_SECOND_NOTCH,
+  runControlAction,
+};

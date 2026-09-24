@@ -38,10 +38,11 @@ const GROUPS = [
     items: [{ action: "night-vision", label: "Режим прибора" }],
   },
   {
-    title: "Рычаги",
+    // В кабине рычаги берут удержанием; кнопка переключает положение по кругу
+    title: "Рычаги (0 → 1 → 2)",
     items: [
-      { action: "left-lever", label: "Левый" },
-      { action: "right-lever", label: "Правый" },
+      { run: (state) => state.cycleLeftLever(), label: "Левый" },
+      { run: (state) => state.cycleRightLever(), label: "Правый" },
     ],
   },
   {
@@ -119,13 +120,13 @@ class SystemsTestPanel {
 
   _buildHtml() {
     const groups = GROUPS.map(
-      (group) => `
+      (group, groupIdx) => `
         <div class="stp-group">
           <div class="stp-group-title">${group.title}</div>
           ${group.items
             .map(
-              (item) =>
-                `<button class="stp-btn" data-test-action="${item.action}">${item.label}</button>`,
+              (item, itemIdx) =>
+                `<button class="stp-btn" data-test-item="${groupIdx}:${itemIdx}">${item.label}</button>`,
             )
             .join("")}
         </div>
@@ -183,9 +184,13 @@ class SystemsTestPanel {
         return;
       }
 
-      const action = target.dataset.testAction;
-      if (action) {
-        runControlAction(action, this.ui._actionContext());
+      const itemRef = target.dataset.testItem;
+      if (itemRef) {
+        const [groupIdx, itemIdx] = itemRef.split(":").map(Number);
+        const item = GROUPS[groupIdx].items[itemIdx];
+
+        if (item.run) item.run(this.state);
+        else runControlAction(item.action, this.ui._actionContext());
         return;
       }
 

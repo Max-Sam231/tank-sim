@@ -1832,11 +1832,11 @@ check("Панель проверки систем ссылается тольк�
   for (const group of GROUPS) {
     assert(group.title, "у группы нет названия");
     for (const item of group.items) {
+      assert(item.label, "у кнопки панели нет подписи");
       assert(
-        CONTROL_ACTIONS[item.action],
+        item.run || CONTROL_ACTIONS[item.action],
         `кнопка «${item.label}» ссылается на неизвестное действие ${item.action}`,
       );
-      assert(item.label, `у действия ${item.action} нет подписи`);
     }
   }
 
@@ -1860,19 +1860,21 @@ check("Кнопки панели меняют состояние танка", ()
   });
   const panel = new SystemsTestPanel({ state, ui });
 
-  const click = (action) => {
-    const btn = panel.rootEl.querySelector(`[data-test-action="${action}"]`);
-    assert(btn, `не найдена кнопка ${action}`);
+  const click = (label) => {
+    const btn = [...panel.rootEl.querySelectorAll("[data-test-item]")].find(
+      (el) => el.textContent === label,
+    );
+    assert(btn, `не найдена кнопка «${label}»`);
     btn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   };
 
-  click("blower");
+  click("Нагнетатель");
   assert(state.blowerOn, "нагнетатель не включился с панели");
 
-  click("night-vision");
+  click("Режим прибора");
   assert(state.tvneMode === 1, "ТВНЕ не переключился с панели");
 
-  click("opvt-pipe");
+  click("Труба");
   assert(state.opvtPipeInstalled, "труба не установлена с панели");
 
   // Сводка обновляется по состоянию
@@ -2105,6 +2107,101 @@ check("Сигнальные лампы размечены на щитке и з�
   overlays.render(state.getSnapshot());
 
   assert(fireLamp.getAttribute("src") !== off, "лампа пожара не загорелась");
+});
+
+/** UIController на свежей разметке вместе со ссылкой на сцену. */
+function cabinWithUi() {
+  const window = freshDom();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  const state = new TankState();
+
+  new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+
+  return { window, rootEl, state };
+}
+
+check("Рычаги управления размечены в кабине", () => {
+  const window = freshDom();
+
+  for (const action of ["left-lever", "right-lever"]) {
+    const el = window.document.querySelector(`.cabin-hitbox-layer [data-action="${action}"]`);
+    assert(el, `в кабине нет хитбокса рычага ${action}`);
+    assert(el.getAttribute("points"), `у рычага ${action} нет полигона`);
+  }
+});
+
+check("Рычаг берётся удержанием и отпускается", () => {
+  const { window, rootEl, state } = cabinWithUi();
+
+  const lever = rootEl.querySelector('[data-action="left-lever"]');
+  assert(lever, "не найден левый рычаг");
+
+  lever.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
+  assert(state.leftLever === 1, `рычаг не взят: ${state.leftLever}`);
+
+  window.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
+  assert(state.leftLever === 0, "рычаг не отпущен");
+  assert(state.rightLever === 0, "второй рычаг тоже должен быть отпущен");
+});
+
+check("Удержание с Shift даёт второе положение", () => {
+  const { window, rootEl, state } = cabinWithUi();
+
+  const lever = rootEl.querySelector('[data-action="right-lever"]');
+  lever.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true, shiftKey: true }));
+  assert(state.rightLever === 2, `ожидалось второе положение, получено ${state.rightLever}`);
+
+  window.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
+  assert(state.rightLever === 0, "рычаг не отпущен");
+});
+
+check("Рычаги управляются с клавиатуры", () => {
+  const { window, state } = cabinWithUi();
+
+  const key = (type, code, shiftKey = false) =>
+    window.dispatchEvent(new window.KeyboardEvent(type, { code, key: code, shiftKey, bubbles: true }));
+
+  key("keydown", "KeyA");
+  assert(state.leftLever === 1, `клавиша A не взяла левый рычаг: ${state.leftLever}`);
+  key("keyup", "KeyA");
+  assert(state.leftLever === 0, "левый рычаг не отпущен");
+
+  key("keydown", "ArrowRight", true);
+  assert(state.rightLever === 2, "Shift+стрелка не дала резкий поворот");
+
+  // Отпустили Shift, не отпуская рычаг — поворот смягчается
+  window.dispatchEvent(new window.KeyboardEvent("keyup", { key: "Shift", code: "ShiftLeft", bubbles: true }));
+  assert(state.rightLever === 1, `после отпускания Shift ожидалось первое положение: ${state.rightLever}`);
+
+  key("keyup", "ArrowRight");
+  assert(state.rightLever === 0, "правый рычаг не отпущен");
+});
+
+check("Поворот рычагом из кабины меняет курс машины", () => {
+  const { window, rootEl, state } = cabinWithUi();
+
+  const quickStart = SCENARIO_INPUTS.find((input) => input.label.startsWith("Завести"));
+  quickStart.apply(state);
+  state.setGearLever("3");
+  state.toggleOilPumpGearbox();
+  state.setFuelManualFeed(100);
+  state.setGasPedal(true);
+  for (let i = 0; i < 40 * 60; i += 1) state.tick(1 / 60);
+
+  assert(state.sensors.speed_kmh > 1, `машина не поехала: ${state.sensors.speed_kmh}`);
+  const heading = state.sensors.heading_deg;
+
+  rootEl
+    .querySelector('[data-action="right-lever"]')
+    .dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
+  for (let i = 0; i < 5 * 60; i += 1) state.tick(1 / 60);
+
+  assert(state.sensors.heading_deg !== heading, "курс не изменился при повороте рычагом");
 });
 
 for (const { name, fn } of checks) {
