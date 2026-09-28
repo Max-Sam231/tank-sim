@@ -1762,16 +1762,31 @@ check("Сигнальные лампы размечены на щитке и з�
   assert(fireLamp.getAttribute("src") !== off, "лампа пожара не загорелась");
 });
 
-check("У каждого органа есть название и описание для изучения", () => {
+check("У каждого органа есть название, описание и факты для изучения", () => {
   for (const key of Object.keys(FAMILIARIZATION_DATA)) {
     const entry = getStudyEntry(key);
     assert(entry.title, `${key}: нет названия`);
     assert(entry.description, `${key}: нет описания`);
+    assert(entry.facts.length > 0, `${key}: нечего рассказать, кроме описания`);
   }
 
   // Незнакомый орган не должен ронять режим
   const unknown = getStudyEntry("такого-органа-нет");
   assert(unknown.title && unknown.description, "нет запасного описания");
+  assert(Array.isArray(unknown.facts), "у запасной карточки нет списка фактов");
+});
+
+check("Факты в карточке не повторяются", () => {
+  const entry = getStudyEntry("gauge-coolant-temp");
+  assert(new Set(entry.facts).size === entry.facts.length, "в карточке есть повторы");
+
+  // Пояснения берутся из всех вопросов, а не только из показанных в проверке
+  const questions = FAMILIARIZATION_DATA["gauge-coolant-temp"].questions;
+  const unique = new Set(questions.map((q) => q.explanation));
+  assert(
+    entry.facts.length === unique.size,
+    `фактов ${entry.facts.length} при ${unique.size} различных пояснениях`,
+  );
 });
 
 check("Режим изучения показывает описание, а не вопросы", () => {
@@ -1789,6 +1804,7 @@ check("Режим изучения показывает описание, а н�
     body.querySelector(".fam-study-description"),
     "не показано описание органа",
   );
+  assert(body.querySelectorAll(".fam-study-facts li").length > 0, "не показаны нормы и устройство");
   assert(!body.querySelector(".fam-option-card"), "в изучении показаны варианты ответа");
   assert(controller.submitBtn.classList.contains("hidden"), "кнопка проверки не скрыта");
   assert(controller.nextBtn.textContent === "Понятно", "не та подпись кнопки");

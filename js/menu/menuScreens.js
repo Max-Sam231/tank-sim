@@ -69,22 +69,20 @@ const MENU_SCREENS = [
         <h1 class="training-title">Ознакомление</h1>
       </div>
       <div class="training-content">
-        <div class="scenario-menu-full">
-          <div class="scenario-menu-content-full">
-            <div class="scenario-menu-title">Выберите режим</div>
-            <button class="scenario-menu-apply-full" data-action="familiarization-study">
-              Изучение
-            </button>
-            <div class="scenario-menu-hint">
-              Клик по органу управления или прибору открывает его название и назначение
-            </div>
-            <button class="scenario-menu-apply-full" data-action="familiarization-quiz">
-              Проверка
-            </button>
-            <div class="scenario-menu-hint">
-              По каждому органу задаются вопросы на знание его устройства и норм
-            </div>
-          </div>
+        <div class="mode-choice">
+          <button class="mode-card" data-action="familiarization-study">
+            <span class="mode-card-title">Изучение</span>
+            <span class="mode-card-text">
+              Клик по органу управления или прибору открывает его назначение,
+              устройство и эксплуатационные нормы
+            </span>
+          </button>
+          <button class="mode-card" data-action="familiarization-quiz">
+            <span class="mode-card-title">Проверка</span>
+            <span class="mode-card-text">
+              По каждому органу задаются вопросы на знание устройства и норм
+            </span>
+          </button>
         </div>
       </div>
 `,
