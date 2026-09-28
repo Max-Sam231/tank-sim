@@ -33,16 +33,6 @@ const GROUPS = [
       { action: "paz-mode", label: "ПАЗ авто / ручной" },
     ],
   },
-  {
-    title: "ОПВТ",
-    items: [
-      { action: "opvt-seal", label: "Герметизация" },
-      { action: "opvt-pipe", label: "Труба" },
-      { action: "opvt-exhaust-seal", label: "Выпуск" },
-      { action: "opvt-pump-check", label: "Проверка насоса" },
-      { action: "opvt-pump", label: "Насос" },
-    ],
-  },
 ];
 
 /**
@@ -82,11 +72,7 @@ function quickStartEngine(state) {
 const SCENARIO_INPUTS = [
   { label: "Завести и прогреть", apply: quickStartEngine },
   { label: "Пожар в МТО", apply: (state) => state.startFire(0.25) },
-  { label: "Забить фильтр", apply: (state) => state.setAirFilterClogging(0.9) },
-  { label: "Промыть фильтр", apply: (state) => state.serviceAirFilter() },
   { label: "Заражение", apply: (state) => state.setContaminated(true) },
-  { label: "В воду (2 м)", apply: (state) => state.setWaterDepth(2) },
-  { label: "На берег", apply: (state) => state.setWaterDepth(0) },
   { label: "Сброс обстановки", apply: (state) => state.clearIncidents() },
 ];
 
@@ -201,8 +187,6 @@ class SystemsTestPanel {
       `Двигатель: ${engine}  ОЖ ${snapshot.coolant_temp.toFixed(0)} °C  скорость ${snapshot.speed_kmh.toFixed(0)} км/ч`,
       `Пожар: ${(snapshot.fire_level * 100).toFixed(0)}%  баллонов: ${3 - snapshot.ppoCylindersUsed}`,
       `Наддув: ${snapshot.compartment_pressure.toFixed(0)} мм`,
-      `Фильтр: ${(snapshot.airFilterClogging * 100).toFixed(0)}%  разрежение ${snapshot.air_filter_vacuum.toFixed(0)}`,
-      `Вода: глубина ${snapshot.water_depth_m} м  уровень ${(snapshot.water_level * 100).toFixed(0)}%`,
       `Охлаждение перед остановкой: ${(snapshot.cooldown_progress * 100).toFixed(0)}%`,
     ];
 

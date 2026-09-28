@@ -107,12 +107,7 @@ const { overheatLimit } = await import("../js/physics/thermalSystem.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
 const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
 const { LIMIT_RULES, TOLERANCE_SEC } = await import("../js/physics/operatingLimits.js");
-const { SERVICE_LIMIT } = await import("../js/physics/airFilter.js");
 const { SPIN_UP_SEC: BLOWER_SPIN_UP_SEC } = await import("../js/physics/nbcProtection.js");
-const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await import(
-  "../js/physics/underwaterDriving.js"
-);
-const { getScenarioDefinition } = await import("../js/scenarios/index.js");
 const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/SystemsTestPanel.js");
 const { AlarmOverlay, ALARMS, activeAlarms } = await import("../js/ui/AlarmOverlay.js");
 const { SmokeEmitter, SMOKE_STYLES } = await import("../js/smoke/SmokeEmitter.js");
@@ -1422,52 +1417,6 @@ check("Нагрузка на непрогретом двигателе запи�
   );
 });
 
-check("Забитый воздухоочиститель виден по разрежению и срезает обороты", () => {
-  const rpmWith = (clogging) => {
-    const { state, run } = startedEngine();
-    state.setShutters("4");
-    state.setAirFilterClogging(clogging);
-    state.setFuelManualFeed(100);
-    run(40);
-    return { rpm: state.sensors.engine_rpm, vacuum: state.sensors.air_filter_vacuum, state };
-  };
-
-  const clean = rpmWith(0);
-  const clogged = rpmWith(0.9);
-
-  assert(clogged.rpm < clean.rpm, `забитый фильтр не срезал обороты: ${clogged.rpm} против ${clean.rpm}`);
-  assert(clogged.vacuum > clean.vacuum, "разрежение не выросло на забитом фильтре");
-  assert(clogged.state.sensors.is_air_filter_clogged, "фильтр не помечен требующим обслуживания");
-  assert(
-    clogged.state.violations.some((v) => v.includes("воздухоочистителем")),
-    "работа с забитым фильтром не записана",
-  );
-});
-
-check("Кассеты фильтра промываются одним действием", () => {
-  const state = new TankState();
-  state.setAirFilterClogging(0.9);
-
-  assert(state.serviceAirFilter(), "фильтр не обслужен");
-  assert(state.airFilterClogging === 0, "загрязнение не сброшено");
-
-  state.tick(1 / 60);
-  assert(!state.sensors.is_air_filter_clogged, "фильтр всё ещё помечен забитым");
-});
-
-check("Порог обслуживания фильтра отражается в признаке", () => {
-  const state = new TankState();
-  const tick = () => state.tick(1 / 60);
-
-  state.setAirFilterClogging(SERVICE_LIMIT - 0.01);
-  tick();
-  assert(!state.sensors.is_air_filter_clogged, "фильтр помечен забитым до порога");
-
-  state.setAirFilterClogging(SERVICE_LIMIT);
-  tick();
-  assert(state.sensors.is_air_filter_clogged, "фильтр не помечен забитым на пороге");
-});
-
 /** Танк с включённой массой и удобным прогоном времени. */
 function poweredTank() {
   const state = new TankState();
@@ -1546,126 +1495,6 @@ check("Ресурс фильтра расходуется только при р
   assert(state.sensors.filter_life_left < 1, "ресурс фильтра не расходуется");
 });
 
-/** Полностью подготовленная к воде машина. */
-function preparedForWater() {
-  const { state, run } = startedEngine();
-  state.toggleOpvtSealed();
-  state.toggleOpvtPipe();
-  state.toggleOpvtExhaustSeal();
-  state.toggleOpvtPumpCheck();
-  state.setShutters("0");
-  return { state, run };
-}
-
-check("Подготовка к воде требует всех шагов", () => {
-  const state = new TankState();
-
-  assert(!isPrepared(state), "неподготовленная машина считается готовой");
-  assert(
-    missingSteps(state).length === PREPARATION_STEPS.length,
-    "перечислены не все невыполненные шаги",
-  );
-
-  state.toggleOpvtSealed();
-  state.toggleOpvtPipe();
-  state.toggleOpvtExhaustSeal();
-  assert(!isPrepared(state), "машина готова без проверки насоса");
-
-  state.toggleOpvtPumpCheck();
-  assert(isPrepared(state), "все шаги выполнены, а машина не готова");
-  assert(missingSteps(state).length === 0, "остались невыполненные шаги");
-});
-
-check("Неподготовленная машина набирает воду", () => {
-  const { state, run } = startedEngine();
-
-  state.setWaterDepth(2);
-  run(5);
-
-  assert(state.sensors.is_flooding, "вода не поступает в негерметичную машину");
-  assert(state.sensors.water_level > 0, "уровень воды не растёт");
-  assert(
-    state.violations.some((v) => v.includes("без подготовки")),
-    `нарушения подготовки не записаны: ${JSON.stringify(state.violations)}`,
-  );
-});
-
-check("Подготовленная машина воду не набирает", () => {
-  const { state, run } = preparedForWater();
-
-  state.setWaterDepth(2);
-  run(10);
-
-  assert(!state.sensors.is_flooding, "подготовленная машина течёт");
-  assert(state.sensors.water_level === 0, "уровень воды вырос в герметичной машине");
-});
-
-check("Открытые жалюзи топят машину даже подготовленную", () => {
-  const { state, run } = preparedForWater();
-
-  state.setShutters("4");
-  state.setWaterDepth(2);
-  run(5);
-
-  assert(state.sensors.is_flooding, "вода не пошла через открытые жалюзи");
-  assert(
-    state.violations.some((v) => v.includes("открытыми жалюзи")),
-    "не записан вход в воду с открытыми жалюзи",
-  );
-});
-
-check("Насос откачивает воду медленнее, чем она поступает", () => {
-  const { state, run } = startedEngine();
-
-  state.setWaterDepth(2);
-  state.toggleOpvtPump();
-  run(10);
-
-  assert(state.sensors.water_level > 0, "вода не поступает при работающем насосе");
-  assert(state.sensors.is_flooding, "насос перекрыл течь полностью");
-});
-
-check("Превышение глубины и остановка под водой записываются", () => {
-  const { state, run } = preparedForWater();
-
-  state.setWaterDepth(PIPE_HEIGHT_M + 1);
-  run(3);
-  assert(
-    state.violations.some((v) => v.includes("глубина брода")),
-    "превышение глубины не записано",
-  );
-
-  state.stopEngine();
-  run(3);
-  assert(
-    state.violations.some((v) => v.includes("остановлен под водой")),
-    "остановка под водой не записана",
-  );
-});
-
-check("Сценарий ОПВТ собирается и описан полностью", () => {
-  const scenario = getScenarioDefinition({ startMethod: "underwater-driving" });
-
-  assert(scenario, "сценарий ОПВТ не найден");
-  assert(scenario.stages.length > 0, "в сценарии нет этапов");
-
-  const ids = new Set();
-  for (const stage of scenario.stages) {
-    assert(stage.title, `этап ${stage.id} без названия`);
-    assert(stage.steps.length > 0, `этап ${stage.id} без шагов`);
-
-    for (const step of stage.steps) {
-      assert(step.title, `шаг ${step.id} без названия`);
-      assert(typeof step.completeWhen === "function", `шаг ${step.id} без условия`);
-      assert(!ids.has(step.id), `повторяющийся шаг ${step.id}`);
-      ids.add(step.id);
-
-      // Шаг засчитывается либо автоматически, либо по взведению
-      assert(step.auto || step.gateKeys?.length, `шаг ${step.id} нельзя ни взвести, ни засчитать`);
-    }
-  }
-});
-
 check("Панель проверки систем ссылается только на существующие действия", () => {
   for (const group of GROUPS) {
     assert(group.title, "у группы нет названия");
@@ -1709,8 +1538,8 @@ check("Кнопки панели меняют состояние танка", ()
   click("Нагнетатель");
   assert(state.blowerOn, "нагнетатель не включился с панели");
 
-  click("Труба");
-  assert(state.opvtPipeInstalled, "труба не установлена с панели");
+  click("Через фильтр");
+  assert(state.filterMode, "подача через фильтр не включилась с панели");
 
   // Сводка обновляется по состоянию
   assert(
@@ -1723,9 +1552,7 @@ check("Сброс обстановки возвращает машину в ис
   const state = new TankState();
 
   state.startFire(0.3);
-  state.setAirFilterClogging(0.9);
   state.setContaminated(true);
-  state.setWaterDepth(3);
   state.dischargePpo();
   for (let i = 0; i < 300; i += 1) state.tick(1 / 60);
 
@@ -1735,11 +1562,9 @@ check("Сброс обстановки возвращает машину в ис
   state.clearIncidents();
 
   assert(state.sensors.fire_level === 0, "пожар не потушен сбросом");
-  assert(state.sensors.water_depth_m === 0, "машина осталась в воде");
-  assert(state.sensors.water_level === 0, "вода осталась внутри");
   assert(!state.sensors.is_contaminated, "заражение не снято");
-  assert(state.airFilterClogging === 0, "фильтр остался забитым");
   assert(state.ppoCylindersUsed === 0, "баллоны не восстановлены");
+  assert(state.filterLifeUsed === 0, "ресурс фильтра-поглотителя не восстановлен");
   assert(state.violations.length === 0, "журнал нарушений не очищен");
 
   // Двигатель сбросом не трогаем: обстановка и машина — разные вещи
@@ -1814,7 +1639,7 @@ check("Аварийная сигнализация показывает пожа
   assert(overlay.rootEl.hidden, "сигнализация осталась после сброса");
 });
 
-check("Сигнализация показывает перегрев и поступление воды", () => {
+check("Сигнализация показывает перегрев", () => {
   const { state, run } = startedEngine();
 
   state.setShutters("0");
@@ -1825,12 +1650,6 @@ check("Сигнализация показывает перегрев и пос�
     `перегрев не в списке аварий: ${state.sensors.coolant_temp} °C`,
   );
 
-  state.setWaterDepth(2);
-  run(2);
-  assert(
-    activeAlarms(state.getSnapshot()).some((a) => a.id === "flooding"),
-    "поступление воды не в списке аварий",
-  );
 });
 
 check("Проверка ламп не выдаётся за аварию", () => {
@@ -1851,7 +1670,6 @@ check("Проверка ламп не выдаётся за аварию", () =>
 check("Каждая авария описана полностью", () => {
   const state = new TankState();
   state.startFire(0.5);
-  state.setWaterDepth(2);
   const snapshot = state.getSnapshot();
 
   const ids = new Set();

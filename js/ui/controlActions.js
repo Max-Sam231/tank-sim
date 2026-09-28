@@ -34,12 +34,6 @@ const CONTROL_ACTIONS = {
   "filter-mode": { call: "toggleFilterMode" },
   "paz-mode": { call: "togglePazMode" },
 
-  // Оборудование подводного вождения
-  "opvt-seal": { call: "toggleOpvtSealed" },
-  "opvt-pipe": { call: "toggleOpvtPipe" },
-  "opvt-exhaust-seal": { call: "toggleOpvtExhaustSeal" },
-  "opvt-pump-check": { call: "toggleOpvtPumpCheck" },
-  "opvt-pump": { call: "toggleOpvtPump" },
 
   "instrument-panel": {
     run: ({ state, ui }) => {

@@ -1,7 +1,6 @@
 import { updatePhysics } from "./physics/index.js";
 import { stopEngine as shutDownEngine, isReadyToStop } from "./physics/engineShutdown.js";
 import { dischargeCylinder, canDischarge } from "./physics/fireSuppression.js";
-import { serviceAirFilter as washFilterCassettes } from "./physics/airFilter.js";
 
 const EMIT_INTERVAL_SEC = 0.25;
 
@@ -82,15 +81,10 @@ class TankState {
       is_smoke_screen_active: false,
       fire_level: 0.0,
       is_fire_detected: false,
-      air_filter_vacuum: 100.0,
-      is_air_filter_clogged: false,
       is_contaminated: false,
       compartment_pressure: 0.0,
       filter_life_left: 1.0,
       is_compartment_sealed: false,
-      water_depth_m: 0.0,
-      water_level: 0.0,
-      is_flooding: false,
     };
 
     this.lamps = {
@@ -115,17 +109,11 @@ class TankState {
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
-    this.airFilterClogging = 0;
     this.pazAuto = true;
     this.blowerOn = false;
     this.filterMode = false;
     this.filterLifeUsed = 0;
     this._blowerSpinUpTime = 0;
-    this.opvtSealed = false;
-    this.opvtPipeInstalled = false;
-    this.opvtExhaustSealed = false;
-    this.opvtPumpChecked = false;
-    this.opvtPumpOn = false;
     this.violations = [];
     this._timeSinceLastEmit = 0;
 
@@ -218,15 +206,10 @@ class TankState {
     this.sensors.is_smoke_screen_active = false;
     this.sensors.fire_level = 0.0;
     this.sensors.is_fire_detected = false;
-    this.sensors.air_filter_vacuum = 100.0;
-    this.sensors.is_air_filter_clogged = false;
     this.sensors.is_contaminated = false;
     this.sensors.compartment_pressure = 0.0;
     this.sensors.filter_life_left = 1.0;
     this.sensors.is_compartment_sealed = false;
-    this.sensors.water_depth_m = 0.0;
-    this.sensors.water_level = 0.0;
-    this.sensors.is_flooding = false;
 
     this.lamps.battery_charge = false;
     this.lamps.oil_pressure_alarm = false;
@@ -248,17 +231,11 @@ class TankState {
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
     this._limitBreachTime = {};
-    this.airFilterClogging = 0;
     this.pazAuto = true;
     this.blowerOn = false;
     this.filterMode = false;
     this.filterLifeUsed = 0;
     this._blowerSpinUpTime = 0;
-    this.opvtSealed = false;
-    this.opvtPipeInstalled = false;
-    this.opvtExhaustSealed = false;
-    this.opvtPumpChecked = false;
-    this.opvtPumpOn = false;
     this.violations = [];
     this._timeSinceLastEmit = 0;
     this._brakeHoldTime = 0;
@@ -359,15 +336,9 @@ class TankState {
       violations: [...this.violations],
       ppoAuto: this.ppoAuto,
       ppoCylindersUsed: this.ppoCylindersUsed,
-      airFilterClogging: this.airFilterClogging,
       pazAuto: this.pazAuto,
       blowerOn: this.blowerOn,
       filterMode: this.filterMode,
-      opvtSealed: this.opvtSealed,
-      opvtPipeInstalled: this.opvtPipeInstalled,
-      opvtExhaustSealed: this.opvtExhaustSealed,
-      opvtPumpChecked: this.opvtPumpChecked,
-      opvtPumpOn: this.opvtPumpOn,
 
       air_left_cylinder: this.sensors.air_left_cylinder,
       air_right_cylinder: this.sensors.air_right_cylinder,
@@ -574,13 +545,10 @@ class TankState {
   clearIncidents() {
     this.sensors.fire_level = 0;
     this.sensors.is_fire_detected = false;
-    this.sensors.water_depth_m = 0;
-    this.sensors.water_level = 0;
     this.sensors.is_contaminated = false;
 
     this.ppoCylindersUsed = 0;
     this._ppoDischargeTime = 0;
-    this.airFilterClogging = 0;
     this.filterLifeUsed = 0;
     this.violations = [];
     this._limitBreachTime = {};
@@ -607,19 +575,6 @@ class TankState {
     return true;
   }
 
-  /** Задаёт загрязнение воздухоочистителя — вводная от преподавателя. */
-  setAirFilterClogging(level) {
-    this.airFilterClogging = this._clamp(Number(level) || 0, 0, 1);
-    this._emit();
-  }
-
-  /** Промывает кассеты воздухоочистителя — нужен ключ из ЗИП. */
-  serviceAirFilter() {
-    if (!washFilterCassettes(this)) return false;
-    this._emit();
-    return true;
-  }
-
   /** Включает нагнетатель фильтровентиляционной установки. */
   toggleBlower() {
     this._toggle("blowerOn");
@@ -638,35 +593,6 @@ class TankState {
   /** Задаёт заражение местности — вводная от преподавателя. */
   setContaminated(isContaminated) {
     this.sensors.is_contaminated = Boolean(isContaminated);
-    this._emit();
-  }
-
-  // --- Оборудование подводного вождения ---------------------------------
-
-  toggleOpvtSealed() {
-    this._toggle("opvtSealed");
-  }
-
-  toggleOpvtPipe() {
-    this._toggle("opvtPipeInstalled");
-  }
-
-  toggleOpvtExhaustSeal() {
-    this._toggle("opvtExhaustSealed");
-  }
-
-  toggleOpvtPumpCheck() {
-    this._toggle("opvtPumpChecked");
-  }
-
-  /** Водооткачивающий насос. */
-  toggleOpvtPump() {
-    this._toggle("opvtPumpOn");
-  }
-
-  /** Заводит машину в воду на заданную глубину — вводная от преподавателя. */
-  setWaterDepth(meters) {
-    this.sensors.water_depth_m = Math.max(0, Number(meters) || 0);
     this._emit();
   }
 

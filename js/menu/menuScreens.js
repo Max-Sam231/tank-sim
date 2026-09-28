@@ -38,7 +38,6 @@ const MENU_SCREENS = [
                 <option value="electric-start">Запуск стартером</option>
                 <option value="combined-start">Комбинированный запуск</option>
                 <option value="heater-warmup">Разогрев подогревателем</option>
-                <option value="underwater-driving">Преодоление водной преграды (ОПВТ)</option>
               </select>
             </label>
             <label class="scenario-menu-field">

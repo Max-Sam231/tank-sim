@@ -20,12 +20,6 @@ const ALARMS = [
     detail: (s) => `очаг ${(s.fire_level * 100).toFixed(0)}%, баллонов ${3 - s.ppoCylindersUsed}`,
   },
   {
-    id: "flooding",
-    text: "ПОСТУПЛЕНИЕ ВОДЫ",
-    isActive: (s) => Boolean(s.is_flooding),
-    detail: (s) => `уровень ${(s.water_level * 100).toFixed(0)}%`,
-  },
-  {
     id: "oil",
     text: "АВАРИЙНОЕ ДАВЛЕНИЕ МАСЛА",
     isActive: (s) => Boolean(s.lamp_oil_pressure_alarm) && Boolean(s.engineRunning),

@@ -3,16 +3,11 @@ import { getPreparationToStart20CScenario } from "./preparation-to-start.js";
 import { getElectricStart20CScenario } from "./electric-start.js";
 import { getCombinedStart20CScenario } from "./combined-start.js";
 import { getHeaterWarmupScenario } from "./heater-warmup.js";
-import { getUnderwaterDrivingScenario } from "./underwater-driving.js";
 
 function getScenarioDefinition({ startMethod, ambientTempC, fuelType }) {
   const method = String(startMethod || "");
   const t = Math.round(Number(ambientTempC));
   const fuel = String(fuelType || "diesel");
-
-  if (method === "underwater-driving") {
-    return getUnderwaterDrivingScenario();
-  }
 
   if (method === "heater-warmup") {
     return getHeaterWarmupScenario(t);

@@ -42,9 +42,7 @@ const TRACKED_SENSORS = [
   "fuel_level_external",
   "cooldown_progress",
   "fire_level",
-  "air_filter_vacuum",
   "compartment_pressure",
-  "water_level",
 ];
 
 const TRACKED_FLAGS = ["engineRunning", "parkingBrakeLatched"];
@@ -305,52 +303,12 @@ const SCENARIOS = {
     },
   },
 
-  "забитый воздухоочиститель душит двигатель": {
-    durationSec: 120,
-    setup: (state) => {
-      prime(state, "electric-start");
-      state.setShutters("4");
-      state.setAirFilterClogging(0.9);
-    },
-    at: {
-      ...ELECTRIC_START_STEPS,
-      30: (state) => state.setFuelManualFeed(100),
-    },
-  },
-
   "заражённая местность с автоматической защитой": {
     durationSec: 60,
     setup: (state) => state.toggleBattery(),
     at: {
       10: (state) => state.setContaminated(true),
       50: (state) => state.setContaminated(false),
-    },
-  },
-
-  "вход в воду без подготовки": {
-    durationSec: 40,
-    setup: (state) => prime(state, "electric-start"),
-    at: {
-      ...ELECTRIC_START_STEPS,
-      30: (state) => state.setWaterDepth(2),
-    },
-  },
-
-  "вход в воду подготовленной машины": {
-    durationSec: 40,
-    setup: (state) => {
-      prime(state, "electric-start");
-      state.toggleOpvtSealed();
-      state.toggleOpvtPipe();
-      state.toggleOpvtExhaustSeal();
-      state.toggleOpvtPumpCheck();
-    },
-    at: {
-      ...ELECTRIC_START_STEPS,
-      30: (state) => {
-        state.toggleOpvtPump();
-        state.setWaterDepth(2);
-      },
     },
   },
 

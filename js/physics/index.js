@@ -7,11 +7,9 @@ import { computeCrankingMode, updateEngineState, updateRpm } from "./engine.js";
 import { updateEngineOil, updateGearboxOil } from "./lubrication.js";
 import { updateHeater, updateTemperatures } from "./thermalSystem.js";
 import { updateSpeed } from "./driveline.js";
-import { updateUnderwaterDriving } from "./underwaterDriving.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
-import { updateAirFilter } from "./airFilter.js";
 import { updateNbcProtection } from "./nbcProtection.js";
 import { updateOperatingLimits } from "./operatingLimits.js";
 import { updateLamps } from "./signalLamps.js";
@@ -47,7 +45,6 @@ function updatePhysics(state, dt) {
   changed = updateEngineState(state, ctx) || changed;
   changed = updateRpm(state, ctx) || changed;
 
-  changed = updateAirFilter(state, ctx) || changed;
   changed = updateEngineOil(state, ctx) || changed;
   changed = updateGearboxOil(state, ctx) || changed;
 
@@ -55,7 +52,6 @@ function updatePhysics(state, dt) {
   changed = updateTemperatures(state, ctx) || changed;
 
   changed = updateSpeed(state, ctx) || changed;
-  changed = updateUnderwaterDriving(state, ctx) || changed;
   changed = updateAmmeter(state, ctx) || changed;
   changed = updateFuelLevels(state, ctx) || changed;
 
