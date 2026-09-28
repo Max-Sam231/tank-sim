@@ -83,6 +83,7 @@ const SCENARIO_INPUTS = [
   { label: "Завести и прогреть", apply: quickStartEngine },
   { label: "Пожар в МТО", apply: (state) => state.startFire(0.25) },
   { label: "Забить фильтр", apply: (state) => state.setAirFilterClogging(0.9) },
+  { label: "Промыть фильтр", apply: (state) => state.serviceAirFilter() },
   { label: "Заражение", apply: (state) => state.setContaminated(true) },
   { label: "В воду (2 м)", apply: (state) => state.setWaterDepth(2) },
   { label: "На берег", apply: (state) => state.setWaterDepth(0) },

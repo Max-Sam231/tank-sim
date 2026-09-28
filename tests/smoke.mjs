@@ -1443,16 +1443,15 @@ check("Забитый воздухоочиститель виден по раз�
   );
 });
 
-check("Кассеты фильтра промываются только с ключом из ЗИП", () => {
+check("Кассеты фильтра промываются одним действием", () => {
   const state = new TankState();
   state.setAirFilterClogging(0.9);
 
-  assert(!state.serviceAirFilter(), "фильтр обслужен без ключа");
-  assert(state.airFilterClogging === 0.9, "загрязнение изменилось без обслуживания");
-
-  state.takeZipKey();
-  assert(state.serviceAirFilter(), "фильтр не обслужен при наличии ключа");
+  assert(state.serviceAirFilter(), "фильтр не обслужен");
   assert(state.airFilterClogging === 0, "загрязнение не сброшено");
+
+  state.tick(1 / 60);
+  assert(!state.sensors.is_air_filter_clogged, "фильтр всё ещё помечен забитым");
 });
 
 check("Порог обслуживания фильтра отражается в признаке", () => {
