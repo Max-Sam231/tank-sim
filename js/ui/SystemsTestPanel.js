@@ -34,18 +34,6 @@ const GROUPS = [
     ],
   },
   {
-    title: "ТВНЕ",
-    items: [{ action: "night-vision", label: "Режим прибора" }],
-  },
-  {
-    // В кабине рычаги берут удержанием; кнопка переключает положение по кругу
-    title: "Рычаги (0 → 1 → 2)",
-    items: [
-      { run: (state) => state.cycleLeftLever(), label: "Левый" },
-      { run: (state) => state.cycleRightLever(), label: "Правый" },
-    ],
-  },
-  {
     title: "ОПВТ",
     items: [
       { action: "opvt-seal", label: "Герметизация" },
@@ -204,7 +192,6 @@ class SystemsTestPanel {
     const readout = this.rootEl.querySelector("[data-test-readout]");
     if (!readout) return;
 
-    const tvne = ["выкл", "пассивный", "активный"][snapshot.tvneMode] || "?";
     const engine = snapshot.engineRunning
       ? `работает ${snapshot.engine_rpm.toFixed(0)} об/мин`
       : "не работает";
@@ -212,9 +199,8 @@ class SystemsTestPanel {
     const lines = [
       `Двигатель: ${engine}  ОЖ ${snapshot.coolant_temp.toFixed(0)} °C  скорость ${snapshot.speed_kmh.toFixed(0)} км/ч`,
       `Пожар: ${(snapshot.fire_level * 100).toFixed(0)}%  баллонов: ${3 - snapshot.ppoCylindersUsed}`,
-      `Наддув: ${snapshot.compartment_pressure.toFixed(0)} мм  ТВНЕ: ${tvne} ${snapshot.night_vision_range.toFixed(0)} м`,
+      `Наддув: ${snapshot.compartment_pressure.toFixed(0)} мм`,
       `Фильтр: ${(snapshot.airFilterClogging * 100).toFixed(0)}%  разрежение ${snapshot.air_filter_vacuum.toFixed(0)}`,
-      `Курс: ${snapshot.heading_deg.toFixed(0)}°  ГПК: ${snapshot.gyro_heading_deg.toFixed(0)}°`,
       `Вода: глубина ${snapshot.water_depth_m} м  уровень ${(snapshot.water_level * 100).toFixed(0)}%`,
       `Охлаждение перед остановкой: ${(snapshot.cooldown_progress * 100).toFixed(0)}%`,
     ];

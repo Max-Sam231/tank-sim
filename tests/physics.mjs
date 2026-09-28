@@ -40,14 +40,10 @@ const TRACKED_SENSORS = [
   "speed_kmh",
   "fuel_level_internal",
   "fuel_level_external",
-  "gyro_spin_up",
   "cooldown_progress",
   "fire_level",
   "air_filter_vacuum",
   "compartment_pressure",
-  "night_vision_range",
-  "heading_deg",
-  "yaw_rate_deg",
   "water_level",
 ];
 
@@ -267,14 +263,6 @@ const SCENARIOS = {
     },
   },
 
-  "разгон гирополукомпаса": {
-    durationSec: 360,
-    setup: (state) => {
-      state.toggleBattery();
-      state.toggleGpk();
-    },
-  },
-
   "прокачка масла КП насосом до пуска": {
     durationSec: 40,
     setup: (state) => {
@@ -336,41 +324,6 @@ const SCENARIOS = {
     at: {
       10: (state) => state.setContaminated(true),
       50: (state) => state.setContaminated(false),
-    },
-  },
-
-  "прибор ночного видения и засветка фарами": {
-    durationSec: 40,
-    setup: (state) => {
-      state.toggleBattery();
-      state.cycleNightVision();
-    },
-    at: {
-      15: (state) => state.toggleLightsAll(),
-      25: (state) => state.toggleLightsAll(),
-    },
-  },
-
-  "движение с поворотом рычагами": {
-    durationSec: 200,
-    setup: (state) => {
-      prime(state, "electric-start");
-      state.setShutters("4");
-    },
-    at: {
-      ...ELECTRIC_START_STEPS,
-      60: (state) => {
-        state.setGearLever("3");
-        state.toggleOilPumpGearbox();
-        state.setFuelManualFeed(100);
-        state.setGasPedal(true);
-      },
-      120: (state) => state.setLever("right", 1),
-      150: (state) => state.setLever("right", 0),
-      170: (state) => {
-        state.setLever("left", 2);
-        state.setLever("right", 2);
-      },
     },
   },
 

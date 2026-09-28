@@ -78,9 +78,6 @@ class TankState {
       fuel_level_external: 400.0,
       is_bcn_active: false,
       is_mzn_active: false,
-      heading_deg: 0.0,
-      gyro_spin_up: 0.0,
-      is_gyro_ready: false,
       cooldown_progress: 0.0,
       is_smoke_screen_active: false,
       fire_level: 0.0,
@@ -91,11 +88,6 @@ class TankState {
       compartment_pressure: 0.0,
       filter_life_left: 1.0,
       is_compartment_sealed: false,
-      night_vision_range: 0.0,
-      night_vision_glare: 0.0,
-      is_night_vision_ready: false,
-      gyro_heading_deg: 0.0,
-      yaw_rate_deg: 0.0,
       water_depth_m: 0.0,
       water_level: 0.0,
       is_flooding: false,
@@ -118,7 +110,6 @@ class TankState {
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
-    this._gyroSpinUpTime = 0;
     this._idleCooldownTime = 0;
     this.ppoAuto = true;
     this.ppoCylindersUsed = 0;
@@ -130,12 +121,6 @@ class TankState {
     this.filterMode = false;
     this.filterLifeUsed = 0;
     this._blowerSpinUpTime = 0;
-    this.tvneMode = 0;
-    this._tvneWarmUpTime = 0;
-    this._tvneGlare = 0;
-    this._gyroDrift = 0;
-    this.leftLever = 0;
-    this.rightLever = 0;
     this.opvtSealed = false;
     this.opvtPipeInstalled = false;
     this.opvtExhaustSealed = false;
@@ -229,9 +214,6 @@ class TankState {
     this.sensors.fuel_level_external = 400.0;
     this.sensors.is_bcn_active = false;
     this.sensors.is_mzn_active = false;
-    this.sensors.heading_deg = 0.0;
-    this.sensors.gyro_spin_up = 0.0;
-    this.sensors.is_gyro_ready = false;
     this.sensors.cooldown_progress = 0.0;
     this.sensors.is_smoke_screen_active = false;
     this.sensors.fire_level = 0.0;
@@ -242,11 +224,6 @@ class TankState {
     this.sensors.compartment_pressure = 0.0;
     this.sensors.filter_life_left = 1.0;
     this.sensors.is_compartment_sealed = false;
-    this.sensors.night_vision_range = 0.0;
-    this.sensors.night_vision_glare = 0.0;
-    this.sensors.is_night_vision_ready = false;
-    this.sensors.gyro_heading_deg = 0.0;
-    this.sensors.yaw_rate_deg = 0.0;
     this.sensors.water_depth_m = 0.0;
     this.sensors.water_level = 0.0;
     this.sensors.is_flooding = false;
@@ -266,7 +243,6 @@ class TankState {
     this._crankTime = 0;
     this._batteryVoltage = 25.0;
     this._oilPrimed = false;
-    this._gyroSpinUpTime = 0;
     this._idleCooldownTime = 0;
     this.ppoAuto = true;
     this.ppoCylindersUsed = 0;
@@ -278,12 +254,6 @@ class TankState {
     this.filterMode = false;
     this.filterLifeUsed = 0;
     this._blowerSpinUpTime = 0;
-    this.tvneMode = 0;
-    this._tvneWarmUpTime = 0;
-    this._tvneGlare = 0;
-    this._gyroDrift = 0;
-    this.leftLever = 0;
-    this.rightLever = 0;
     this.opvtSealed = false;
     this.opvtPipeInstalled = false;
     this.opvtExhaustSealed = false;
@@ -393,9 +363,6 @@ class TankState {
       pazAuto: this.pazAuto,
       blowerOn: this.blowerOn,
       filterMode: this.filterMode,
-      tvneMode: this.tvneMode,
-      leftLever: this.leftLever,
-      rightLever: this.rightLever,
       opvtSealed: this.opvtSealed,
       opvtPipeInstalled: this.opvtPipeInstalled,
       opvtExhaustSealed: this.opvtExhaustSealed,
@@ -668,30 +635,9 @@ class TankState {
     this._toggle("pazAuto");
   }
 
-  /** Переключает ТВНЕ: выключен, пассивный, активный. */
-  cycleNightVision() {
-    this._cycle("tvneMode", 3);
-  }
-
   /** Задаёт заражение местности — вводная от преподавателя. */
   setContaminated(isContaminated) {
     this.sensors.is_contaminated = Boolean(isContaminated);
-    this._emit();
-  }
-
-  /** Переводит рычаг управления: отпущен, первое положение, второе. */
-  cycleLeftLever() {
-    this._cycle("leftLever", 3);
-  }
-
-  cycleRightLever() {
-    this._cycle("rightLever", 3);
-  }
-
-  /** Прямая установка положения рычага — для удержания мышью. */
-  setLever(side, position) {
-    const key = side === "left" ? "leftLever" : "rightLever";
-    this[key] = this._clamp(Number(position) || 0, 0, 2);
     this._emit();
   }
 

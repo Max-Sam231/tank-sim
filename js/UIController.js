@@ -3,14 +3,7 @@ import { ActionModals } from "./ui/ActionModals.js";
 import { Tooltip } from "./ui/Tooltip.js";
 import { renderHitboxLabels } from "./ui/hitboxLabels.js";
 import { parsePolygonPoints, polygonBBox } from "./ui/polygonGeometry.js";
-import {
-  PEDAL_ACTIONS,
-  LEVER_ACTIONS,
-  LEVER_KEYS,
-  LEVER_FIRST_NOTCH,
-  LEVER_SECOND_NOTCH,
-  runControlAction,
-} from "./ui/controlActions.js";
+import { PEDAL_ACTIONS, runControlAction } from "./ui/controlActions.js";
 import { renderStatusConsole } from "./ui/statusConsole.js";
 import { OverlayRenderer } from "./ui/OverlayRenderer.js";
 import { GaugeArrows } from "./ui/GaugeArrows.js";
@@ -67,7 +60,6 @@ class UIController {
     });
 
     this._wireEvents();
-    this._wireLeverKeys();
 
     this._overlays.buildCabinOverlays();
     this._overlays.buildInstrumentPanelOverlays();
@@ -90,56 +82,6 @@ class UIController {
   _notifyAction(action, meta = {}) {
     if (!this.actionNotifier || !action) return;
     this.actionNotifier.notify(action, this.state.getSnapshot(), meta);
-  }
-
-  /**
-   * Берёт рычаг управления на себя.
-   * С Shift — второе положение: подтормаживание гусеницы, резкий поворот.
-   * @returns {boolean} был ли это рычаг
-   */
-  _pressLever(action, event) {
-    const side = LEVER_ACTIONS[action];
-    if (!side) return false;
-
-    event.preventDefault();
-    this.state.setLever(side, event.shiftKey ? LEVER_SECOND_NOTCH : LEVER_FIRST_NOTCH);
-    this._notifyAction(action);
-
-    return true;
-  }
-
-  /** Отпускает оба рычага: курсор мог уйти с того, что был взят. */
-  _releaseLevers() {
-    for (const side of Object.values(LEVER_ACTIONS)) this.state.setLever(side, 0);
-  }
-
-  /** Рычагами удобнее управлять с клавиатуры: обе руки заняты одновременно. */
-  _wireLeverKeys() {
-    window.addEventListener("keydown", (event) => {
-      const action = LEVER_KEYS[event.code];
-      if (!action || event.repeat) return;
-
-      event.preventDefault();
-      this.state.setLever(
-        LEVER_ACTIONS[action],
-        event.shiftKey ? LEVER_SECOND_NOTCH : LEVER_FIRST_NOTCH,
-      );
-    });
-
-    window.addEventListener("keyup", (event) => {
-      const action = LEVER_KEYS[event.code];
-      if (action) this.state.setLever(LEVER_ACTIONS[action], 0);
-
-      // Отпустили Shift, не отпуская рычаг — поворот становится плавным
-      if (event.key === "Shift") {
-        for (const side of Object.values(LEVER_ACTIONS)) {
-          const key = side === "left" ? "leftLever" : "rightLever";
-          if (this.state[key] === LEVER_SECOND_NOTCH) {
-            this.state.setLever(side, LEVER_FIRST_NOTCH);
-          }
-        }
-      }
-    });
   }
 
   /** То, что нужно обработчику действия из таблицы controlActions. */
@@ -279,8 +221,6 @@ class UIController {
       const action = el.dataset.action;
       this._lastAction = action || null;
 
-      if (this._pressLever(action, event)) return;
-
       const setter = PEDAL_ACTIONS[action];
       if (!setter) return;
 
@@ -300,14 +240,12 @@ class UIController {
 
       // Отпускаем обе педали: курсор мог уйти с той, что была нажата
       for (const pedalSetter of Object.values(PEDAL_ACTIONS)) this.state[pedalSetter](false);
-      this._releaseLevers();
     };
 
     window.addEventListener("mouseup", releasePedals);
 
     this.rootEl.addEventListener("mouseleave", () => {
       for (const pedalSetter of Object.values(PEDAL_ACTIONS)) this.state[pedalSetter](false);
-      this._releaseLevers();
     });
 
     this.rootEl.addEventListener(

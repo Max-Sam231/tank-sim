@@ -104,17 +104,11 @@ const { FamiliarizationController } = await import(
 const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiarizationData.js");
 const { getStudyEntry } = await import("../js/familiarization/studyCard.js");
 const { overheatLimit } = await import("../js/physics/thermalSystem.js");
-const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
 const { CYLINDER_COUNT, CRITICAL_LEVEL } = await import("../js/physics/fireSuppression.js");
 const { LIMIT_RULES, TOLERANCE_SEC } = await import("../js/physics/operatingLimits.js");
 const { SERVICE_LIMIT } = await import("../js/physics/airFilter.js");
 const { SPIN_UP_SEC: BLOWER_SPIN_UP_SEC } = await import("../js/physics/nbcProtection.js");
-const { MODE_PASSIVE, MODE_ACTIVE, WARM_UP_SEC, RANGE_PASSIVE_M, RANGE_ACTIVE_M } = await import(
-  "../js/physics/nightVision.js"
-);
-const { LEVER_FIRST, LEVER_SECOND, SHARP_TURN_SPEED_LIMIT, turnDirection, isBrakingWithLevers } =
-  await import("../js/physics/steering.js");
 const { isPrepared, missingSteps, PREPARATION_STEPS, PIPE_HEIGHT_M } = await import(
   "../js/physics/underwaterDriving.js"
 );
@@ -1099,26 +1093,6 @@ check("Освещение видно по вольтамперметру", () =>
   assert(withLights < idle, `со светом ток ${withLights}, без света ${idle}`);
 });
 
-check("Гирополукомпас готов не сразу и теряет разгон без питания", () => {
-  const state = new TankState();
-  state.toggleBattery();
-  state.toggleGpk();
-
-  for (let i = 0; i < 60 * 60; i += 1) state.tick(1 / 60);
-  assert(!state.sensors.is_gyro_ready, "гироскоп готов через минуту, а должен раскручиваться дольше");
-  assert(state.sensors.gyro_spin_up > 0, "разгон не идёт");
-
-  const remaining = Math.ceil(SPIN_UP_SEC - 60) + 5;
-  for (let i = 0; i < remaining * 60; i += 1) state.tick(1 / 60);
-  assert(state.sensors.is_gyro_ready, "гироскоп так и не раскрутился");
-
-  // Снятие массы обесточивает прибор — разгон начинается заново
-  state.toggleBattery();
-  state.tick(1 / 60);
-  assert(!state.sensors.is_gyro_ready, "гироскоп остался готов без питания");
-  assert(state.sensors.gyro_spin_up === 0, "разгон не сбросился");
-});
-
 check("Насос прокачки даёт давление в КП до пуска двигателя", () => {
   const state = new TankState();
   state.toggleBattery();
@@ -1572,149 +1546,6 @@ check("Ресурс фильтра расходуется только при р
   assert(state.sensors.filter_life_left < 1, "ресурс фильтра не расходуется");
 });
 
-check("ТВНЕ выходит на режим и переключает дальность", () => {
-  const { state, run } = poweredTank();
-
-  state.cycleNightVision();
-  assert(state.tvneMode === MODE_PASSIVE, "не включился пассивный режим");
-
-  run(WARM_UP_SEC / 2);
-  assert(!state.sensors.is_night_vision_ready, "прибор готов раньше времени");
-
-  run(WARM_UP_SEC);
-  assert(state.sensors.is_night_vision_ready, "прибор не вышел на режим");
-  assert(
-    Math.round(state.sensors.night_vision_range) === RANGE_PASSIVE_M,
-    `дальность пассивного режима ${state.sensors.night_vision_range}`,
-  );
-
-  state.cycleNightVision();
-  assert(state.tvneMode === MODE_ACTIVE, "не включился активный режим");
-  run(1);
-  assert(
-    Math.round(state.sensors.night_vision_range) === RANGE_ACTIVE_M,
-    `дальность активного режима ${state.sensors.night_vision_range}`,
-  );
-  assert(
-    state.violations.some((v) => v.includes("демаскирует")),
-    "работа с прожектором не отмечена",
-  );
-});
-
-check("Засветка ослепляет ТВНЕ и отпускает не сразу", () => {
-  const { state, run } = poweredTank();
-
-  state.cycleNightVision();
-  run(WARM_UP_SEC + 1);
-  const clear = state.sensors.night_vision_range;
-  assert(clear > 0, "прибор не видит в темноте");
-
-  state.toggleLightsAll();
-  run(2);
-  assert(state.sensors.night_vision_range < clear, "фары не засветили прибор");
-
-  state.toggleLightsAll();
-  run(0.5);
-  assert(state.sensors.night_vision_glare > 0, "засветка спала мгновенно");
-
-  run(5);
-  assert(state.sensors.night_vision_range > 0, "прибор не восстановился после засветки");
-});
-
-/** Заведённый и прогретый танк, идущий на передаче. */
-function movingTank() {
-  const { state, run } = startedEngine();
-  state.setShutters("4");
-  run(60);
-  state.setGearLever("3");
-  state.toggleOilPumpGearbox();
-  state.setFuelManualFeed(100);
-  state.setGasPedal(true);
-  run(30);
-
-  assert(state.sensors.speed_kmh > 1, `машина не поехала: ${state.sensors.speed_kmh} км/ч`);
-  return { state, run };
-}
-
-check("Сторона поворота определяется рычагами", () => {
-  const state = new TankState();
-
-  assert(turnDirection(state) === 0, "без рычагов машина должна идти прямо");
-
-  state.setLever("left", LEVER_FIRST);
-  assert(turnDirection(state) === -1, "левый рычаг не даёт поворот влево");
-
-  state.setLever("left", 0);
-  state.setLever("right", LEVER_FIRST);
-  assert(turnDirection(state) === 1, "правый рычаг не даёт поворот вправо");
-
-  // Оба рычага на себя — это торможение, а не поворот
-  state.setLever("left", LEVER_SECOND);
-  assert(turnDirection(state) === 0, "два рычага дали поворот вместо торможения");
-  assert(isBrakingWithLevers(state), "два рычага не считаются торможением");
-});
-
-check("Поворот меняет курс и срезает скорость", () => {
-  const { state, run } = movingTank();
-
-  const straightSpeed = state.sensors.speed_kmh;
-  const startHeading = state.sensors.heading_deg;
-
-  state.setLever("right", LEVER_FIRST);
-  run(5);
-
-  assert(state.sensors.heading_deg !== startHeading, "курс не изменился в повороте");
-  assert(state.sensors.yaw_rate_deg > 0, "поворот вправо должен давать положительную скорость");
-  assert(state.sensors.speed_kmh < straightSpeed, "поворот не срезал скорость");
-});
-
-check("Резкий поворот круче плавного", () => {
-  const yawAt = (position) => {
-    const { state, run } = movingTank();
-    state.setLever("left", position);
-    run(3);
-    return Math.abs(state.sensors.yaw_rate_deg);
-  };
-
-  assert(yawAt(LEVER_SECOND) > yawAt(LEVER_FIRST), "второе положение не круче первого");
-});
-
-check("Оба рычага останавливают машину", () => {
-  const { state, run } = movingTank();
-
-  state.setLever("left", LEVER_SECOND);
-  state.setLever("right", LEVER_SECOND);
-  run(10);
-
-  assert(state.sensors.speed_kmh < 1, `машина не остановилась: ${state.sensors.speed_kmh} км/ч`);
-});
-
-check("Стоящая машина рычагами не разворачивается", () => {
-  const state = new TankState();
-  state.setLever("right", LEVER_SECOND);
-  state.tick(1 / 60);
-
-  assert(state.sensors.yaw_rate_deg === 0, "стоящая машина развернулась");
-});
-
-check("Гирополукомпас показывает курс со своей ошибкой", () => {
-  const state = new TankState();
-  state.toggleBattery();
-  state.toggleGpk();
-  const run = (sec) => { for (let i = 0; i < sec * 60; i += 1) state.tick(1 / 60); };
-
-  run(SPIN_UP_SEC + 2);
-  assert(state.sensors.is_gyro_ready, "гироскоп не раскрутился");
-
-  const before = state.sensors.gyro_heading_deg;
-  run(120);
-  assert(
-    state.sensors.gyro_heading_deg !== before,
-    "показания прибора не уходят со временем",
-  );
-  assert(state.sensors.heading_deg === 0, "истинный курс изменился у стоящей машины");
-});
-
 /** Полностью подготовленная к воде машина. */
 function preparedForWater() {
   const { state, run } = startedEngine();
@@ -1878,15 +1709,12 @@ check("Кнопки панели меняют состояние танка", ()
   click("Нагнетатель");
   assert(state.blowerOn, "нагнетатель не включился с панели");
 
-  click("Режим прибора");
-  assert(state.tvneMode === 1, "ТВНЕ не переключился с панели");
-
   click("Труба");
   assert(state.opvtPipeInstalled, "труба не установлена с панели");
 
   // Сводка обновляется по состоянию
   assert(
-    panel.rootEl.querySelector("[data-test-readout]").innerHTML.includes("ТВНЕ"),
+    panel.rootEl.querySelector("[data-test-readout]").innerHTML.includes("Наддув"),
     "сводка не отрисовалась",
   );
 });
@@ -2114,101 +1942,6 @@ check("Сигнальные лампы размечены на щитке и з�
   overlays.render(state.getSnapshot());
 
   assert(fireLamp.getAttribute("src") !== off, "лампа пожара не загорелась");
-});
-
-/** UIController на свежей разметке вместе со ссылкой на сцену. */
-function cabinWithUi() {
-  const window = freshDom();
-  const rootEl = window.document.querySelector(".stage") || window.document.body;
-  const state = new TankState();
-
-  new UIController({
-    rootEl,
-    consoleEl: window.document.createElement("div"),
-    state,
-    isDebug: false,
-  });
-
-  return { window, rootEl, state };
-}
-
-check("Рычаги управления размечены в кабине", () => {
-  const window = freshDom();
-
-  for (const action of ["left-lever", "right-lever"]) {
-    const el = window.document.querySelector(`.cabin-hitbox-layer [data-action="${action}"]`);
-    assert(el, `в кабине нет хитбокса рычага ${action}`);
-    assert(el.getAttribute("points"), `у рычага ${action} нет полигона`);
-  }
-});
-
-check("Рычаг берётся удержанием и отпускается", () => {
-  const { window, rootEl, state } = cabinWithUi();
-
-  const lever = rootEl.querySelector('[data-action="left-lever"]');
-  assert(lever, "не найден левый рычаг");
-
-  lever.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
-  assert(state.leftLever === 1, `рычаг не взят: ${state.leftLever}`);
-
-  window.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
-  assert(state.leftLever === 0, "рычаг не отпущен");
-  assert(state.rightLever === 0, "второй рычаг тоже должен быть отпущен");
-});
-
-check("Удержание с Shift даёт второе положение", () => {
-  const { window, rootEl, state } = cabinWithUi();
-
-  const lever = rootEl.querySelector('[data-action="right-lever"]');
-  lever.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true, shiftKey: true }));
-  assert(state.rightLever === 2, `ожидалось второе положение, получено ${state.rightLever}`);
-
-  window.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
-  assert(state.rightLever === 0, "рычаг не отпущен");
-});
-
-check("Рычаги управляются с клавиатуры", () => {
-  const { window, state } = cabinWithUi();
-
-  const key = (type, code, shiftKey = false) =>
-    window.dispatchEvent(new window.KeyboardEvent(type, { code, key: code, shiftKey, bubbles: true }));
-
-  key("keydown", "KeyA");
-  assert(state.leftLever === 1, `клавиша A не взяла левый рычаг: ${state.leftLever}`);
-  key("keyup", "KeyA");
-  assert(state.leftLever === 0, "левый рычаг не отпущен");
-
-  key("keydown", "ArrowRight", true);
-  assert(state.rightLever === 2, "Shift+стрелка не дала резкий поворот");
-
-  // Отпустили Shift, не отпуская рычаг — поворот смягчается
-  window.dispatchEvent(new window.KeyboardEvent("keyup", { key: "Shift", code: "ShiftLeft", bubbles: true }));
-  assert(state.rightLever === 1, `после отпускания Shift ожидалось первое положение: ${state.rightLever}`);
-
-  key("keyup", "ArrowRight");
-  assert(state.rightLever === 0, "правый рычаг не отпущен");
-});
-
-check("Поворот рычагом из кабины меняет курс машины", () => {
-  const { window, rootEl, state } = cabinWithUi();
-
-  const quickStart = SCENARIO_INPUTS.find((input) => input.label.startsWith("Завести"));
-  quickStart.apply(state);
-  state.setGearLever("3");
-  state.toggleOilPumpGearbox();
-  state.setFuelManualFeed(100);
-  state.setGasPedal(true);
-  for (let i = 0; i < 40 * 60; i += 1) state.tick(1 / 60);
-
-  assert(state.sensors.speed_kmh > 1, `машина не поехала: ${state.sensors.speed_kmh}`);
-  const heading = state.sensors.heading_deg;
-
-  rootEl
-    .querySelector('[data-action="right-lever"]')
-    .dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true }));
-  for (let i = 0; i < 5 * 60; i += 1) state.tick(1 / 60);
-
-  assert(state.sensors.heading_deg !== heading, "курс не изменился при повороте рычагом");
 });
 
 check("У каждого органа есть название и описание для изучения", () => {

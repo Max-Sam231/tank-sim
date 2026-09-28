@@ -7,16 +7,13 @@ import { computeCrankingMode, updateEngineState, updateRpm } from "./engine.js";
 import { updateEngineOil, updateGearboxOil } from "./lubrication.js";
 import { updateHeater, updateTemperatures } from "./thermalSystem.js";
 import { updateSpeed } from "./driveline.js";
-import { updateSteering } from "./steering.js";
 import { updateUnderwaterDriving } from "./underwaterDriving.js";
 import { updateCooldown } from "./engineShutdown.js";
 import { updateSmokeScreen } from "./smokeScreen.js";
 import { updateFireSuppression } from "./fireSuppression.js";
 import { updateAirFilter } from "./airFilter.js";
 import { updateNbcProtection } from "./nbcProtection.js";
-import { updateNightVision } from "./nightVision.js";
 import { updateOperatingLimits } from "./operatingLimits.js";
-import { updateGyroCompass } from "./navigation.js";
 import { updateLamps } from "./signalLamps.js";
 
 const MAX_STEP_SEC = 0.25;
@@ -58,7 +55,6 @@ function updatePhysics(state, dt) {
   changed = updateTemperatures(state, ctx) || changed;
 
   changed = updateSpeed(state, ctx) || changed;
-  changed = updateSteering(state, ctx) || changed;
   changed = updateUnderwaterDriving(state, ctx) || changed;
   changed = updateAmmeter(state, ctx) || changed;
   changed = updateFuelLevels(state, ctx) || changed;
@@ -67,8 +63,6 @@ function updatePhysics(state, dt) {
   changed = updateFireSuppression(state, ctx) || changed;
   changed = updateCooldown(state, ctx) || changed;
   changed = updateNbcProtection(state, ctx) || changed;
-  changed = updateNightVision(state, ctx) || changed;
-  changed = updateGyroCompass(state, ctx) || changed;
   changed = updateLamps(state, ctx) || changed;
 
   // Контроль режимов — последним: сверяет уже посчитанные показания
