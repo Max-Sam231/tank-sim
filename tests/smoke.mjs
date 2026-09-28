@@ -2173,6 +2173,18 @@ check("Сигнальные лампы не перекрывают органы 
   }
 
   assert(clashes.length === 0, clashes.join("; "));
+
+  // Щиток нарисован не на весь кадр: за его краем прозрачность, и там
+  // лампа повиснет в пустоте. Держим их в габаритах плиты.
+  const PLATE = { minX: 355, minY: 40, maxX: 1210, maxY: 1065 };
+  for (const lamp of lamps) {
+    const inside =
+      lamp.minX >= PLATE.minX &&
+      lamp.minY >= PLATE.minY &&
+      lamp.maxX <= PLATE.maxX &&
+      lamp.maxY <= PLATE.maxY;
+    assert(inside, `${lamp.name} вне плиты щитка: ${lamp.minX},${lamp.minY}`);
+  }
 });
 
 for (const { name, fn } of checks) {
