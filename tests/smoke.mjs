@@ -2145,6 +2145,36 @@ check("Редактор не даёт клику дойти до органа у
   editor.dispose();
 });
 
+check("Сигнальные лампы не перекрывают органы щитка", () => {
+  const window = freshDom();
+  const layer = window.document.querySelector("svg.instrument-panel-hitbox-layer");
+  assert(layer, "не найден слой щитка приборов");
+
+  /** Габаритный прямоугольник полигона. */
+  const boxOf = (el) => {
+    const points = parsePolygonPoints(el.getAttribute("points"));
+    const bbox = polygonBBox(points);
+    return { name: el.dataset.action || el.dataset.gauge, ...bbox };
+  };
+
+  const boxes = [...layer.querySelectorAll("polygon[points]")].map(boxOf);
+  const lamps = boxes.filter((b) => b.name?.startsWith("lamp-"));
+  assert(lamps.length === 5, `ламп на щитке: ${lamps.length}`);
+
+  const overlaps = (a, b) =>
+    !(a.maxX <= b.minX || b.maxX <= a.minX || a.maxY <= b.minY || b.maxY <= a.minY);
+
+  const clashes = [];
+  for (const lamp of lamps) {
+    for (const other of boxes) {
+      if (other === lamp || other.name?.startsWith("lamp-")) continue;
+      if (overlaps(lamp, other)) clashes.push(`${lamp.name} поверх ${other.name}`);
+    }
+  }
+
+  assert(clashes.length === 0, clashes.join("; "));
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();
