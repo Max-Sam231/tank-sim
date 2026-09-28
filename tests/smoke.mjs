@@ -116,6 +116,7 @@ const { getScenarioDefinition } = await import("../js/scenarios/index.js");
 const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/SystemsTestPanel.js");
 const { AlarmOverlay, ALARMS, activeAlarms } = await import("../js/ui/AlarmOverlay.js");
 const { SmokeEmitter, SMOKE_STYLES } = await import("../js/smoke/SmokeEmitter.js");
+const { HitboxEditor } = await import("../js/ui/HitboxEditor.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -2013,6 +2014,135 @@ check("Прогресс изучения и проверки считается 
   assert(!controller.isStudyMode, "режим проверки не включился");
 
   controller.stop();
+});
+
+/** Слой хитбоксов с заданными экранными размерами. */
+function editorOnLayer({ width = 960, height = 540, preserve = "none" } = {}) {
+  const window = freshDom();
+  const layer = window.document.querySelector("svg.hitbox-layer");
+  assert(layer, "в разметке нет слоя хитбоксов");
+
+  layer.setAttribute("preserveAspectRatio", preserve);
+  layer.getBoundingClientRect = () => ({
+    left: 0,
+    top: 0,
+    width,
+    height,
+    right: width,
+    bottom: height,
+  });
+
+  const editor = new HitboxEditor();
+  const clickAt = (x, y) => {
+    const event = new window.MouseEvent("click", { bubbles: true, clientX: x, clientY: y });
+    layer.dispatchEvent(event);
+  };
+
+  return { window, layer, editor, clickAt };
+}
+
+check("Редактор переводит клики в координаты слоя", () => {
+  const { editor, clickAt } = editorOnLayer({ width: 960, height: 540, preserve: "none" });
+
+  // Слой растянут вдвое: экранные 480×270 — это центр системы 1920×1080
+  clickAt(480, 270);
+  assert(editor.points.length === 1, "точка не добавилась");
+  assert(
+    editor.points[0].x === 960 && editor.points[0].y === 540,
+    `ожидался центр (960,540), получено (${editor.points[0].x},${editor.points[0].y})`,
+  );
+
+  clickAt(0, 0);
+  assert(editor.points[1].x === 0 && editor.points[1].y === 0, "левый верхний угол уехал");
+
+  clickAt(960, 540);
+  assert(
+    editor.points[2].x === 1920 && editor.points[2].y === 1080,
+    "правый нижний угол уехал",
+  );
+
+  editor.dispose();
+});
+
+check("Редактор учитывает поля при вписывании с пропорциями", () => {
+  // Слой 1000×400 ниже, чем 16:9, поэтому картинка вписана по высоте
+  // и поля оказываются по бокам
+  const width = 1000;
+  const height = 400;
+  const { editor, clickAt } = editorOnLayer({ width, height, preserve: "xMidYMid meet" });
+
+  const scale = Math.min(width / 1920, height / 1080);
+  const offsetX = (width - 1920 * scale) / 2;
+  const offsetY = (height - 1080 * scale) / 2;
+  assert(offsetX > 0, "поля должны быть по бокам");
+
+  clickAt(offsetX, offsetY);
+  assert(
+    editor.points[0].x === 0 && editor.points[0].y === 0,
+    `начало картинки должно давать (0,0), получено (${editor.points[0].x},${editor.points[0].y})`,
+  );
+
+  clickAt(width - offsetX, height - offsetY);
+  assert(
+    editor.points[1].x === 1920 && editor.points[1].y === 1080,
+    `конец картинки должен давать (1920,1080), получено (${editor.points[1].x},${editor.points[1].y})`,
+  );
+
+  // Клик в поле за картинкой даёт отрицательную координату — это видно сразу
+  clickAt(0, offsetY);
+  assert(editor.points[2].x < 0, "клик мимо картинки должен быть заметен");
+
+  editor.dispose();
+});
+
+check("Редактор собирает готовую строку разметки", () => {
+  const { window, editor, clickAt } = editorOnLayer();
+
+  editor.rootEl.querySelector("[data-hbe-action]").value = "ppo-discharge";
+
+  clickAt(0, 0);
+  clickAt(480, 0);
+  assert(editor.markup === "", "разметка выдана меньше чем по трём точкам");
+
+  clickAt(480, 270);
+  assert(
+    editor.markup.includes('data-action="ppo-discharge"'),
+    `в разметке нет действия: ${editor.markup}`,
+  );
+  assert(editor.markup.includes('points="0,0 960,0 960,540"'), `не те точки: ${editor.markup}`);
+
+  // Контур показывается прямо на слое
+  assert(window.document.querySelector(".hbe-preview"), "контур не отрисован");
+
+  editor.undo();
+  assert(editor.points.length === 2, "точка не отменилась");
+
+  editor.clear();
+  assert(editor.points.length === 0, "точки не сброшены");
+  assert(!window.document.querySelector(".hbe-preview"), "контур остался после сброса");
+
+  editor.dispose();
+});
+
+check("Редактор не даёт клику дойти до органа управления", () => {
+  const { window, editor } = editorOnLayer();
+
+  const state = new TankState();
+  const rootEl = window.document.querySelector(".stage") || window.document.body;
+  new UIController({
+    rootEl,
+    consoleEl: window.document.createElement("div"),
+    state,
+    isDebug: false,
+  });
+
+  const battery = rootEl.querySelector('[data-action="battery-toggle"]');
+  battery.dispatchEvent(new window.MouseEvent("click", { bubbles: true, clientX: 10, clientY: 10 }));
+
+  assert(!state.isBatteryOn, "клик по разметке переключил массу");
+  assert(editor.points.length === 1, "точка не добавилась");
+
+  editor.dispose();
 });
 
 for (const { name, fn } of checks) {

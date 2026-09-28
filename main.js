@@ -14,12 +14,17 @@ import { SmokeEmitter } from './js/smoke/SmokeEmitter.js';
 import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
 import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
 import { AlarmOverlay } from './js/ui/AlarmOverlay.js';
+import { HitboxEditor } from './js/ui/HitboxEditor.js';
 const APP_MODE = "prod"; // "debug" или "prod" — отладочные хитбоксы и подписи
 const IS_DEBUG = APP_MODE === "debug";
 
 // Панель проверки систем нужна и без отладочных хитбоксов:
 // у новых органов управления пока нет своих полигонов на фоне
 const SHOW_TEST_PANEL = true;
+
+// Редактор хитбоксов: обвести орган на сцене и получить строку разметки.
+// Включать только для разметки — он перехватывает клики по сцене.
+const SHOW_HITBOX_EDITOR = false;
 
 function bootstrap() {
   const sceneEl = document.getElementById("scene");
@@ -119,6 +124,7 @@ function bootstrap() {
   new AlarmOverlay({ state });
 
   if (SHOW_TEST_PANEL) new SystemsTestPanel({ state, ui });
+  if (SHOW_HITBOX_EDITOR) new HitboxEditor();
 
   const training = new TrainingEngine({ state });
   const reportModal = new FinishReportModal({
