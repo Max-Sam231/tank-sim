@@ -49,7 +49,10 @@ class StartMenu {
   get _navTargets() {
     return {
       training: () => this.showScreen("training"),
-      familiarization: () => this.onFamiliarization?.(),
+      // Ознакомление ведёт на выбор режима: изучение или проверка
+      familiarization: () => this.showScreen("familiarization"),
+      "familiarization-study": () => this.onFamiliarization?.("study"),
+      "familiarization-quiz": () => this.onFamiliarization?.("quiz"),
       instruction: () => {
         this.showScreen("instruction");
         this.onInstruction?.();

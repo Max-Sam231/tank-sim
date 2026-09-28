@@ -2813,3 +2813,19 @@ body.familiarization-mode-active .fam-item-inactive {
   pointer-events: none;
   z-index: 21;
 }
+
+/* Карточка режима изучения: только описание органа, без вопросов */
+.fam-study-description {
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 4px 0 8px;
+}
+
+/* Пояснение под кнопкой выбора режима ознакомления */
+.scenario-menu-hint {
+  margin: -6px 0 14px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+}

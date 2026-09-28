@@ -1,10 +1,15 @@
 import { buildCard, renderedOptions, isAnswerCorrect, totalElements } from "./quiz.js";
 import { TOP_BAR_HTML, MODAL_HTML, questionHtml, feedbackHtml } from "./quizMarkup.js";
 import { markStudied, restoreMarks, clearMarks } from "./studiedMarks.js";
+import { getStudyEntry, studyCardHtml } from "./studyCard.js";
 
 /**
  * Режим ознакомления: клик по органу управления открывает карточку
- * с вопросами вместо того, чтобы этот орган переключить.
+ * вместо того, чтобы этот орган переключить.
+ *
+ * Два режима. «Изучение» рассказывает, что это за орган и зачем он —
+ * с ним курсант знакомится с кабиной впервые. «Проверка» по тем же
+ * органам задаёт вопросы. Прогресс у каждого свой.
  *
  * Перехват кликов идёт на фазе погружения по всему окну — так до
  * UIController они не доходят и состояние танка не меняется.
@@ -19,13 +24,30 @@ const PASSTHROUGH_SELECTORS = ["#famTopBar", "#famModal", "[data-action='exit_to
 /** Что считается органом управления при клике по сцене. */
 const INTERACTIVE_SELECTOR = ".hitbox, .overlay-control, [data-gauge], [data-action]";
 
+/** Режимы работы. */
+const MODE_STUDY = "study";
+const MODE_QUIZ = "quiz";
+
+const MODE_TITLES = {
+  [MODE_STUDY]: "Изучение кабины и приборов Т-72",
+  [MODE_QUIZ]: "Проверка: кабина и приборы Т-72",
+};
+
+const MODES = { MODE_STUDY, MODE_QUIZ };
+
 export class FamiliarizationController {
   constructor({ app, onExit }) {
     this.app = app;
     this.onExit = onExit;
 
     this.isActive = false;
-    this.studiedKeys = new Set();
+    this.mode = MODE_STUDY;
+
+    // Прогресс раздельный: изучил — не значит сдал проверку
+    this.progress = {
+      [MODE_STUDY]: new Set(),
+      [MODE_QUIZ]: new Set(),
+    };
 
     this.currentKey = null;
     this.currentCard = null;
@@ -39,9 +61,18 @@ export class FamiliarizationController {
     this._initDOM();
   }
 
+  /** Ключи, пройденные в текущем режиме. */
+  get studiedKeys() {
+    return this.progress[this.mode];
+  }
+
   /** Совместимость с прежним именем поля. */
   get testedElements() {
     return this.studiedKeys;
+  }
+
+  get isStudyMode() {
+    return this.mode === MODE_STUDY;
   }
 
   // --- Разметка ------------------------------------------------------------
@@ -86,13 +117,24 @@ export class FamiliarizationController {
 
   // --- Жизненный цикл режима ----------------------------------------------
 
-  start() {
+  /**
+   * @param {"study"|"quiz"} [mode] изучение или проверка
+   */
+  start(mode = MODE_STUDY) {
+    this.mode = mode === MODE_QUIZ ? MODE_QUIZ : MODE_STUDY;
+
     this.isActive = true;
     this.studiedKeys.clear();
     clearMarks();
 
     document.body.classList.add("familiarization-mode-active");
     this.topBarEl.classList.remove("hidden");
+
+    const titleEl = this.topBarEl.querySelector(".fam-title");
+    if (titleEl) titleEl.textContent = MODE_TITLES[this.mode];
+
+    const badgeEl = this.topBarEl.querySelector(".fam-badge");
+    if (badgeEl) badgeEl.textContent = this.isStudyMode ? "ОЗНАКОМЛЕНИЕ" : "ПРОВЕРКА";
 
     const totalEl = document.getElementById("famTotalCount");
     if (totalEl) totalEl.textContent = String(totalElements());
@@ -146,19 +188,50 @@ export class FamiliarizationController {
 
     if (this.studiedKeys.has(key)) return;
 
-    this.openQuiz(key, targetEl);
+    this.openCard(key, targetEl);
   }
 
   // --- Карточка вопросов ---------------------------------------------------
 
-  openQuiz(key, targetEl = null) {
+  /** Открывает карточку по органу — описание или вопросы, смотря по режиму. */
+  openCard(key, targetEl = null) {
     this.currentKey = key;
-    this.currentCard = buildCard(key);
-    this.currentQuestionIdx = 0;
     this.currentTargetEl = targetEl;
+    this.currentQuestionIdx = 0;
+    this.currentCard = this.isStudyMode ? null : buildCard(key);
 
-    this._renderModal();
+    if (this.isStudyMode) this._renderStudyCard();
+    else this._renderModal();
+
     this.modalEl.classList.remove("hidden");
+  }
+
+  /** Совместимость: прежнее имя метода открывало карточку вопросов. */
+  openQuiz(key, targetEl = null) {
+    this.openCard(key, targetEl);
+  }
+
+  /** Карточка изучения: название, тип и описание органа. */
+  _renderStudyCard() {
+    const entry = getStudyEntry(this.currentKey);
+
+    const tagEl = document.getElementById("famModalTag");
+    const titleEl = document.getElementById("famModalTitle");
+    const bodyEl = document.getElementById("famModalBody");
+
+    if (tagEl) tagEl.textContent = this._elementTag(entry.id);
+    if (titleEl) titleEl.textContent = entry.title;
+    if (bodyEl) bodyEl.innerHTML = studyCardHtml(entry);
+
+    // Проверять нечего: карточка закрывается одной кнопкой
+    this.submitBtn.classList.add("hidden");
+    this.nextBtn.textContent = "Понятно";
+    this.nextBtn.classList.remove("hidden");
+  }
+
+  /** Приборы щитка и органы управления подписаны по-разному. */
+  _elementTag(id) {
+    return String(id).startsWith("gauge-") ? "ПРИБОР КИП" : "ОРГАН УПРАВЛЕНИЯ";
   }
 
   closeModal() {
@@ -171,18 +244,17 @@ export class FamiliarizationController {
   }
 
   get _currentQuestion() {
-    return this.currentCard?.questions[this.currentQuestionIdx];
+    return this.currentCard?.questions?.[this.currentQuestionIdx];
   }
 
   _renderModal() {
     if (!this.currentCard) return;
 
     const question = this._currentQuestion;
-    const isGauge = this.currentCard.id.startsWith("gauge-");
 
     const tagEl = document.getElementById("famModalTag");
     const titleEl = document.getElementById("famModalTitle");
-    if (tagEl) tagEl.textContent = isGauge ? "ПРИБОР КИП" : "ОРГАН УПРАВЛЕНИЯ";
+    if (tagEl) tagEl.textContent = this._elementTag(this.currentCard.id);
     if (titleEl) titleEl.textContent = this.currentCard.title;
 
     this.isAnswered = false;
@@ -296,6 +368,12 @@ export class FamiliarizationController {
   }
 
   _handleNextStep() {
+    if (this.isStudyMode) {
+      this._completeCard();
+      this.closeModal();
+      return;
+    }
+
     if (this.currentQuestionIdx + 1 < this.currentCard.questions.length) {
       this.currentQuestionIdx += 1;
       this._renderModal();
@@ -325,3 +403,5 @@ export class FamiliarizationController {
     if (fillEl) fillEl.style.width = `${percent}%`;
   }
 }
+
+export { MODE_STUDY, MODE_QUIZ, MODES };

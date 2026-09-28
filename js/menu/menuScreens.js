@@ -62,6 +62,35 @@ const MENU_SCREENS = [
 `,
   },
   {
+    name: "familiarization",
+    className: "start-screen start-screen-familiarization",
+    html: `
+      <div class="training-header">
+        <button class="training-back" data-action="back">← Назад</button>
+        <h1 class="training-title">Ознакомление</h1>
+      </div>
+      <div class="training-content">
+        <div class="scenario-menu-full">
+          <div class="scenario-menu-content-full">
+            <div class="scenario-menu-title">Выберите режим</div>
+            <button class="scenario-menu-apply-full" data-action="familiarization-study">
+              Изучение
+            </button>
+            <div class="scenario-menu-hint">
+              Клик по органу управления или прибору открывает его название и назначение
+            </div>
+            <button class="scenario-menu-apply-full" data-action="familiarization-quiz">
+              Проверка
+            </button>
+            <div class="scenario-menu-hint">
+              По каждому органу задаются вопросы на знание его устройства и норм
+            </div>
+          </div>
+        </div>
+      </div>
+`,
+  },
+  {
     name: "instruction",
     className: "start-screen start-screen-instruction",
     html: `

@@ -102,6 +102,7 @@ const { FamiliarizationController } = await import(
   "../js/familiarization/FamiliarizationController.js"
 );
 const { FAMILIARIZATION_DATA } = await import("../js/familiarization/familiarizationData.js");
+const { getStudyEntry } = await import("../js/familiarization/studyCard.js");
 const { overheatLimit } = await import("../js/physics/thermalSystem.js");
 const { SPIN_UP_SEC } = await import("../js/physics/navigation.js");
 const { isTcaEngaged, MIN_COOLANT_C, MIN_RPM } = await import("../js/physics/smokeScreen.js");
@@ -761,12 +762,15 @@ function buildMenu() {
   const rootEl = window.document.createElement("div");
   window.document.body.appendChild(rootEl);
 
-  const calls = { training: [], instruction: 0, familiarization: 0 };
+  const calls = { training: [], instruction: 0, familiarization: 0, modes: [] };
   const menu = new StartMenu({
     rootEl,
     onTrainingStart: (scenario) => calls.training.push(scenario),
     onInstruction: () => (calls.instruction += 1),
-    onFamiliarization: () => (calls.familiarization += 1),
+    onFamiliarization: (mode) => {
+      calls.familiarization += 1;
+      calls.modes.push(mode);
+    },
   });
 
   const click = (selector) => {
@@ -812,10 +816,13 @@ check("Кнопки меню переключают экраны и зовут �
   click('[data-action="authors"]');
   assert(menu.currentScreen === "authors", "не открылся экран авторов");
 
+  // Ознакомление ведёт на выбор режима, а не сразу в режим
   click('[data-action="familiarization"]');
-  assert(calls.familiarization === 1, "обработчик ознакомления не вызван");
-  // Ознакомление не экран меню, а отдельный режим — меню остаётся где было
-  assert(menu.currentScreen === "authors", "ознакомление не должно менять экран меню");
+  assert(menu.currentScreen === "familiarization", "не открылся выбор режима ознакомления");
+  assert(calls.familiarization === 0, "режим запустился до выбора");
+
+  click('[data-action="familiarization-study"]');
+  assert(calls.familiarization === 1, "изучение не запустилось");
 });
 
 check("Только один экран меню активен одновременно", () => {
@@ -997,10 +1004,10 @@ check("Режим ознакомления включается и показы�
 check("Карточка проходится до конца и засчитывает орган", () => {
   const window = freshDom();
   const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
-  controller.start();
+  controller.start("quiz");
 
   const key = Object.keys(FAMILIARIZATION_DATA)[0];
-  controller.openQuiz(key, null);
+  controller.openCard(key, null);
   assert(!controller.modalEl.classList.contains("hidden"), "карточка не открылась");
 
   const click = (el) => el.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
@@ -2202,6 +2209,78 @@ check("Поворот рычагом из кабины меняет курс м�
   for (let i = 0; i < 5 * 60; i += 1) state.tick(1 / 60);
 
   assert(state.sensors.heading_deg !== heading, "курс не изменился при повороте рычагом");
+});
+
+check("У каждого органа есть название и описание для изучения", () => {
+  for (const key of Object.keys(FAMILIARIZATION_DATA)) {
+    const entry = getStudyEntry(key);
+    assert(entry.title, `${key}: нет названия`);
+    assert(entry.description, `${key}: нет описания`);
+  }
+
+  // Незнакомый орган не должен ронять режим
+  const unknown = getStudyEntry("такого-органа-нет");
+  assert(unknown.title && unknown.description, "нет запасного описания");
+});
+
+check("Режим изучения показывает описание, а не вопросы", () => {
+  const window = freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+
+  controller.start("study");
+  assert(controller.isStudyMode, "режим изучения не включился");
+
+  const key = Object.keys(FAMILIARIZATION_DATA)[0];
+  controller.openCard(key, null);
+
+  const body = window.document.getElementById("famModalBody");
+  assert(
+    body.querySelector(".fam-study-description"),
+    "не показано описание органа",
+  );
+  assert(!body.querySelector(".fam-option-card"), "в изучении показаны варианты ответа");
+  assert(controller.submitBtn.classList.contains("hidden"), "кнопка проверки не скрыта");
+  assert(controller.nextBtn.textContent === "Понятно", "не та подпись кнопки");
+
+  const title = window.document.getElementById("famModalTitle").textContent;
+  assert(title === FAMILIARIZATION_DATA[key].title, `заголовок не совпал: ${title}`);
+
+  controller.stop();
+});
+
+check("Изученный орган засчитывается одной кнопкой", () => {
+  const window = freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+  controller.start("study");
+
+  const key = Object.keys(FAMILIARIZATION_DATA)[0];
+  controller.openCard(key, null);
+  controller.nextBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+  assert(controller.studiedKeys.has(key), "орган не засчитан");
+  assert(controller.modalEl.classList.contains("hidden"), "карточка не закрылась");
+  assert(
+    window.document.getElementById("famProgressCount").textContent === "1",
+    "прогресс не увеличился",
+  );
+
+  controller.stop();
+});
+
+check("Прогресс изучения и проверки считается раздельно", () => {
+  freshDom();
+  const controller = new FamiliarizationController({ app: {}, onExit: () => {} });
+  const key = Object.keys(FAMILIARIZATION_DATA)[0];
+
+  controller.start("study");
+  controller.studiedKeys.add(key);
+  assert(controller.studiedKeys.size === 1, "изучение не засчиталось");
+
+  controller.start("quiz");
+  assert(controller.studiedKeys.size === 0, "проверка унаследовала прогресс изучения");
+  assert(!controller.isStudyMode, "режим проверки не включился");
+
+  controller.stop();
 });
 
 for (const { name, fn } of checks) {

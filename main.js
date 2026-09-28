@@ -249,7 +249,7 @@ function bootstrap() {
       startLoop();
     },
 
-    onFamiliarization: () => {
+    onFamiliarization: (mode) => {
       audioManager.init();
       audioManager.stopAll();
       stopLoop();
@@ -258,7 +258,7 @@ function bootstrap() {
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
       changeScene("driver");
-      familiarization.start();
+      familiarization.start(mode);
     },
 
     onInstruction: () => {
