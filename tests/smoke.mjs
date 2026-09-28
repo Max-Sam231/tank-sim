@@ -2021,6 +2021,25 @@ check("Сигнальные лампы не перекрывают органы 
   }
 });
 
+check("Клик по тексту внутри кнопки меню срабатывает", () => {
+  const { menu, calls, rootEl, window } = buildMenu();
+
+  menu.showScreen("familiarization");
+
+  // Курсант попадает по надписи, а не по краю кнопки: событие приходит
+  // на вложенный элемент, у которого своего data-action нет
+  const label = rootEl.querySelector(
+    '[data-action="familiarization-study"] .mode-card-title',
+  );
+  assert(label, "не найдена подпись кнопки изучения");
+  assert(!label.dataset.action, "подпись сама несёт действие — проверка бессмысленна");
+
+  label.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+
+  assert(calls.familiarization === 1, "режим не запустился при клике по тексту");
+  assert(calls.modes[0] === "study", `запущен не тот режим: ${calls.modes[0]}`);
+});
+
 for (const { name, fn } of checks) {
   try {
     await fn();

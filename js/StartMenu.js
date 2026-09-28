@@ -64,7 +64,10 @@ class StartMenu {
 
   _wireEvents() {
     this.rootEl.addEventListener("click", (event) => {
-      this._navTargets[event.target.dataset.action]?.();
+      // Ищем ближайшего носителя действия: у кнопки может быть вложенная
+      // разметка, и клик приходит на внутренний элемент, а не на неё саму
+      const actionEl = event.target.closest("[data-action]");
+      this._navTargets[actionEl?.dataset.action]?.();
     });
 
     this._wireInstructionTabs();
