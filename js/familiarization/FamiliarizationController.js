@@ -223,10 +223,48 @@ export class FamiliarizationController {
     if (titleEl) titleEl.textContent = entry.title;
     if (bodyEl) bodyEl.innerHTML = studyCardHtml(entry);
 
+    // Сохраняем sources для переключения
+    this.currentSources = entry.sources;
+
+    // Добавляем обработчики для переключения источников
+    if (entry.sources && entry.sources.length > 1) {
+      const sourceButtons = bodyEl.querySelectorAll(".fam-source-btn");
+      sourceButtons.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const index = parseInt(e.target.dataset.index, 10);
+          this._switchSource(index);
+        });
+      });
+    }
+
     // Проверять нечего: карточка закрывается одной кнопкой
     this.submitBtn.classList.add("hidden");
     this.nextBtn.textContent = "Понятно";
     this.nextBtn.classList.remove("hidden");
+  }
+
+  /** Переключение между источниками */
+  _switchSource(index) {
+    const source = this.currentSources?.[index];
+    if (!source) return;
+
+    // Обновляем описание
+    const descEl = document.querySelector(".fam-study-description");
+    if (descEl) descEl.textContent = source.description;
+
+    // Обновляем ссылку на источник
+    const sourceEl = document.querySelector(".fam-study-source");
+    if (sourceEl) sourceEl.textContent = source.reference;
+
+    // Обновляем активную кнопку
+    const buttons = document.querySelectorAll(".fam-source-btn");
+    buttons.forEach((btn, idx) => {
+      if (idx === index) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
   }
 
   /** Приборы щитка и органы управления подписаны по-разному. */

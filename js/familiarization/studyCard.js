@@ -40,16 +40,28 @@ function uniqueFacts(questions) {
 
 /**
  * Что показать по органу управления.
- * @returns {{id: string, title: string, description: string, facts: string[]}}
+ * @returns {{id: string, title: string, description: string, facts: string[], source?: string, sources?: Array<{name: string, description: string, reference: string}>}}
  */
 function getStudyEntry(key) {
   const entry = FAMILIARIZATION_DATA[key] || fallbackEntry(key);
 
+  // Если есть несколько источников, используем первый по умолчанию
+  let description = entry.description;
+  let source = entry.source;
+
+  // Если есть sources, берем описание из первого источника
+  if (entry.sources && entry.sources.length > 0) {
+    description = entry.sources[0].description;
+    source = entry.sources[0].reference;
+  }
+
   return {
     id: entry.id || key,
     title: entry.title,
-    description: entry.description,
+    description,
     facts: uniqueFacts(entry.questions || []),
+    source,
+    sources: entry.sources || null,
   };
 }
 
@@ -57,14 +69,45 @@ function getStudyEntry(key) {
 function studyCardHtml(entry) {
   const description = `<div class="fam-study-description">${entry.description}</div>`;
 
-  if (entry.facts.length === 0) return description;
+  let factsSection = "";
+  if (entry.facts.length > 0) {
+    const facts = entry.facts.map((text) => `<li>${text}</li>`).join("");
+    factsSection = `
+      <div class="fam-study-section">Устройство и нормы</div>
+      <ul class="fam-study-facts">${facts}</ul>
+    `;
+  }
 
-  const facts = entry.facts.map((text) => `<li>${text}</li>`).join("");
+  let sourceSection = "";
+  let sourceSwitcher = "";
+
+  if (entry.sources && entry.sources.length > 1) {
+    // Переключатель между источниками
+    const sourceButtons = entry.sources.map((src, idx) => `
+      <button class="fam-source-btn ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+        ${src.name}
+      </button>
+    `).join("");
+
+    sourceSwitcher = `
+      <div class="fam-source-switcher">
+        <span class="fam-source-label">Источник:</span>
+        <div class="fam-source-buttons">${sourceButtons}</div>
+      </div>
+    `;
+
+    // Показываем ссылку на активный источник
+    const activeSource = entry.sources[0];
+    sourceSection = `<div class="fam-study-source">${activeSource.reference}</div>`;
+  } else if (entry.source) {
+    sourceSection = `<div class="fam-study-source">Источник: ${entry.source}</div>`;
+  }
 
   return `
     ${description}
-    <div class="fam-study-section">Устройство и нормы</div>
-    <ul class="fam-study-facts">${facts}</ul>
+    ${factsSection}
+    ${sourceSwitcher}
+    ${sourceSection}
   `;
 }
 
