@@ -1,5 +1,5 @@
 /**
- * Дымовой тест: поднимает index.html в jsdom, инициализирует UIController
+ * Дымовой тест: поднимает sim.html в jsdom, инициализирует UIController
  * поверх настоящей разметки и проверяет, что ключевые элементы интерфейса живы.
  *
  * Запуск: npm run smoke
@@ -22,11 +22,11 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-/** Поднимает DOM из index.html и отдаёт готовое окно. */
+/** Поднимает DOM из sim.html и отдаёт готовое окно. */
 function bootDom() {
-  const html = readFileSync(resolve(ROOT, "index.html"), "utf8");
+  const html = readFileSync(resolve(ROOT, "sim.html"), "utf8");
   const dom = new JSDOM(html, {
-    url: pathToFileURL(resolve(ROOT, "index.html")).href,
+    url: pathToFileURL(resolve(ROOT, "sim.html")).href,
     pretendToBeVisual: true,
   });
 
@@ -63,7 +63,7 @@ function bootDom() {
 let window = bootDom();
 
 /**
- * Свежий DOM из index.html для теста, который вешает обработчики.
+ * Свежий DOM из sim.html для теста, который вешает обработчики.
  * Контроллеры помечают разметку data-bound="1", поэтому повторная привязка
  * в том же документе молча не сработала бы, а слушатели прошлого теста
  * продолжили бы работать со своим состоянием.

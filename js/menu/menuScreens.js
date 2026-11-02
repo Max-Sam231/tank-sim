@@ -15,6 +15,7 @@ const MENU_SCREENS = [
         <button class="start-nav-item" data-action="familiarization">Ознакомление</button>
         <button class="start-nav-item" data-action="instruction">Инструкция</button>
         <button class="start-nav-item" data-action="authors">Авторы</button>
+        <a class="start-nav-item start-nav-home" href="/">На главную</a>
       </nav>
 `,
   },

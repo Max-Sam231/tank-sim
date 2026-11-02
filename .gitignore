@@ -146,3 +146,36 @@ vite.config.ts.timestamp-*
 *.pdf
 *.doc
 *.txt
+
+# macOS
+.DS_Store
+__MACOSX/
+
+# --- 3D-модель T-72 (только локально, не коммитить и не пушить) ---
+t-72-outdated/
+models/t72/**
+!models/t72/README.md
+models/t72b3/
+
+# Локальный Blender для экспорта (не в репозиторий)
+tools/blender-portable/
+tools/blender.zip
+
+# Исходники и экспорты (Blender / web / CAD)
+*.blend
+*.blend1
+*.glb
+*.gltf
+*.fbx
+*.obj
+*.usdz
+*.stl
+*.dae
+*.3ds
+*.max
+*.mb
+*.ma
+
+# Тяжёлые карты текстур модели (если лежат вне папок выше)
+**/textures/*8k*
+**/textures/*8K*

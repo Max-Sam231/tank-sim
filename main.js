@@ -127,6 +127,10 @@ function bootstrap() {
   if (SHOW_HITBOX_EDITOR) new HitboxEditor();
 
   const training = new TrainingEngine({ state });
+
+  /** Открыть главное меню поверх 3D-танка в ангаре. */
+  let openStartMenu = () => {};
+
   const reportModal = new FinishReportModal({
     onContinue: () => {
       startLoop();
@@ -137,7 +141,7 @@ function bootstrap() {
       audioManager.stopAll();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
-      startMenu.show();
+      openStartMenu();
     },
   });
 
@@ -217,8 +221,7 @@ function bootstrap() {
     app,
     onExit: () => {
       audioManager.stopAll();
-      changeScene("hangar");
-      startMenu.show();
+      openStartMenu();
     },
   });
 
@@ -247,6 +250,8 @@ function bootstrap() {
         fuelType,
       });
 
+      document.body.classList.remove("menu-open");
+      hangarScene.leaveMenuBackdrop();
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.remove("hidden");
       document.getElementById("inventoryBar")?.classList.remove("hidden");
@@ -260,6 +265,8 @@ function bootstrap() {
       audioManager.stopAll();
       stopLoop();
       state.reset();
+      document.body.classList.remove("menu-open");
+      hangarScene.leaveMenuBackdrop();
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
@@ -272,6 +279,13 @@ function bootstrap() {
       audioManager.init(); 
     },
   });
+
+  openStartMenu = () => {
+    document.body.classList.add("menu-open");
+    startMenu.show();
+    changeScene("hangar");
+    hangarScene.enterMenuBackdrop();
+  };
 
   // 6. Обработчики кнопок
   if (finishBtnEl) {
@@ -298,10 +312,9 @@ function bootstrap() {
     });
   }
 
-  // 7. Запуск
+  // 7. Запуск — меню поверх 3D-танка в ангаре
   FullscreenManager.setup();
-  startMenu.show();
-  changeScene("hangar");
+  openStartMenu();
 }
 
 if (document.readyState === "loading") {
