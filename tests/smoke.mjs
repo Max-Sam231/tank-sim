@@ -112,6 +112,8 @@ const { SystemsTestPanel, GROUPS, SCENARIO_INPUTS } = await import("../js/ui/Sys
 const { AlarmOverlay, ALARMS, activeAlarms } = await import("../js/ui/AlarmOverlay.js");
 const { SmokeEmitter, SMOKE_STYLES } = await import("../js/smoke/SmokeEmitter.js");
 const { HitboxEditor } = await import("../js/ui/HitboxEditor.js");
+const { ZipBoxModal } = await import("../js/ui/ZipBoxModal.js");
+const { ZIP_BOX_2_ITEMS } = await import("../js/scenes/hangar/zipBox2Data.js");
 
 /** Предсказуемый источник случайности: всегда берёт первый элемент. */
 const firstAlways = () => 0;
@@ -418,6 +420,64 @@ check("Подсказка ящика ЗИП отражает состояние"
   state.takeExhaustCap();
   zip.syncDOM();
   assert(hintEl.textContent === "Козырёк у вас", `неожиданная подсказка: ${hintEl.textContent}`);
+});
+
+check("Модальное окно ящика ЗИП №2 отображает 31 предмет и управляет снаряжением", () => {
+  freshDom();
+  const state = new TankState();
+  const modal = new ZipBoxModal({ state });
+  assert(modal.items.length === 31, "не все 31 предмет в ЗИП №2");
+
+  modal.show();
+  
+  // Проверка режима раскладки (по умолчанию collage)
+  assert(modal.viewMode === "collage", "по умолчанию должен быть режим раскладки collage");
+  const boardItems = modal.rootEl.querySelectorAll(".zip-board-item");
+  assert(boardItems.length === 31, `ожидалось 31 предмет на доске, найдено ${boardItems.length}`);
+
+  // Проверка правильного соответствия предметов:
+  const item13 = modal.items.find((it) => it.pos === 13);
+  assert(item13.name === "Козырёк выхлопа подогревателя", `неверное имя поз 13: ${item13.name}`);
+  assert(item13.img.includes("pos13.png"), "поз 13 должна указывать на pos13.png");
+
+  const item14 = modal.items.find((it) => it.pos === 14);
+  assert(item14.name === "Ключ предельный динамометрический", `неверное имя поз 14: ${item14.name}`);
+  assert(item14.img.includes("pos14.png"), "поз 14 должна указывать на pos14.png");
+
+  const item25 = modal.items.find((it) => it.pos === 25);
+  assert(item25.name === "Гайки пальца гусеницы (4 шт.)", `неверное имя поз 25: ${item25.name}`);
+  assert(item25.img.includes("pos25.png"), "поз 25 должна указывать на pos25.png");
+
+  // Переключение в режим сетки (grid)
+  modal._setViewMode("grid");
+  const cards = modal.rootEl.querySelectorAll(".zip-card");
+  assert(cards.length === 31, `ожидалось 31 карточка в режиме сетки, найдено ${cards.length}`);
+
+  // Проверка фильтрации поиска
+  modal.searchInputEl.value = "кувалда";
+  modal.searchInputEl.dispatchEvent(new window.Event("input"));
+  const filtered = modal.rootEl.querySelectorAll(".zip-card");
+  assert(filtered.length === 1, `ожидалась 1 карточка по запросу 'кувалда', найдено ${filtered.length}`);
+
+  // Сброс поиска
+  modal.searchInputEl.value = "";
+  modal.searchInputEl.dispatchEvent(new window.Event("input"));
+  assert(modal.rootEl.querySelectorAll(".zip-card").length === 31, "сброс поиска не вернул карточки");
+
+  // Проверка взятия ключа S=27 через модалку
+  assert(!state.hasZipKey, "ключ уже взят");
+  modal._takeItemByPos(20);
+  assert(state.hasZipKey, "ключ S=27 не взялся через модалку ЗИП");
+
+  // Проверка взятия козырька через модалку
+  assert(!state.hasExhaustCap, "козырёк уже взят");
+  modal._takeItemByPos(13);
+  assert(state.hasExhaustCap, "козырёк выхлопа не взялся через модалку ЗИП");
+
+  // Проверка верхней кнопки в разметке index.html
+  const topBtn = window.document.getElementById("zipBox2ModalBtn");
+  assert(topBtn, "не найдена кнопка zipBox2ModalBtn в index.html");
+  assert(topBtn.textContent.includes("2 ящик ЗИП"), "неверная надпись на кнопке верхнего бара");
 });
 
 check("Каждое действие из таблицы имеет рабочий обработчик", () => {

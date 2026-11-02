@@ -15,6 +15,7 @@ import { FamiliarizationController } from './js/familiarization/FamiliarizationC
 import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
 import { AlarmOverlay } from './js/ui/AlarmOverlay.js';
 import { HitboxEditor } from './js/ui/HitboxEditor.js';
+import { ZipBoxModal } from './js/ui/ZipBoxModal.js';
 const APP_MODE = "prod"; // "debug" или "prod" — отладочные хитбоксы и подписи
 const IS_DEBUG = APP_MODE === "debug";
 
@@ -31,6 +32,8 @@ function bootstrap() {
   const consoleEl = document.getElementById("debugConsole");
   const startMenuContainerEl = document.getElementById("startMenuContainer");
   const finishBtnEl = document.getElementById("simFinishButton");
+  const topToolbarEl = document.getElementById("simTopToolbar");
+  const zipBox2Btn = document.getElementById("zipBox2ModalBtn");
 
   if (!sceneEl || !consoleEl || !startMenuContainerEl) return;
 
@@ -137,6 +140,8 @@ function bootstrap() {
       audioManager.stopAll();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
+      topToolbarEl?.classList.add("hidden");
+      zipBoxModal.hide();
       startMenu.show();
     },
   });
@@ -159,6 +164,14 @@ function bootstrap() {
   const hangarScene = new HangarScene(app);
   const driverScene = new DriverScene(app);
   const commanderScene = new CommanderScene(app);
+
+  const zipBoxModal = new ZipBoxModal({
+    state,
+    onInventoryChange: (snapshot) => {
+      updateInventoryBar(snapshot);
+      hangarScene?.zipBox?.syncDOM();
+    },
+  });
 
   const changeScene = (name, sceneId) => {
     switch (name) {
@@ -250,6 +263,7 @@ function bootstrap() {
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.remove("hidden");
       document.getElementById("inventoryBar")?.classList.remove("hidden");
+      topToolbarEl?.classList.remove("hidden");
       updateInventoryBar(state.getSnapshot());
       changeScene("hangar");
       startLoop();
@@ -263,6 +277,8 @@ function bootstrap() {
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
       document.getElementById("inventoryBar")?.classList.add("hidden");
+      topToolbarEl?.classList.add("hidden");
+      zipBoxModal.hide();
       changeScene("driver");
       familiarization.start(mode);
     },
@@ -295,6 +311,19 @@ function bootstrap() {
   if (zipBackBtn) {
     zipBackBtn.addEventListener("click", () => {
       changeScene("hangar");
+    });
+  }
+
+  if (zipBox2Btn) {
+    zipBox2Btn.addEventListener("click", () => {
+      zipBoxModal.show();
+    });
+  }
+
+  const openZipBoxModalFromSceneBtn = document.getElementById("openZipBoxModalFromSceneBtn");
+  if (openZipBoxModalFromSceneBtn) {
+    openZipBoxModalFromSceneBtn.addEventListener("click", () => {
+      zipBoxModal.show();
     });
   }
 

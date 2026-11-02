@@ -18,6 +18,14 @@
       </button>
       <button class="test-sensors-button" id="testSensorsButton" type="button">Датчики</button>
       
+      <!-- Верхняя панель быстрого доступа в режиме тренировки -->
+      <div class="sim-top-toolbar hidden" id="simTopToolbar">
+        <button class="top-toolbar-btn zip-box-btn" id="zipBox2ModalBtn" type="button" title="Открыть 2 ящик ЗИП">
+          <span class="toolbar-btn-icon">🧰</span>
+          <span class="toolbar-btn-title">2 ящик ЗИП</span>
+        </button>
+      </div>
+      
       <!-- Панель инвентаря -->
       <div class="inventory-bar hidden" id="inventoryBar">
         <span class="inventory-title">СНАРЯЖЕНИЕ:</span>
@@ -268,6 +276,9 @@
 
         <button id="zipBackBtn" class="view-switch-btn" style="top: 20px; left: 20px; right: auto">
           ← Назад
+        </button>
+        <button id="openZipBoxModalFromSceneBtn" class="view-switch-btn" style="top: 20px; left: 130px; right: auto">
+          🧰 Все предметы (31)
         </button>
 
         <div style="
