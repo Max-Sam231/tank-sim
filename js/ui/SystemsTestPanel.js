@@ -51,7 +51,6 @@ function quickStartEngine(state) {
   if (!state.leftTank) state.toggleLeftTank();
   if (!state.rightTank) state.toggleRightTank();
   state.setBcnMode("on");
-  state.setShutters("4");
 
   for (let i = 0; i < 4; i += 1) state.pumpFuelPrimerLever();
   state.setFuelManualFeed(30);

@@ -27,8 +27,8 @@ function renderMarkerImage({ src, alt, topPercent, markerOffsetPx, corners = nul
 }
 
 const BCN_IMAGES = {
-  off: "./img/8/кран-выкл.png",
-  on: "./img/8/кран-вкл.png",
+  off: "./img/8/кран-вкл.png",
+  on: "./img/8/кран-выкл.png",
   pump: "./img/8/кран-откач.png",
 };
 
@@ -63,7 +63,7 @@ const ACTION_MODAL_DEFS = {
     stateKey: "bcn",
     notifyAction: "bcn",
     apply: (state, value) => state.setBcnMode(value),
-    renderImage: (mode) => `<img src="${BCN_IMAGES[mode] || ""}" alt="БЦН" />`,
+    renderImage: (mode) => `<img src="${BCN_IMAGES[mode] || ""}" alt="Топливораспределительный кран" />`,
   },
 
   shutters: {

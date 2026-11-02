@@ -190,7 +190,20 @@ check("Выбор в модалке БЦН меняет состояние и п
   const actions = [];
   const modals = new ActionModals({ state, onAction: (a) => actions.push(a) });
 
+  const titleEl = window.document.querySelector("#bcnModal .bcn-modal-title");
+  assert(titleEl && titleEl.textContent.trim() === "Топливораспределительный кран", "заголовок модалки должен быть Топливораспределительный кран");
+
+  const buttons = Array.from(window.document.querySelectorAll("#bcnModal .bcn-modal-btn"));
+  const buttonModes = buttons.map((b) => b.getAttribute("data-bcn-mode"));
+  assert(
+    buttonModes.join(",") === "pump,on,off",
+    `ожидался порядок кнопок pump,on,off (сверху вниз: Откачка БЦН, Баки включены, Баки перекрыты), получен ${buttonModes.join(",")}`,
+  );
+
   modals.open("bcn");
+  const imgPlaceholder = window.document.querySelector("#bcnModalImage img");
+  assert(imgPlaceholder && imgPlaceholder.getAttribute("src").includes("кран-вкл.png"), "в положении off картинка должна смотреть вниз (кран-вкл.png)");
+
   const btn = window.document.querySelector('#bcnModal .bcn-modal-btn[data-bcn-mode="pump"]');
   assert(btn, "не найдена кнопка режима pump");
   btn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
@@ -198,6 +211,9 @@ check("Выбор в модалке БЦН меняет состояние и п
   assert(state.bcn === "pump", `ожидался режим pump, получен ${state.bcn}`);
   assert(btn.classList.contains("is-active"), "кнопка не подсветилась");
   assert(actions.includes("bcn"), "не пришло уведомление о действии bcn");
+
+  const imgAfter = window.document.querySelector("#bcnModalImage img");
+  assert(imgAfter && imgAfter.getAttribute("src").includes("кран-откач.png"), "в положении pump картинка должна смотреть вверх (кран-откач.png)");
 
   modals.dispose();
 });
@@ -208,11 +224,27 @@ check("Выбор передачи меняет состояние", () => {
   const modals = new ActionModals({ state, onAction: () => {} });
 
   modals.open("gear");
+
+  const buttonModes = Array.from(
+    window.document.querySelectorAll('#gearModal .bcn-modal-btn'),
+  ).map((el) => el.dataset.gearMode);
+  assert(
+    JSON.stringify(buttonModes) ===
+      JSON.stringify(["7", "6", "5", "4", "3", "2", "1", "neutral", "R"]),
+    `неверный порядок кнопок передач: ${buttonModes.join(", ")}`,
+  );
+
   const btn = window.document.querySelector('#gearModal .bcn-modal-btn[data-gear-mode="3"]');
   assert(btn, "не найдена кнопка 3-й передачи");
   btn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 
   assert(String(state.gearLever) === "3", `ожидалась передача 3, получена ${state.gearLever}`);
+
+  const neutralFrame = getControlOverlayFrame(CONTROL_OVERLAY_DEFS["gear-lever"], { gearLever: "neutral" });
+  assert(
+    neutralFrame?.src?.includes("1_0000s_0006_Слой-57-копия-2.png"),
+    `нейтраль должна отображаться в пазу нейтрали (кадр 6), получен ${neutralFrame?.src}`,
+  );
 
   modals.dispose();
 });

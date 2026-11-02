@@ -292,10 +292,10 @@
       </button>
       <div class="scene-content" id="scene">
         <!-- (Свет выключен) -->
-        <img class="cabin-bg cabin-bg-dark" src="./img/фон_темный.jpg" alt="Cabin Dark" />
+        <img class="cabin-bg cabin-bg-dark" src="./img/фон_темный.png" alt="Cabin Dark" />
 
         <!-- (Свет включен) -->
-        <img class="cabin-bg cabin-bg-light" src="./img/фон_светлый.jpg" alt="Cabin Light" />
+        <img class="cabin-bg cabin-bg-light" src="./img/фон_светлый.png" alt="Cabin Light" />
         <!-- Слой оверлеев (динамически заполняется UIController) -->
         <div class="overlay-layer" aria-hidden="true">
           <svg class="hitbox-layer cabin-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"
@@ -328,25 +328,25 @@
             <!-- Педаль газа -->
             <polygon class="hitbox" data-action="gas-pedal" points="1122,600 1245,600 1245,826 1119,826"></polygon>
             <!-- Клапан спуска воздуха -->
-            <polygon class="hitbox" data-action="air-bleed-valve" points="248,933 272,935 274,988 243,987"></polygon>
+            <polygon class="hitbox" data-action="air-bleed-valve" points="198,943 222,945 224,998 193,997"></polygon>
             <polygon class="hitbox" data-action="cabin-light" points="1460,60 1530,60 1530,180 1460,180"></polygon>
           </svg>
         </div>
 
-        <!-- Модалка БЦН -->
-        <div class="bcn-modal hidden" id="bcnModal" role="dialog" aria-label="БЦН ТЦА">
+        <!-- Модалка топливораспределительного крана -->
+        <div class="bcn-modal hidden" id="bcnModal" role="dialog" aria-label="Топливораспределительный кран">
           <div class="bcn-modal-content">
             <div class="bcn-modal-header">
-              <span class="bcn-modal-title">БЦН ТЦА</span>
+              <span class="bcn-modal-title">Топливораспределительный кран</span>
               <button class="bcn-modal-close" id="bcnModalClose" type="button">&times;</button>
             </div>
             <div class="bcn-modal-image-placeholder" id="bcnModalImage">
               <!-- Место под картинку состояния -->
             </div>
             <div class="bcn-modal-buttons">
-              <button class="bcn-modal-btn" data-bcn-mode="off">Выключено</button>
-              <button class="bcn-modal-btn" data-bcn-mode="on">Включено</button>
-              <button class="bcn-modal-btn" data-bcn-mode="pump">Откачка</button>
+              <button class="bcn-modal-btn" data-bcn-mode="pump">Откачка БЦН</button>
+              <button class="bcn-modal-btn" data-bcn-mode="on">Баки включены</button>
+              <button class="bcn-modal-btn" data-bcn-mode="off">Баки перекрыты</button>
             </div>
           </div>
         </div>
@@ -384,14 +384,14 @@
               <!-- Место под картинку состояния -->
             </div>
             <div class="bcn-modal-buttons">
-              <button class="bcn-modal-btn" data-gear-mode="neutral">Нейтраль</button>
-              <button class="bcn-modal-btn" data-gear-mode="1">1-я передача</button>
-              <button class="bcn-modal-btn" data-gear-mode="2">2-я передача</button>
-              <button class="bcn-modal-btn" data-gear-mode="3">3-я передача</button>
-              <button class="bcn-modal-btn" data-gear-mode="4">4-я передача</button>
-              <button class="bcn-modal-btn" data-gear-mode="5">5-я передача</button>
-              <button class="bcn-modal-btn" data-gear-mode="6">6-я передача</button>
               <button class="bcn-modal-btn" data-gear-mode="7">7-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="6">6-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="5">5-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="4">4-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="3">3-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="2">2-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="1">1-я передача</button>
+              <button class="bcn-modal-btn" data-gear-mode="neutral">Нейтраль</button>
               <button class="bcn-modal-btn" data-gear-mode="R">3X</button>
             </div>
           </div>

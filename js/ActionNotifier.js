@@ -32,7 +32,7 @@ class ActionNotifier {
       "instrument-panel": () => "Открыта приборная панель",
       "left-tank": () => boolText(snapshot.leftTank, "Открыт левый баллон", "Закрыт левый баллон"),
       "right-tank": () => boolText(snapshot.rightTank, "Открыт правый баллон", "Закрыт правый баллон"),
-      bcn: () => enumText(snapshot.bcn, { off: "БЦН выключен", on: "БЦН включен", pump: "БЦН переведен на откачку" }),
+      bcn: () => enumText(snapshot.bcn, { off: "Топливораспределительный кран: баки перекрыты", on: "Топливораспределительный кран: баки включены", pump: "Топливораспределительный кран: откачка БЦН" }),
       shutters: () => enumText(snapshot.shutters, { 0: "Жалюзи закрыты", 1: "Жалюзи в промежуточном состоянии", 2: "Жалюзи в промежуточном состоянии", 3: "Жалюзи в промежуточном состоянии", 4: "Жалюзи открыты" }),
       "fuel-primer-lever": () => `Рычаг прокачки: ${snapshot.fuelPrimerPumps} качаний`,
       "fuel-manual-feed": () => `Ручная подача топлива: ${snapshot.fuelManualFeed}%`,

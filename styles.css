@@ -1265,7 +1265,8 @@ body.app-prod #scene-zip-box .hitbox:hover {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
   padding: 16px;
-  min-width: 220px;
+  width: 320px;
+  box-sizing: border-box;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
