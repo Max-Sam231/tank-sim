@@ -3,13 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "description": "Driver Sim (vanilla HTML/CSS/JS) - development server with auto-reload",
+  "main": "index.html",
   "scripts": {
     "dev": "concurrently \"node live-reload-server.js\" \"serve -s . -l 8000\"",
     "serve": "serve -s . -l 8000",
     "smoke": "node tests/smoke.mjs",
     "test:physics": "node tests/physics.mjs",
-    "test": "npm run smoke && npm run test:physics"
+    "test": "npm run smoke && npm run test:physics",
+    "package:electron": "node tools/build-electron.mjs",
+    "package:nw": "node tools/build-nw.mjs",
+    "package:electron:win": "node tools/build-electron-win.mjs",
+    "package:nw:win": "node tools/build-nw-win.mjs",
+    "package:win": "npm run package:electron:win && npm run package:nw:win",
+    "package:all": "npm run package:electron && npm run package:nw && npm run package:win"
   },
+  "window": {
+    "title": "Driver Sim (Симулятор механика-водителя танка)",
+    "width": 1440,
+    "height": 900,
+    "min_width": 1024,
+    "min_height": 720,
+    "position": "center",
+    "resizable": true,
+    "fullscreen": false,
+    "frame": true
+  },
+  "chromium-args": "--autoplay-policy=no-user-gesture-required --ignore-gpu-blocklist --enable-gpu-rasterization",
   "devDependencies": {
     "concurrently": "^8.2.2",
     "jsdom": "^30.1.1",
