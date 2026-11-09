@@ -1,15 +1,20 @@
+import { requestFullscreen, isFullscreen, onFullscreenChange } from "./fullscreen.js";
+
+const EXIT_PROMPT = {
+  title: "Вернитесь в полноэкранный режим",
+  desc: "Программа может некорректно работать в оконном режиме",
+  button: "Перейти в полноэкранный режим",
+};
+
+/**
+ * Напоминание о полноэкранном режиме во время занятия.
+ *
+ * Следит за выходом из полного экрана и показывает окно с предложением
+ * вернуться. Само разворачивание живёт в fullscreen.js.
+ */
 export class FullscreenManager {
   static requestFullscreenOnLoad() {
-    const doc = document.documentElement;
-    // Try modern fullscreen API
-    if (doc.requestFullscreen) {
-      return doc.requestFullscreen();
-    } else if (doc.webkitRequestFullscreen) {
-      return doc.webkitRequestFullscreen();
-    } else if (doc.msRequestFullscreen) {
-      return doc.msRequestFullscreen();
-    }
-    return Promise.reject(new Error("Fullscreen not supported"));
+    return requestFullscreen();
   }
 
   static updateFullscreenModal() {
@@ -20,53 +25,29 @@ export class FullscreenManager {
 
     if (!modal || !title || !desc || !button) return;
 
-    const isFullscreen = !!(
-      document.fullscreenElement ||
-      document.webkitFullscreenElement ||
-      document.msFullscreenElement
-    );
-
-    if (isFullscreen) {
+    if (isFullscreen()) {
       modal.classList.add("hidden");
-    } else {
-      modal.classList.remove("hidden");
-      title.textContent = "Вернитесь в полноэкранный режим";
-      desc.textContent = "Программа может некорректно работать в оконном режиме";
-      button.textContent = "Перейти в полноэкранный режим";
+      return;
     }
+
+    modal.classList.remove("hidden");
+    title.textContent = EXIT_PROMPT.title;
+    desc.textContent = EXIT_PROMPT.desc;
+    button.textContent = EXIT_PROMPT.button;
   }
 
   static setup() {
-    // Setup fullscreen modal
-    const modalButton = document.getElementById("modalButton");
-    if (modalButton) {
-      modalButton.addEventListener("click", () => {
-        this.requestFullscreenOnLoad().catch(() => {});
-      });
-    }
+    document
+      .getElementById("modalButton")
+      ?.addEventListener("click", () => requestFullscreen().catch(() => {}));
 
-    // Setup instrument panel back button
-    const backButton = document.getElementById("instrumentPanelBack");
-    if (backButton) {
-      backButton.addEventListener("click", () => {
-        const modal = document.getElementById("instrumentPanelModal");
-        if (modal) {
-          modal.classList.add("hidden");
-          const sceneEl = document.getElementById("scene");
-          if (sceneEl) {
-            sceneEl.classList.remove("instrument-panel-open");
-          }
-        }
-      });
-    }
-
-    // Listen for fullscreen changes
-    const fullscreenEvents = ["fullscreenchange", "webkitfullscreenchange", "msfullscreenchange"];
-    fullscreenEvents.forEach(event => {
-      document.addEventListener(event, () => this.updateFullscreenModal());
+    // Возврат из приборной панели к общему виду кабины
+    document.getElementById("instrumentPanelBack")?.addEventListener("click", () => {
+      document.getElementById("instrumentPanelModal")?.classList.add("hidden");
+      document.getElementById("scene")?.classList.remove("instrument-panel-open");
     });
 
-    // Initial state
+    onFullscreenChange(() => this.updateFullscreenModal());
     this.updateFullscreenModal();
   }
 }
