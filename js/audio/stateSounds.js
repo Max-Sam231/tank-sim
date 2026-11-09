@@ -47,6 +47,7 @@ const STATE_SOUNDS = [
 
   { key: "leftTank", enter: "valveOpen", exit: "valveClose" },
   { key: "rightTank", enter: "valveOpen", exit: "valveClose" },
+  { key: "heaterFuelValve", enter: "valveOpen", exit: "valveClose" },
 
   {
     key: "airBleedValve",
@@ -59,6 +60,13 @@ const STATE_SOUNDS = [
       const isTankOpen = state.leftTank || state.rightTank;
       if (hasPressure && isTankOpen) audio.play("airHiss");
     },
+  },
+
+  // Воспламенение подогревателя: хлопок, гул держит heaterSound.js
+  {
+    key: "heaterBurning",
+    enter: "heaterIgnite",
+    stopOnExit: "heaterBurn",
   },
 
   ...CLICK_KEYS.map((key) => ({ key, change: "click" })),
@@ -102,6 +110,8 @@ const INITIAL_SOUND_STATE = Object.freeze({
   combined: false,
   heating: false,
   waterAntifreeze: false,
+  heaterFuelValve: false,
+  heaterBurning: false,
 });
 
 /**

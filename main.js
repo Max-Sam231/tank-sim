@@ -43,6 +43,7 @@ function bootstrap() {
   const state = new TankState();
   const exhaustSmoke = new SmokeEmitter('exhaust-smoke-container', 'exhaust');
   const fireSmoke = new SmokeEmitter('fire-smoke-container', 'fire');
+  const heaterSmoke = new SmokeEmitter('heater-smoke-container', 'heater');
   const audioManager = new AudioManager();
   const actionNotifier = new ActionNotifier({ rootEl: document.body });
 
@@ -111,6 +112,14 @@ function bootstrap() {
 
     // Пожар в МТО виден снаружи — в ангаре над моторным отделением
     fireSmoke.update(snapshot.is_fire_detected, { intensity: snapshot.fire_level });
+
+    // Языки пламени: горит + козырёк + борт открыт (иначе на закрытом борту «пожар» мимо трубы)
+    const heaterFxOn = Boolean(
+      snapshot.heaterBurning && snapshot.exhaustCapInstalled && snapshot.sidePanelOpen,
+    );
+    heaterSmoke.update(heaterFxOn, { intensity: heaterFxOn ? 1 : 0, style: "heater" });
+    document.getElementById("heater-exhaust-fx")?.classList.toggle("invisible", !heaterFxOn);
+
     updateInventoryBar(snapshot);
   });
 
@@ -348,6 +357,41 @@ function bootstrap() {
   // 7. Запуск — меню поверх 3D-танка в ангаре
   FullscreenManager.setup();
   openStartMenu();
+
+  // Хук для автотестов (Selenium) и отладки в консоли
+  window.__tankSim = {
+    state,
+    audio: audioManager,
+    changeScene,
+    startLoop,
+    /** Полный розжиг подогревателя по штатной логике физики. */
+    igniteHeater() {
+      audioManager.init();
+      if (!state.isBatteryOn) state.toggleBattery();
+      state.takeZipKey();
+      state.takeExhaustCap();
+      state.exhaustCoverRemoved = true;
+      state.installExhaustCap();
+      // Борт открыт — иначе FX на закрытой стенке выглядит как «пожар мимо трубы»
+      for (const id of ["1", "2", "3"]) {
+        if (!state[`hingeLatch${id}`]) state.toggleHingeLatch(id);
+      }
+      state.setSidePanelOpen(true);
+      hangarScene.heater?.toggleSidePanel?.(true);
+      hangarScene.heater?.showCloseup?.(true);
+      if (!state.heaterFuelValve) state.toggleHeaterFuelValve();
+      state.sparkPlug = 2; // СВЕЧА
+      state.engineStart = 0; // ПУСК МОТОРА
+      state._emit();
+      state.tick(0.1); // воспламенение → heaterBurning + хлопок
+      // После хлопка — режим МОТОР, отпустить пуск
+      state.sparkPlug = 0;
+      state.engineStart = 1;
+      state._emit();
+      state.tick(0.1);
+      return state.getSnapshot();
+    },
+  };
 }
 
 if (document.readyState === "loading") {

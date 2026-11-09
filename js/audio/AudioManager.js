@@ -1,6 +1,7 @@
 import { SOUND_DEFS, SOUNDS_PATH } from "./soundDefs.js";
 import { WATCHED_KEYS, INITIAL_SOUND_STATE, playStateSounds } from "./stateSounds.js";
 import { updateEngineSound, updateStarterSound } from "./engineSound.js";
+import { updateHeaterBurnSound } from "./heaterSound.js";
 
 /**
  * Звуковое сопровождение тренажёра.
@@ -129,6 +130,7 @@ export class AudioManager {
         state.engineRunning,
         state,
       );
+      updateHeaterBurnSound(this.sounds.heaterBurn, Boolean(state.heaterBurning));
     }
 
     this.prevState = Object.fromEntries(WATCHED_KEYS.map((key) => [key, state[key]]));

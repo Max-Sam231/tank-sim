@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Sim</title>
+  <title>Симулятор Т-72</title>
   <link rel="stylesheet" href="./styles.css" />
   <script type="importmap">
     {
@@ -238,6 +238,11 @@
           <button id="screwExhaustCoverBtn" class="view-switch-btn hidden">
             🔧 Закрутить крышку
           </button>
+        </div>
+
+        <!-- Дым из выхлопа: только при открытом борте + козырёк + горение -->
+        <div id="heater-exhaust-fx" class="heater-exhaust-fx invisible" aria-hidden="true">
+          <div id="heater-smoke-container" class="heater-smoke-particles"></div>
         </div>
 
         <div style="
@@ -517,15 +522,11 @@
               </polygon>
               <!-- Сигнальная лампа «ВО» -->
               <polygon class="hitbox" data-action="air-intake" points="1125,600 1175,600 1175,650 1125,650" title="Сигнальная лампа «ВО» (воздухоочиститель)"></polygon>
-              <!-- Сигнальная лампа «ПОЖАР» -->
+              <!-- Сигнальные лампы на пластине под рядом фар (щиток КИП) -->
               <polygon class="hitbox" data-action="lamp-fire" points="370,1010 420,1010 420,1060 370,1060" title="Сигнальная лампа «ПОЖАР» (ППО)"></polygon>
-              <!-- Сигнальная лампа «ДВИГАТЕЛЬ ДАВЛ.» -->
               <polygon class="hitbox" data-action="lamp-oil-alarm" points="440,1010 490,1010 490,1060 440,1060" title="Сигнальная лампа «ДВИГАТЕЛЬ ДАВЛ.» (аварийное давление масла)"></polygon>
-              <!-- Сигнальная лампа «ОХЛАЖД. ЖИДКОСТЬ» -->
               <polygon class="hitbox" data-action="lamp-overheat" points="510,1010 560,1010 560,1060 510,1060" title="Сигнальная лампа «ОХЛАЖД. ЖИДКОСТЬ» (перегрев)"></polygon>
-              <!-- Сигнальная лампа «ТОПЛИВО» (резерв) -->
               <polygon class="hitbox" data-action="lamp-fuel-reserve" points="580,1010 630,1010 630,1060 580,1060" title="Сигнальная лампа резерва топлива"></polygon>
-              <!-- Сигнальная лампа «ЗАРЯД БАТАРЕЙ» -->
               <polygon class="hitbox" data-action="lamp-battery" points="650,1010 700,1010 700,1060 650,1060" title="Сигнальная лампа зарядки аккумуляторов"></polygon>
               <!-- Выключатель «ОТКАЧКА МАСЛА ИЗ КП» -->
               <polygon class="hitbox" data-action="oil-pump-gearbox" points="1495,540 1545,540 1545,590 1495,590" title="Выключатель «ОТКАЧКА МАСЛА ИЗ КП»">

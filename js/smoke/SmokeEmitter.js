@@ -29,6 +29,8 @@ const SMOKE_STYLES = {
   exhaust: { delayMs: 150, spread: 40, size: 35, gray: 60 },
   smokeScreen: { delayMs: 50, spread: 120, size: 70, gray: 210 },
   fire: { delayMs: 40, spread: 160, size: 90, gray: 25 },
+  // Предпусковой подогреватель: густой дым вниз от козырька
+  heater: { delayMs: 35, spread: 48, size: 42, gray: 50, flame: false },
 };
 
 class SmokeEmitter {
@@ -135,10 +137,10 @@ class SmokeEmitter {
   }
 
   _createParticle() {
-    const { spread, size, gray } = this.style;
+    const { spread, size, gray, flame } = this.style;
 
     const particle = document.createElement("div");
-    particle.className = "smoke-particle";
+    particle.className = flame && Math.random() < 0.45 ? "smoke-particle smoke-particle-flame" : "smoke-particle";
 
     const diameter = size + Math.random() * 25;
     const offsetX = (Math.random() - 0.5) * spread;
@@ -147,10 +149,18 @@ class SmokeEmitter {
     particle.style.height = `${diameter}px`;
     particle.style.left = `calc(50% + ${offsetX}px)`;
 
-    // Тёмный дым темнеет ещё сильнее с интенсивностью, светлый не трогаем
-    const shade = gray < 128 ? Math.round(gray * (1 - 0.4 * this.intensity)) : gray;
-    particle.style.background =
-      `radial-gradient(circle, rgba(${shade},${shade},${shade},0.95) 0%, transparent 75%)`;
+    if (particle.classList.contains("smoke-particle-flame")) {
+      // Язык пламени у среза козырька: жёлтый → оранжевый → красный
+      const hot = 200 + Math.round(Math.random() * 55);
+      particle.style.background =
+        `radial-gradient(circle at 50% 70%, rgba(255,${hot},40,0.95) 0%, rgba(255,90,0,0.75) 35%, rgba(120,20,0,0.2) 70%, transparent 80%)`;
+      particle.style.animationDuration = `${1.1 + Math.random() * 0.5}s`;
+    } else {
+      // Тёмный дым темнеет ещё сильнее с интенсивностью, светлый не трогаем
+      const shade = gray < 128 ? Math.round(gray * (1 - 0.4 * this.intensity)) : gray;
+      particle.style.background =
+        `radial-gradient(circle, rgba(${shade},${shade},${shade},0.95) 0%, transparent 75%)`;
+    }
 
     setTimeout(() => particle.remove(), PARTICLE_LIFETIME_MS);
 

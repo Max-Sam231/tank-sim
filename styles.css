@@ -2951,6 +2951,56 @@ body.familiarization-mode-active .fam-item-inactive {
   z-index: 21;
 }
 
+/* Выхлоп подогревателя: только дым из отверстия козырька */
+.heater-exhaust-fx {
+  position: absolute;
+  left: 74%;
+  top: 58%;
+  width: 100px;
+  height: 140px;
+  transform: translate(-50%, -30%);
+  pointer-events: none;
+  z-index: 40;
+  overflow: visible;
+}
+
+#scene-heater.heater-closeup .heater-exhaust-fx {
+  left: 50%;
+  top: 40%;
+  width: 150px;
+  height: 260px;
+}
+
+.heater-smoke-particles {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/* Частицы рождаются у отверстия и сыпятся вниз (козырёк отражает струю) */
+.heater-exhaust-fx .smoke-particle {
+  top: 22%;
+  bottom: auto;
+  animation-name: heaterWispFall;
+  animation-duration: 1.6s;
+  filter: blur(1.4px);
+}
+
+@keyframes heaterWispFall {
+  0% {
+    opacity: 0.9;
+    transform: translateX(-50%) translateY(0) scale(0.45);
+  }
+  35% {
+    opacity: 0.7;
+    transform: translateX(-25%) translateY(70px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-55%) translateY(180px) scale(2.4);
+  }
+}
+
 /* Карточка режима изучения: только описание органа, без вопросов */
 .fam-study-description {
   font-size: 15px;
