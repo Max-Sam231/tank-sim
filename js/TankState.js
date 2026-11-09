@@ -920,6 +920,13 @@ class TankState {
     this._emit();
   }
 
+  returnZipKey() {
+    if (this.hasZipKey) {
+      this.hasZipKey = false;
+      this._emit();
+    }
+  }
+
   canUnscrewExhaustBolts() {
     return this.hasZipKey;
   }
@@ -941,6 +948,13 @@ class TankState {
   takeExhaustCap() {
     if (!this.hasExhaustCap) {
       this.hasExhaustCap = true;
+      this._emit();
+    }
+  }
+
+  returnExhaustCap() {
+    if (this.hasExhaustCap && !this.exhaustCapInstalled) {
+      this.hasExhaustCap = false;
       this._emit();
     }
   }

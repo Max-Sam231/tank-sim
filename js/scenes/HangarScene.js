@@ -102,11 +102,15 @@ export class HangarScene {
   }
 
   enterZipBox() {
+    if (typeof this.app?.openZipBoxModal === "function") {
+      this.app.openZipBoxModal();
+      return;
+    }
     this.app?.changeScene?.("zip-box");
     setTimeout(() => this.zipBox.updateCapHitbox(), 50);
   }
 
-  /** Вход только с 3D-хитпоинтов. */
+  /** Вход с 3D-хитпоинтов. */
   activateHotspot({ hatch, zone } = {}) {
     if (hatch === "driver") return this.enterDriverCabin();
     if (hatch === "commander") return this.enterCommanderCabin();
@@ -115,12 +119,12 @@ export class HangarScene {
     if (zone === "heater-rear-left") return this.app?.changeScene?.("heater");
   }
 
-  /** На 2D сверху люки и ЗИП отключены — только осмотр. */
+  /** На 2D сверху: люки отключены, ЗИП открывает ящик ЗИП №2 */
   _onTopHit(event) {
     const hit = event.target.closest(".hitbox");
     if (!hit) return;
     if (hit.dataset.hatch) return;
-    if (hit.dataset.zone === "zip-box") return;
+    if (hit.dataset.zone === "zip-box") return this.enterZipBox();
     if (hit.dataset.zone) this._onZoneClick(event);
   }
 
@@ -129,8 +133,7 @@ export class HangarScene {
     const zone = hit?.dataset.zone;
     if (!zone) return;
 
-    // Подогреватель остаётся на боковом 2D (сценарий разогрева)
-    if (zone === "zip-box") return;
+    if (zone === "zip-box") return this.enterZipBox();
 
     const sceneName = ZONE_SCENES[zone];
     if (sceneName) this.app?.changeScene?.(sceneName);

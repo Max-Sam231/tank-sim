@@ -477,6 +477,19 @@ check("Модальное окно ящика ЗИП №2 отображает 3
   modal._takeItemByPos(13);
   assert(state.hasExhaustCap, "козырёк выхлопа не взялся через модалку ЗИП");
 
+  // Проверка возврата ключа и козырька в ЗИП
+  modal._returnItemByPos(20);
+  assert(!state.hasZipKey, "ключ S=27 не вернулся в ящик ЗИП");
+  modal._returnItemByPos(13);
+  assert(!state.hasExhaustCap, "козырёк выхлопа не вернулся в ящик ЗИП");
+
+  // Проверка вызова модалки из HangarScene.enterZipBox()
+  let modalOpened = false;
+  const mockApp = { openZipBoxModal: () => { modalOpened = true; } };
+  const hangarScene = new HangarScene(mockApp);
+  hangarScene.enterZipBox();
+  assert(modalOpened, "HangarScene.enterZipBox не вызвал openZipBoxModal");
+
   // Проверка верхней кнопки в разметке index.html
   const topBtn = window.document.getElementById("zipBox2ModalBtn");
   assert(topBtn, "не найдена кнопка zipBox2ModalBtn в index.html");

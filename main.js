@@ -177,6 +177,10 @@ function bootstrap() {
     },
   });
 
+  app.openZipBoxModal = () => {
+    zipBoxModal.show();
+  };
+
   const changeScene = (name, sceneId) => {
     switch (name) {
       case "hangar":

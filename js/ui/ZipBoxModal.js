@@ -114,7 +114,7 @@ export class ZipBoxModal {
     return this.items
       .map((it) => {
         const isTaken = this._isItemTaken(it);
-        const isActionable = Boolean(it.isActionable);
+        const isActionable = Boolean(it.isActionable || it.pos === 13 || it.pos === 20);
         const isSelected = this.selectedItem && this.selectedItem.pos === it.pos;
         const l = it.layout;
 
@@ -124,6 +124,7 @@ export class ZipBoxModal {
                style="left: ${l.left}%; top: ${l.top}%; width: ${l.width}%; height: ${l.height}%;"
                tabindex="0"
                role="button"
+               title="${this._escapeHtml(it.name)}${isActionable ? (isTaken ? " (В снаряжении, нажмите чтобы вернуть)" : " (Нажмите, чтобы взять)") : ""}"
                aria-label="${this._escapeHtml(it.fullName)}">
             <div class="zip-board-item-inner">
               <img class="zip-board-img" src="${it.img}" alt="${this._escapeHtml(it.name)}" loading="lazy" />
@@ -159,7 +160,7 @@ export class ZipBoxModal {
     return filtered
       .map((it) => {
         const isTaken = this._isItemTaken(it);
-        const isActionable = Boolean(it.isActionable);
+        const isActionable = Boolean(it.isActionable || it.pos === 13 || it.pos === 20);
         const isSelected = this.selectedItem && this.selectedItem.pos === it.pos;
 
         let actionBadgeHtml = "";
@@ -199,12 +200,17 @@ export class ZipBoxModal {
     }
 
     const isTaken = this._isItemTaken(it);
-    const isActionable = Boolean(it.isActionable);
+    const isActionable = Boolean(it.isActionable || it.pos === 13 || it.pos === 20);
 
     let actionBtnHtml = "";
     if (isActionable) {
       if (isTaken) {
-        actionBtnHtml = `<span class="zip-footer-status-tag taken">✔ В снаряжении игрока</span>`;
+        actionBtnHtml = `
+          <button class="zip-footer-action-btn return" data-action="return-item" data-pos="${it.pos}" type="button">
+            Положить в ящик
+          </button>
+          <span class="zip-footer-status-tag taken">✔ В снаряжении</span>
+        `;
       } else {
         actionBtnHtml = `
           <button class="zip-footer-action-btn" data-action="take-item" data-pos="${it.pos}" type="button">
@@ -262,10 +268,10 @@ export class ZipBoxModal {
         return;
       }
 
-      // Кнопка "Взять" в футере
-      const takeBtn = e.target.closest('[data-action="take-item"]');
-      if (takeBtn) {
-        const pos = Number(takeBtn.dataset.pos);
+      // Кнопка "Взять" или "Вернуть" в футере
+      const actionBtn = e.target.closest('[data-action="take-item"], [data-action="return-item"]');
+      if (actionBtn) {
+        const pos = Number(actionBtn.dataset.pos);
         this._takeItemByPos(pos);
         return;
       }
@@ -277,7 +283,8 @@ export class ZipBoxModal {
         const item = this.items.find((it) => it.pos === pos);
         if (item) {
           this.selectedItem = item;
-          if (item.isActionable && !this._isItemTaken(item)) {
+          const isActionable = Boolean(item.isActionable || item.pos === 13 || item.pos === 20);
+          if (isActionable) {
             this._takeItemByPos(pos);
           } else {
             this._refreshDOM();
@@ -364,10 +371,11 @@ export class ZipBoxModal {
 
   _showTooltip(item) {
     const isTaken = this._isItemTaken(item);
+    const isActionable = Boolean(item.isActionable || item.pos === 13 || item.pos === 20);
     let actionHintHtml = "";
-    if (item.isActionable) {
+    if (isActionable) {
       if (isTaken) {
-        actionHintHtml = `<div class="zip-tooltip-action taken">✔ Предмет уже взят в снаряжение</div>`;
+        actionHintHtml = `<div class="zip-tooltip-action taken">✔ Предмет в снаряжении (кликните, чтобы вернуть в ящик)</div>`;
       } else {
         actionHintHtml = `<div class="zip-tooltip-action take">💡 Нажмите, чтобы взять в снаряжение</div>`;
       }
@@ -397,12 +405,27 @@ export class ZipBoxModal {
       if (!this.state.hasZipKey) {
         this.state.takeZipKey();
         this._onItemTaken(pos, "Ключ S=27 взят в снаряжение");
+      } else {
+        this.state.returnZipKey?.();
+        this._onItemTaken(pos, "Ключ S=27 возвращён в ящик ЗИП");
       }
     } else if (pos === 13) {
       if (!this.state.hasExhaustCap) {
         this.state.takeExhaustCap();
         this._onItemTaken(pos, "Козырёк выхлопа взят в снаряжение");
+      } else {
+        this.state.returnExhaustCap?.();
+        this._onItemTaken(pos, "Козырёк выхлопа возвращён в ящик ЗИП");
       }
+    }
+  }
+
+  _returnItemByPos(pos) {
+    if (!this.state) return;
+    if (pos === 20 && this.state.hasZipKey) {
+      this._takeItemByPos(pos);
+    } else if (pos === 13 && this.state.hasExhaustCap) {
+      this._takeItemByPos(pos);
     }
   }
 
