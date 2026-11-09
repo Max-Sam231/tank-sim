@@ -55,8 +55,14 @@ function updateHeater(state, ctx) {
   const wasBurning = state._heaterBurning;
 
   const isReady = ctx.isMassOn && state.heaterFuelValve && state.exhaustCapInstalled;
-  if (isReady && state.sparkPlug === 2) state._heaterBurning = true;
-  if (!state.heaterFuelValve || !ctx.isMassOn || !state.exhaustCapInstalled) {
+  // Розжиг: масса, кран, козырек, переключатель в положении «СВЕЧА» (2) и включен «ПУСК МОТОРА» (!== 1)
+  if (isReady && state.sparkPlug === 2 && state.engineStart !== 1) {
+    state._heaterBurning = true;
+  }
+
+  // Горение поддерживается только при установленном режиме «МОТОР» (0) либо во время розжига
+  const isOperating = state.sparkPlug === 0 || (state.sparkPlug === 2 && state.engineStart !== 1);
+  if (!isReady || !isOperating) {
     state._heaterBurning = false;
   }
 
