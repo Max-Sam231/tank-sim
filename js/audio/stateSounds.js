@@ -62,6 +62,13 @@ const STATE_SOUNDS = [
     },
   },
 
+  // Воспламенение подогревателя: хлопок, гул держит heaterSound.js
+  {
+    key: "heaterBurning",
+    enter: "heaterIgnite",
+    stopOnExit: "heaterBurn",
+  },
+
   ...CLICK_KEYS.map((key) => ({ key, change: "click" })),
   ...SWITCH_KEYS.map((key) => ({ key, change: "switch" })),
 ];
@@ -103,6 +110,8 @@ const INITIAL_SOUND_STATE = Object.freeze({
   combined: false,
   heating: false,
   waterAntifreeze: false,
+  heaterFuelValve: false,
+  heaterBurning: false,
 });
 
 /**

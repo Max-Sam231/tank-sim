@@ -21,6 +21,10 @@ const SOUND_DEFS = {
   engine: { file: "engine_idle.mp3", loop: true, volume: 0.4 },
   engineLoad: { file: "engine_load.mp3", loop: true, volume: 0.0 },
   fuel_pump: { file: "fuel_pump.mp3", loop: true, volume: 0.6 },
+
+  // Предпусковой подогреватель: хлопок розжига + гул горения
+  heaterIgnite: { file: "heater_ignite.mp3", volume: 0.9 },
+  heaterBurn: { file: "heater_burn.mp3", loop: true, volume: 0.45 },
 };
 
 const SOUNDS_PATH = "/sounds";

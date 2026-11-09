@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Sim — учебный комплекс Т-72</title>
+  <title>Симулятор — учебный комплекс Т-72</title>
   <meta name="description" content="Электронное пособие и симулятор кабины механика-водителя танка Т-72 для курсантов ВУЦ." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,40 +15,85 @@
     <div class="landing-top">
       <header class="landing-nav">
         <a class="brand" href="#top">
-          <span class="brand-mark" aria-hidden="true">DS</span>
-          Driver Sim
+          <span class="brand-mark" aria-hidden="true">Т-72</span>
+          Симулятор
         </a>
         <nav class="landing-nav-links" aria-label="Разделы">
+          <a href="#paths">Режимы</a>
           <a href="#about">О продукте</a>
-          <a href="#paths">Что внутри</a>
-          <a href="#audience">Для кого</a>
+          <a href="#authors">Авторы</a>
         </nav>
         <div class="landing-nav-actions">
-          <a class="btn btn-ghost" href="./manual.html">Пособие</a>
-          <a class="btn btn-primary" href="./sim.html">Симулятор</a>
+          <a class="btn btn-ghost" href="#about">О продукте</a>
         </div>
       </header>
 
-      <section class="hero" aria-label="Главный экран">
+      <div class="paths-top" id="paths">
+        <div class="section-head section-head-on-dark">
+          <div class="eyebrow">Режимы</div>
+          <h2><span class="accent">Выберите путь</span><br />под задачу занятия</h2>
+          <p class="section-lead">Два больших входа — пособие или симулятор. Одна учебная цель: уверенный алгоритм подготовки и пуска.</p>
+        </div>
+        <div class="path-grid">
+          <a class="path-preview" href="./manual.html">
+            <img
+              class="path-preview-img"
+              src="./img/12/12.png"
+              alt=""
+              width="1200"
+              height="800"
+            />
+            <div class="path-preview-shade" aria-hidden="true"></div>
+            <div class="path-preview-body">
+              <span class="path-card-kicker">Теория</span>
+              <h3>Электронное пособие</h3>
+              <p>
+                Операционные карты, последовательности подготовки и пуска,
+                ограничения по МЗН и стартеру.
+              </p>
+              <span class="path-preview-cta">Открыть пособие</span>
+            </div>
+          </a>
+          <a class="path-preview" href="./sim.html">
+            <img
+              class="path-preview-img"
+              src="./img/landing/hero-tank.png"
+              alt=""
+              width="1376"
+              height="768"
+            />
+            <div class="path-preview-shade" aria-hidden="true"></div>
+            <div class="path-preview-body">
+              <span class="path-card-kicker">Практика</span>
+              <h3>Симулятор танка</h3>
+              <p>
+                Ангар, кабина механика-водителя, ознакомление и тренировочные
+                сценарии запуска двигателя.
+              </p>
+              <span class="path-preview-cta">Открыть симулятор</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <section class="section section-hero-follow" aria-label="О комплексе">
+      <div class="hero hero-light">
         <div class="hero-copy">
-          <h1 class="hero-brand">Driver Sim</h1>
+          <h1 class="hero-brand">Симулятор</h1>
           <p class="hero-line">Теория и практика запуска двигателя Т-72 в одном контуре.</p>
           <p class="hero-sub">
             Кратко ознакомьтесь с комплексом, затем откройте электронное пособие
             или перейдите в симулятор кабины механика-водителя.
           </p>
-          <div class="hero-cta">
-            <a class="btn btn-primary" href="./manual.html">Электронное пособие</a>
-            <a class="btn btn-ghost" href="./sim.html">Симулятор танка</a>
-          </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
           <div class="hero-plane">
             <img class="hero-tank-shot" src="./img/landing/hero-tank.png" alt="" width="1376" height="768" />
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
 
     <section class="section" id="about">
       <div class="section-head">
@@ -58,44 +103,6 @@
           Пособие даёт нормативную базу по операционным картам. Симулятор —
           кабину, органы управления и сценарии тренировки без риска для техники.
         </p>
-      </div>
-    </section>
-
-    <div class="section-alt" id="paths">
-      <div class="section-tight">
-        <div class="section-head">
-          <div class="eyebrow">Что внутри</div>
-          <h2><span class="accent">Выберите путь</span><br />под задачу занятия</h2>
-          <p class="section-lead">Два входа — одна учебная цель: уверенный алгоритм подготовки и пуска.</p>
-        </div>
-        <div class="path-grid">
-          <a class="path-card" href="./manual.html">
-            <span class="path-card-kicker">Теория</span>
-            <h3>Электронное пособие</h3>
-            <p>
-              Операционные карты, последовательности подготовки и пуска,
-              ограничения по МЗН и стартеру. Сейчас — макет читалки с оглавлением.
-            </p>
-            <span class="btn btn-primary">Читать пособие</span>
-          </a>
-          <a class="path-card" href="./sim.html">
-            <span class="path-card-kicker">Практика</span>
-            <h3>Симулятор танка</h3>
-            <p>
-              Ангар, кабина механика-водителя, ознакомление и тренировочные
-              сценарии запуска двигателя в виртуальной среде.
-            </p>
-            <span class="btn btn-primary">Открыть симулятор</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <section class="section" id="audience">
-      <div class="section-head">
-        <div class="eyebrow">Для кого</div>
-        <h2>Курсанты и преподаватели ВУЦ</h2>
-        <p class="section-lead">Комплекс рассчитан на учебный класс и маломощные ПК.</p>
       </div>
       <div class="audience-grid">
         <article class="audience-card">
@@ -113,10 +120,35 @@
       </div>
     </section>
 
+    <section class="section section-authors" id="authors">
+      <div class="section-head">
+        <div class="eyebrow">Авторы</div>
+        <h2>Команда учебного комплекса</h2>
+        <p class="section-lead">Методическая поддержка и разработка симулятора кабины Т-72.</p>
+      </div>
+      <div class="authors-grid">
+        <article class="authors-block">
+          <h3>Методическая поддержка</h3>
+          <ul>
+            <li>Пепеляев А.В.</li>
+            <li>Щербаченко А.Н.</li>
+            <li>Вишняков А.А.</li>
+          </ul>
+        </article>
+        <article class="authors-block">
+          <h3>Разработчики</h3>
+          <ul>
+            <li>Шкурин М.М.</li>
+            <li>Марютин М.А.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
     <footer class="landing-footer">
       <div class="footer-grid">
         <div>
-          <div class="footer-brand">Driver Sim</div>
+          <div class="footer-brand">Симулятор</div>
           <p class="footer-about">
             Интерактивный учебный комплекс: электронное пособие и симулятор
             кабины механика-водителя танка Т-72.
@@ -124,9 +156,9 @@
         </div>
         <div class="footer-col">
           <h4>Разделы</h4>
+          <a href="#paths">Режимы</a>
           <a href="#about">О продукте</a>
-          <a href="#paths">Что внутри</a>
-          <a href="#audience">Для кого</a>
+          <a href="#authors">Авторы</a>
         </div>
         <div class="footer-col">
           <h4>Входы</h4>
@@ -134,7 +166,7 @@
           <a href="./sim.html">Симулятор танка</a>
         </div>
       </div>
-      <div class="footer-bottom">© 2026 Driver Sim</div>
+      <div class="footer-bottom">© 2026 Симулятор Т-72</div>
     </footer>
   </div>
 </body>

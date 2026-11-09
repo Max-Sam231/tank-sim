@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Sim</title>
+  <title>Симулятор Т-72</title>
   <link rel="stylesheet" href="./styles.css" />
   <script type="importmap">
     {
@@ -229,6 +229,11 @@
           <button id="screwExhaustCoverBtn" class="view-switch-btn hidden">
             🔧 Закрутить крышку
           </button>
+        </div>
+
+        <!-- Дым из выхлопа: только при открытом борте + козырёк + горение -->
+        <div id="heater-exhaust-fx" class="heater-exhaust-fx invisible" aria-hidden="true">
+          <div id="heater-smoke-container" class="heater-smoke-particles"></div>
         </div>
 
         <div style="

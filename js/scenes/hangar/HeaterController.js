@@ -214,6 +214,7 @@ class HeaterController {
     if (!els) return;
 
     this.isCloseup = false;
+    this.sectionEl?.classList.toggle("heater-closeup", false);
 
     if (els.img) els.img.src = isOpen ? IMAGES.panelOpened : IMAGES.panelClosed;
 
@@ -240,6 +241,7 @@ class HeaterController {
     if (!els) return;
 
     this.isCloseup = isCloseup;
+    this.sectionEl?.classList.toggle("heater-closeup", Boolean(isCloseup));
 
     if (els.img) els.img.src = isCloseup ? this._closeupImage() : IMAGES.panelOpened;
 
@@ -317,6 +319,7 @@ class HeaterController {
     if (!els) return;
 
     const sidePanelOpen = Boolean(this.state?.sidePanelOpen);
+    this.sectionEl?.classList.toggle("heater-closeup", Boolean(this.isCloseup && sidePanelOpen));
 
     if (els.img) {
       if (!sidePanelOpen) {
