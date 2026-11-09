@@ -318,6 +318,48 @@ const CONTROL_OVERLAY_DEFS = {
     on: "./img/12/лампа-актив.png",
   },
 
+  // Выносной пульт ПВ-82
+  "lamp-pv82-rpm": {
+    kind: "boolean",
+    stateKey: "lamp_pv82_rpm",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-pv82-coolant": {
+    kind: "boolean",
+    stateKey: "lamp_pv82_coolant",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-pv82-fan": {
+    kind: "boolean",
+    stateKey: "lamp_pv82_fan",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+  "lamp-pv82-brake": {
+    kind: "boolean",
+    stateKey: "lamp_pv82_brake",
+    inflate: 1.0,
+    offsetX: 0,
+    offsetY: 0,
+    z: 70,
+    off: "./img/12/лампа.png",
+    on: "./img/12/лампа-актив.png",
+  },
+
   // Remaining instrument panel toggles (tmb1/tmb2)
   heating: {
     kind: "boolean",

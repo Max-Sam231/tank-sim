@@ -26,14 +26,6 @@
       </button>
       <button class="test-sensors-button" id="testSensorsButton" type="button">Датчики</button>
       
-      <!-- Верхняя панель быстрого доступа в режиме тренировки -->
-      <div class="sim-top-toolbar hidden" id="simTopToolbar">
-        <button class="top-toolbar-btn zip-box-btn" id="zipBox2ModalBtn" type="button" title="Открыть 2 ящик ЗИП">
-          <span class="toolbar-btn-icon">🧰</span>
-          <span class="toolbar-btn-title">2 ящик ЗИП</span>
-        </button>
-      </div>
-      
       <!-- Панель инвентаря -->
       <div class="inventory-bar hidden" id="inventoryBar">
         <span class="inventory-title">СНАРЯЖЕНИЕ:</span>
@@ -152,7 +144,6 @@
       <div id="tank-3d-view" class="tank-view">
         <div class="hangar-view-container tank-3d-container">
           <canvas id="tank-3d-canvas" aria-label="3D модель танка"></canvas>
-          <p id="tank-3d-status" class="tank-3d-status" role="status"></p>
         </div>
       </div>
     </section>
@@ -522,12 +513,37 @@
               </polygon>
               <!-- Сигнальная лампа «ВО» -->
               <polygon class="hitbox" data-action="air-intake" points="1125,600 1175,600 1175,650 1125,650" title="Сигнальная лампа «ВО» (воздухоочиститель)"></polygon>
-              <!-- Сигнальные лампы на пластине под рядом фар (щиток КИП) -->
-              <polygon class="hitbox" data-action="lamp-fire" points="370,1010 420,1010 420,1060 370,1060" title="Сигнальная лампа «ПОЖАР» (ППО)"></polygon>
-              <polygon class="hitbox" data-action="lamp-oil-alarm" points="440,1010 490,1010 490,1060 440,1060" title="Сигнальная лампа «ДВИГАТЕЛЬ ДАВЛ.» (аварийное давление масла)"></polygon>
-              <polygon class="hitbox" data-action="lamp-overheat" points="510,1010 560,1010 560,1060 510,1060" title="Сигнальная лампа «ОХЛАЖД. ЖИДКОСТЬ» (перегрев)"></polygon>
-              <polygon class="hitbox" data-action="lamp-fuel-reserve" points="580,1010 630,1010 630,1060 580,1060" title="Сигнальная лампа резерва топлива"></polygon>
-              <polygon class="hitbox" data-action="lamp-battery" points="650,1010 700,1010 700,1060 650,1060" title="Сигнальная лампа зарядки аккумуляторов"></polygon>
+              <!-- Выносной пульт ПВ-82 с 4 сигнальными лампами (правый верхний сектор) -->
+              <g class="pv82-panel-assembly" id="pv82Panel">
+                <!-- Внешний литой корпус пульта -->
+                <rect x="1380" y="35" width="490" height="135" rx="12" class="pv82-casing-body"></rect>
+                <rect x="1384" y="39" width="482" height="127" rx="9" class="pv82-casing-inner"></rect>
+
+                <!-- Монтажное ухо / кабельный ввод -->
+                <rect x="1348" y="70" width="34" height="65" rx="4" class="pv82-bracket"></rect>
+                <circle cx="1362" cy="102" r="8" class="pv82-bracket-bolt"></circle>
+
+                <!-- Заводская табличка наименования прибора -->
+                <rect x="1490" y="43" width="270" height="18" rx="4" class="pv82-title-plate"></rect>
+                <text x="1625" y="56" class="pv82-title-text" text-anchor="middle">ПУЛЬТ ВЫНОСНОЙ ПВ-82</text>
+
+                <!-- Планка трафаретных обозначений сигналов -->
+                <rect x="1430" y="132" width="430" height="26" rx="4" class="pv82-labels-strip"></rect>
+                <line x1="1530" y1="134" x2="1530" y2="156" class="pv82-strip-divider"></line>
+                <line x1="1630" y1="134" x2="1645" y2="156" class="pv82-strip-divider diagonal"></line>
+                <line x1="1730" y1="134" x2="1730" y2="156" class="pv82-strip-divider"></line>
+
+                <text x="1480" y="149" class="pv82-label-text" text-anchor="middle">ОБОРОТЫ ДВИГАТ.</text>
+                <text x="1580" y="149" class="pv82-label-text" text-anchor="middle">ОХЛ. ЖИДКОСТЬ</text>
+                <text x="1680" y="149" class="pv82-label-text" text-anchor="middle">ВЕНТ.</text>
+                <text x="1780" y="149" class="pv82-label-text" text-anchor="middle">ТОРМОЗ</text>
+
+                <!-- Хитбоксы 4 сигнальных ламп ПВ-82 -->
+                <polygon class="hitbox" data-action="lamp-pv82-rpm" points="1450,65 1510,65 1510,125 1450,125" title="Сигнальная лампа «ОБОРОТЫ ДВИГАТ.» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-coolant" points="1550,65 1610,65 1610,125 1550,125" title="Сигнальная лампа «ОХЛ. ЖИДКОСТЬ» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-fan" points="1650,65 1710,65 1710,125 1650,125" title="Сигнальная лампа «ВЕНТ. / ДАВЛЕН. ДВ.» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-brake" points="1750,65 1810,65 1810,125 1750,125" title="Сигнальная лампа «ТОРМОЗ» (ПВ-82)"></polygon>
+              </g>
               <!-- Выключатель «ОТКАЧКА МАСЛА ИЗ КП» -->
               <polygon class="hitbox" data-action="oil-pump-gearbox" points="1495,540 1545,540 1545,590 1495,590" title="Выключатель «ОТКАЧКА МАСЛА ИЗ КП»">
               </polygon>
@@ -575,19 +591,14 @@
 
         <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"
           aria-hidden="true">
-          <polygon class="hitbox" data-action="toggle_commander_view"
-            points="700,700 800,700 800,800 700,800" />
-          <polygon class="hitbox" data-action="enter_driver_seat"
-            points="900,900 1000,900 1000,1000 900,1000" />
-
-            <!-- Хитбокс на зону рычага (подбери points под своё фото) -->
-            <polygon
-              class="hitbox"
-              data-action="toggle_heater_fuel_valve"
-              points="1050,500 1250,500 1250,700 1050,700"
-              title="Переключить подачу топлива"
-            />
-          </svg>
+          <!-- Топливный кран подогревателя (рычаг подачи топлива) -->
+          <polygon
+            class="hitbox"
+            data-action="toggle_heater_fuel_valve"
+            points="1140,945 1265,945 1265,1065 1140,1065"
+            title="Топливный кран подогревателя"
+          />
+        </svg>
       </div>
     </section>
   </main>

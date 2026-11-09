@@ -56,6 +56,14 @@ const HOTSPOT_DEFS = [
     radius: 0.34,
     color: 0xff7b72,
   },
+  {
+    id: "heater-rear-left",
+    zone: "heater-rear-left",
+    label: "Подогреватель (борт кормы слева)",
+    blender: [-1.25, 2.15, 0.95],
+    radius: 0.35,
+    color: 0xff9800,
+  },
 ];
 
 const CLICK_DRAG_PX = 6;
@@ -143,6 +151,10 @@ export class Tank3DView {
     this.canvas.addEventListener("pointermove", this._onPointerMove);
     this.canvas.addEventListener("pointerup", this._onPointerUp);
     this.canvas.addEventListener("pointerleave", () => this._setHovered(null));
+
+    if (typeof window !== "undefined") {
+      window.tank3d = this;
+    }
 
     if (this._pendingMenuMode) {
       this.setMenuMode(true);
@@ -591,6 +603,36 @@ export class Tank3DView {
       pulse.ring.scale.setScalar((2 - wave) * boost);
       pulse.sphere.material.opacity = hovered ? 0.85 : 0.5;
     }
+  }
+
+  /**
+   * Корректировка положения точки в 3D (координаты Blender: [X right, Y length, Z up]).
+   * Вызов из консоли DevTools:
+   *   tank3d.setHotspot("heater-rear-left", -1.2, 2.2, 1.0)
+   */
+  setHotspot(id, x, y, z) {
+    const marker = this.hotspots?.find(
+      (m) => m.userData?.hotspot?.id === id || m.userData?.hotspot?.zone === id,
+    );
+    if (!marker) {
+      const available = this.hotspots?.map((m) => m.userData?.hotspot?.id).join(", ");
+      console.warn(`[Tank3DView] Точка "${id}" не найдена. Доступные: ${available}`);
+      return null;
+    }
+    const def = HOTSPOT_DEFS.find((d) => d.id === id || d.zone === id);
+    if (def) def.blender = [x, y, z];
+    marker.position.copy(this._blenderToLocal([x, y, z]));
+    console.log(`[Tank3DView] Точка "${id}" перемещена: [${x}, ${y}, ${z}]`);
+    return [x, y, z];
+  }
+
+  getHotspots() {
+    return HOTSPOT_DEFS.map((d) => ({
+      id: d.id,
+      label: d.label,
+      blender: [...d.blender],
+      color: `#${d.color.toString(16)}`,
+    }));
   }
 
   _observeResize() {
