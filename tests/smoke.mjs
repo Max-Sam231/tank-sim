@@ -1,5 +1,5 @@
 /**
- * Дымовой тест: поднимает index.html в jsdom, инициализирует UIController
+ * Дымовой тест: поднимает sim.html в jsdom, инициализирует UIController
  * поверх настоящей разметки и проверяет, что ключевые элементы интерфейса живы.
  *
  * Запуск: npm run smoke
@@ -22,11 +22,11 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-/** Поднимает DOM из index.html и отдаёт готовое окно. */
+/** Поднимает DOM из sim.html и отдаёт готовое окно. */
 function bootDom() {
-  const html = readFileSync(resolve(ROOT, "index.html"), "utf8");
+  const html = readFileSync(resolve(ROOT, "sim.html"), "utf8");
   const dom = new JSDOM(html, {
-    url: pathToFileURL(resolve(ROOT, "index.html")).href,
+    url: pathToFileURL(resolve(ROOT, "sim.html")).href,
     pretendToBeVisual: true,
   });
 
@@ -63,7 +63,7 @@ function bootDom() {
 let window = bootDom();
 
 /**
- * Свежий DOM из index.html для теста, который вешает обработчики.
+ * Свежий DOM из sim.html для теста, который вешает обработчики.
  * Контроллеры помечают разметку data-bound="1", поэтому повторная привязка
  * в том же документе молча не сработала бы, а слушатели прошлого теста
  * продолжили бы работать со своим состоянием.
@@ -310,7 +310,10 @@ check("HangarScene поднимается и переключает виды п�
   const scene = new HangarScene(makeApp(state));
   scene.init();
 
-  assert(scene.currentMode === "top", `после init ожидался вид top, получен ${scene.currentMode}`);
+  assert(scene.currentMode === "3d", `после init ожидался вид 3d, получен ${scene.currentMode}`);
+
+  scene.toggleView();
+  assert(scene.currentMode === "top", `ожидался вид top, получен ${scene.currentMode}`);
 
   scene.toggleView();
   assert(scene.currentMode === "side", `ожидался вид side, получен ${scene.currentMode}`);
@@ -319,7 +322,7 @@ check("HangarScene поднимается и переключает виды п�
   assert(scene.currentMode === "side-right", `ожидался вид side-right, получен ${scene.currentMode}`);
 
   scene.toggleView();
-  assert(scene.currentMode === "top", "цикл видов не вернулся к top");
+  assert(scene.currentMode === "3d", "цикл видов не вернулся к 3d");
 
   scene.dispose();
 });

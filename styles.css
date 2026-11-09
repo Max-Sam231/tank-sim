@@ -542,15 +542,34 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: #000;
+  background: transparent;
   color: #fff;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
+  pointer-events: none;
 }
 
 .start-menu-container.is-hidden {
   display: none;
+}
+
+/* Затемнение поверх 3D-ангара — читаемость пунктов меню */
+.start-menu-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.45) 42%, rgba(0, 0, 0, 0.28) 100%),
+    radial-gradient(ellipse at 70% 55%, transparent 20%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.start-menu-container > * {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .start-screen {
@@ -635,10 +654,22 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   padding: 12px 0;
   cursor: pointer;
   transition: opacity 0.2s;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
 }
 
 .start-nav-item:hover {
   opacity: 0.7;
+}
+
+a.start-nav-item {
+  text-decoration: none;
+  color: inherit;
+}
+
+.start-nav-home {
+  margin-top: 8px;
+  opacity: 0.75;
+  font-size: 18px;
 }
 
 /* Training Screen */
@@ -648,6 +679,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   padding: 20px 40px;
   gap: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 
 .training-back {
@@ -679,10 +713,11 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .scenario-menu-content-full {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 12px;
   padding: 24px;
+  backdrop-filter: blur(10px);
 }
 
 .scenario-menu-apply-full {
@@ -713,6 +748,9 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   padding: 20px 40px;
   gap: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 
 .instruction-back {
@@ -732,6 +770,10 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 .instruction-content {
   padding: 40px;
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
 }
 
 .instruction-placeholder {
@@ -811,7 +853,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 
 /* Authors Card */
 .authors-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 32px;
@@ -819,6 +861,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
   margin: 0 auto;
   text-align: center;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
 }
 
 .authors-lead {
@@ -1057,8 +1100,8 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .hitbox.interactive,
 #scene-heater .hitbox,
 #scene-zip-box .hitbox {
-  fill: rgba(255, 255, 255, 1);
-  stroke: rgba(255, 255, 255, 0.4);
+  fill: transparent;
+  stroke: rgba(255, 255, 255, 0.35);
   stroke-width: 1.5px;
   cursor: pointer;
   transition:
@@ -1070,25 +1113,24 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .hitbox.interactive:hover,
 #scene-heater .hitbox:hover,
 #scene-zip-box .hitbox:hover {
-  fill: rgba(255, 255, 255, 0.45);
-  stroke: rgba(255, 255, 255, 0.9);
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: rgba(255, 255, 255, 0.7);
   stroke-width: 2px;
 }
 
-/* В продакшене скрываем хитбоксы по умолчанию */
+/* В продакшене хитбоксы невидимы, лёгкая подсветка только на hover */
 body.app-prod .hitbox.interactive,
 body.app-prod #scene-heater .hitbox,
 body.app-prod #scene-zip-box .hitbox {
-  fill: rgba(255, 255, 255, 1);
+  fill: transparent;
   stroke: transparent;
 }
 
-/* В продакшене подсвечиваем хитбоксы при наведении */
 body.app-prod .hitbox.interactive:hover,
 body.app-prod #scene-heater .hitbox:hover,
 body.app-prod #scene-zip-box .hitbox:hover {
-  fill: rgba(255, 255, 255, 0.15);
-  stroke: rgba(255, 255, 255, 0.55);
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.45);
   stroke-width: 1.5px;
 }
 
@@ -1493,6 +1535,36 @@ body.app-prod #scene-zip-box .hitbox:hover {
   height: 100%;
 }
 
+.tank-3d-container {
+  background: radial-gradient(ellipse at 50% 80%, #2a2a2a 0%, #0d0d0d 70%);
+}
+
+#tank-3d-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.tank-3d-status {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 20;
+  max-width: min(90%, 720px);
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
 /**/
 .view-switch-btn {
   position: absolute;
@@ -1524,10 +1596,44 @@ body.app-prod #scene-zip-box .hitbox:hover {
     transform 0.1s;
 }
 
-/* Скрываем кнопки переключения видов и рентгена, когда открыто стартовое меню */
-.start-menu-container:not(.is-hidden)~.game-scene .view-switch-btn,
-.start-menu-container:not(.is-hidden)~.game-scene .xray-btn {
+/* HUD и кнопки ангара прячем, пока открыто стартовое меню */
+body.menu-open .view-switch-btn,
+body.menu-open .xray-btn,
+body.menu-open .tank-3d-status,
+body.menu-open .test-sensors-button,
+body.menu-open #inventoryBar,
+body.menu-open #simFinishButton,
+body.menu-open .systems-test-panel {
   display: none !important;
+}
+
+/* 2D-осмотр: люки и ЗИП не кликаются и не рисуются (вход только из 3D) */
+#scene-hangar.hangar-mode-2d [data-hatch],
+#scene-hangar.hangar-mode-2d [data-zone="zip-box"] {
+  pointer-events: none;
+  fill: transparent !important;
+  stroke: transparent !important;
+  filter: none !important;
+}
+
+/* Компактная кнопка рентген-слоя (как раньше, слева) */
+.hangar-xray-btn {
+  top: 20px;
+  left: 20px;
+  right: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 255, 255, 0.15);
+}
+
+/* 3D на весь экран под меню */
+body.menu-open #scene-hangar,
+body.menu-open #tank-3d-view,
+body.menu-open #tank-3d-view .hangar-view-container {
+  width: 100%;
+  height: 100%;
+  max-width: none;
 }
 
 .view-switch-btn:hover {
@@ -2054,8 +2160,8 @@ body.app-prod #scene-zip-box .hitbox:hover {
 
 /* Подсветка хитбоксов в ангаре */
 #scene-hangar .hitbox {
-  fill: rgba(255, 255, 255, 1);
-  stroke: rgba(255, 255, 255, 0.4);
+  fill: transparent;
+  stroke: rgba(255, 255, 255, 0.35);
   stroke-width: 1.5px;
   transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease;
   pointer-events: auto;
@@ -2063,22 +2169,21 @@ body.app-prod #scene-zip-box .hitbox:hover {
 }
 
 #scene-hangar .hitbox:hover {
-  fill: rgba(255, 255, 255, 0.45);
-  stroke: rgba(255, 255, 255, 0.85);
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: rgba(255, 255, 255, 0.7);
+  filter: none;
 }
 
-/* В продакшене хитбоксы в ангаре полностью прозрачны, а при наведении дают только тень (свечение) */
+/* В продакшене хитбоксы в ангаре невидимы (клик сохраняется там, где нужен) */
 body.app-prod #scene-hangar .hitbox {
-  fill: rgba(255, 255, 255, 1);
+  fill: transparent;
   stroke: transparent;
 }
 
 body.app-prod #scene-hangar .hitbox:hover {
-  fill: rgba(255, 255, 255, 0.01);
-  /* Очень низкая непрозрачность для drop-shadow */
+  fill: transparent;
   stroke: transparent;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.85));
+  filter: none;
 }
 
 /* === Панель Инвентаря (Inventory Bar) === */
@@ -2994,12 +3099,13 @@ body.familiarization-mode-active .fam-item-inactive {
   gap: 10px;
   padding: 22px 24px;
   text-align: left;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 10px;
   color: #fff;
   font: inherit;
   cursor: pointer;
+  backdrop-filter: blur(8px);
   transition:
     background 0.2s,
     border-color 0.2s,
