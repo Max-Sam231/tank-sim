@@ -29,18 +29,19 @@ export class CommanderScene {
             case 'toggle_heater_fuel_valve':
                 this.app.state.toggleHeaterFuelValve();
                 this._syncFuelValveVisual();
-                console.log("⛽ Клапан:", this.app.state.heaterFuelValve ? "ПОДНЯТ" : "ОПУЩЕН");
+                this.app.actionNotifier?.notify("toggle_heater_fuel_valve", this.app.state.getSnapshot());
+                console.log("⛽ Топливный кран подогревателя:", this.app.state.heaterFuelValve ? "ОТКРЫТ" : "ЗАКРЫТ");
                 break;
         }
     }
 
     _syncFuelValveVisual() {
-    const isTilted = this.app.state?.commanderView === 'tilted';
-    const isValveUp = this.app.state?.heaterFuelValve === true;
-    
-    this.el.classList.toggle('commander-view-tilted', isTilted);
-    this.el.classList.toggle('valve-up', isTilted && isValveUp);
-}
+        const isTilted = this.app.state?.commanderView === 'tilted';
+        const isValveUp = Boolean(this.app.state?.heaterFuelValve);
+        
+        this.el?.classList.toggle('commander-view-tilted', isTilted);
+        this.el?.classList.toggle('valve-up', isValveUp);
+    }
 
     dispose() {
         console.log("CommanderScene dispose");

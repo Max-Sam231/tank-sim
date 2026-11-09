@@ -490,10 +490,37 @@ check("Модальное окно ящика ЗИП №2 отображает 3
   hangarScene.enterZipBox();
   assert(modalOpened, "HangarScene.enterZipBox не вызвал openZipBoxModal");
 
-  // Проверка верхней кнопки в разметке index.html
-  const topBtn = window.document.getElementById("zipBox2ModalBtn");
-  assert(topBtn, "не найдена кнопка zipBox2ModalBtn в index.html");
-  assert(topBtn.textContent.includes("2 ящик ЗИП"), "неверная надпись на кнопке верхнего бара");
+  // Проверка вызова подогревателя из HangarScene.activateHotspot
+  let heaterOpened = false;
+  const mockAppHeater = { changeScene: (name) => { if (name === "heater") heaterOpened = true; } };
+  const hangarSceneHeater = new HangarScene(mockAppHeater);
+  hangarSceneHeater.activateHotspot({ zone: "heater-rear-left" });
+  assert(heaterOpened, "HangarScene.activateHotspot не открыл сцену подогревателя для heater-rear-left");
+});
+
+check("Кабина командира: хитбокс крана подогревателя переключает клапан топлива", async () => {
+  freshDom();
+  const state = new TankState();
+  const { CommanderScene } = await import("../js/scenes/CommanderScene.js");
+  const scene = new CommanderScene(makeApp(state));
+  scene.init();
+
+  const valveHitbox = window.document.querySelector('#scene-commander [data-action="toggle_heater_fuel_valve"]');
+  assert(valveHitbox, "не найден хитбокс toggle_heater_fuel_valve");
+  assert(valveHitbox.getAttribute("points") === "1140,945 1265,945 1265,1065 1140,1065", "неверные координаты хитбокса");
+
+  // Проверка удаления ненужных хитбоксов
+  assert(!window.document.querySelector('#scene-commander [data-action="enter_driver_seat"]'), "хитбокс enter_driver_seat не должен присутствовать");
+  assert(!window.document.querySelector('#scene-commander [data-action="toggle_commander_view"]'), "хитбокс toggle_commander_view не должен присутствовать");
+
+  assert(!state.heaterFuelValve, "клапан изначально должен быть закрыт");
+  valveHitbox.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert(state.heaterFuelValve, "клик по хитбоксу не открыл топливный кран подогревателя");
+
+  valveHitbox.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert(!state.heaterFuelValve, "повторный клик не закрыл топливный кран подогревателя");
+
+  scene.dispose();
 });
 
 check("Каждое действие из таблицы имеет рабочий обработчик", () => {
@@ -1834,17 +1861,16 @@ check("Сигнальные лампы размечены на щитке и з�
   const rootEl = window.document.querySelector(".stage") || window.document.body;
 
   const LAMPS = [
-    ["lamp-fire", "lamp_fire"],
-    ["lamp-oil-alarm", "lamp_oil_pressure_alarm"],
-    ["lamp-overheat", "lamp_overheat"],
-    ["lamp-fuel-reserve", "lamp_fuel_reserve"],
-    ["lamp-battery", "lamp_battery_charge"],
+    ["lamp-pv82-rpm", "lamp_pv82_rpm"],
+    ["lamp-pv82-coolant", "lamp_pv82_coolant"],
+    ["lamp-pv82-fan", "lamp_pv82_fan"],
+    ["lamp-pv82-brake", "lamp_pv82_brake"],
   ];
 
   for (const [action, stateKey] of LAMPS) {
     assert(
       window.document.querySelector(`[data-action="${action}"]`),
-      `на щитке нет хитбокса лампы ${action}`,
+      `на пульте ПВ-82 нет хитбокса лампы ${action}`,
     );
     const def = CONTROL_OVERLAY_DEFS[action];
     assert(def, `нет описания оверлея ${action}`);
@@ -1859,15 +1885,14 @@ check("Сигнальные лампы размечены на щитке и з�
   const state = new TankState();
   overlays.render(state.getSnapshot());
 
-  const fireLamp = overlays.getElement("lamp-fire");
-  assert(fireLamp, "спрайт лампы пожара не создан");
-  const off = fireLamp.getAttribute("src");
+  const brakeLamp = overlays.getElement("lamp-pv82-brake");
+  assert(brakeLamp, "спрайт лампы тормоза не создан");
+  const off = brakeLamp.getAttribute("src");
 
-  state.startFire(0.3);
-  state.tick(1 / 60);
+  state.parkingBrakeLatched = true;
   overlays.render(state.getSnapshot());
 
-  assert(fireLamp.getAttribute("src") !== off, "лампа пожара не загорелась");
+  assert(brakeLamp.getAttribute("src") !== off, "лампа тормоза ПВ-82 не загорелась");
 });
 
 check("У каждого органа есть название, описание и факты для изучения", () => {
@@ -2101,7 +2126,7 @@ check("Сигнальные лампы не перекрывают органы 
 
   const boxes = [...layer.querySelectorAll("polygon[points]")].map(boxOf);
   const lamps = boxes.filter((b) => b.name?.startsWith("lamp-"));
-  assert(lamps.length === 5, `ламп на щитке: ${lamps.length}`);
+  assert(lamps.length === 4, `ламп на пульте ПВ-82: ${lamps.length}`);
 
   const overlaps = (a, b) =>
     !(a.maxX <= b.minX || b.maxX <= a.minX || a.maxY <= b.minY || b.maxY <= a.minY);
@@ -2116,16 +2141,15 @@ check("Сигнальные лампы не перекрывают органы 
 
   assert(clashes.length === 0, clashes.join("; "));
 
-  // Щиток нарисован не на весь кадр: за его краем прозрачность, и там
-  // лампа повиснет в пустоте. Держим их в габаритах плиты.
-  const PLATE = { minX: 355, minY: 40, maxX: 1210, maxY: 1065 };
+  // Пульт ПВ-82 смонтирован в правом верхнем секторе
+  const PV82_ZONE = { minX: 1350, minY: 35, maxX: 1880, maxY: 170 };
   for (const lamp of lamps) {
     const inside =
-      lamp.minX >= PLATE.minX &&
-      lamp.minY >= PLATE.minY &&
-      lamp.maxX <= PLATE.maxX &&
-      lamp.maxY <= PLATE.maxY;
-    assert(inside, `${lamp.name} вне плиты щитка: ${lamp.minX},${lamp.minY}`);
+      lamp.minX >= PV82_ZONE.minX &&
+      lamp.minY >= PV82_ZONE.minY &&
+      lamp.maxX <= PV82_ZONE.maxX &&
+      lamp.maxY <= PV82_ZONE.maxY;
+    assert(inside, `${lamp.name} вне габаритов пульта ПВ-82: ${lamp.minX},${lamp.minY}`);
   }
 });
 

@@ -365,6 +365,25 @@ class TankState {
       lamp_commander_call: this.lamps.commander_call,
       lamp_air_intake: this.lamps.air_intake,
       lamp_fire: this.lamps.fire,
+
+      // Сигнальные лампы выносного пульта ПВ-82
+      lamp_pv82_rpm: Boolean(
+        this.signalLamps === 2 || (this.sensors?.rpm ?? this.rpm ?? 0) > 2300
+      ),
+      lamp_pv82_coolant: Boolean(
+        this.signalLamps === 2 ||
+          this.lamps.overheat ||
+          (this.sensors?.coolant_temp ?? 0) >= (this.waterAntifreeze ? 115 : 105) ||
+          this.shutters === 0
+      ),
+      lamp_pv82_fan: Boolean(
+        this.signalLamps === 2 ||
+          this.shutters === 0 ||
+          this.lamps.oil_pressure_alarm
+      ),
+      lamp_pv82_brake: Boolean(
+        this.signalLamps === 2 || this.parkingBrakeLatched
+      ),
       hingeLatch1: this.hingeLatch1,
       hingeLatch2: this.hingeLatch2,
       hingeLatch3: this.hingeLatch3,

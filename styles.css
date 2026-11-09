@@ -95,6 +95,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  container-type: size;
 }
 
 .overlay-container {
@@ -102,6 +103,8 @@ body {
   /* Match SVG "xMidYMid meet" behavior: fill while maintaining 16:9 aspect ratio */
   width: min(100%, calc(100vh * 16 / 9));
   height: min(calc(100vw * 9 / 16), 100%);
+  width: min(100%, calc(100cqh * 16 / 9));
+  height: min(calc(100cqw * 9 / 16), 100%);
   pointer-events: none;
 }
 
@@ -255,6 +258,70 @@ body.app-debug .gauge-hitbox:hover {
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+/* Выносной пульт ПВ-82 */
+.pv82-panel-assembly {
+  user-select: none;
+}
+.pv82-casing-body {
+  fill: #2c3338;
+  stroke: #49545c;
+  stroke-width: 4;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75));
+}
+.pv82-casing-inner {
+  fill: #394248;
+  stroke: #1c2124;
+  stroke-width: 2;
+}
+.pv82-bracket {
+  fill: #22272b;
+  stroke: #454f57;
+  stroke-width: 2.5;
+}
+.pv82-bracket-bolt {
+  fill: #6c7882;
+  stroke: #171a1c;
+  stroke-width: 2;
+}
+.pv82-title-plate {
+  fill: #191d20;
+  stroke: #5a6670;
+  stroke-width: 1.5;
+}
+.pv82-title-text {
+  fill: #dce3e8;
+  font-family: "Courier New", monospace, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+.pv82-labels-strip {
+  fill: #15181b;
+  stroke: #3c454d;
+  stroke-width: 1.5;
+}
+.pv82-strip-divider {
+  stroke: #46515a;
+  stroke-width: 1.5;
+}
+.pv82-label-text {
+  fill: #ffffff;
+  font-family: "Courier New", monospace, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.overlay[data-action^="lamp-pv82"] {
+  border-radius: 50%;
+  transition: filter 0.15s ease-in-out;
+}
+.overlay[data-action^="lamp-pv82"][src*="актив"] {
+  filter: drop-shadow(0 0 12px rgba(255, 30, 30, 0.95)) drop-shadow(0 0 24px rgba(255, 0, 0, 0.6));
 }
 
 .hitbox {
@@ -437,7 +504,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 .test-sensors-button {
   position: absolute;
   top: 20px;
-  right: 160px;
+  right: 180px;
   z-index: 1200;
   padding: 10px 14px;
   border-radius: 10px;
@@ -463,7 +530,7 @@ body.app-prod .hitbox-layer.labels-visible .hitbox-label {
 }
 
 .test-sensors-button:active {
-  transform: translateX(-50%) translateY(1px);
+  transform: translateY(1px);
 }
 
 .scenario-menu {
@@ -1151,6 +1218,13 @@ body.app-prod #scene-zip-box .hitbox:hover {
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
 }
 
+#scene-commander.valve-up .hitbox[data-action="toggle_heater_fuel_valve"] {
+  fill: rgba(46, 125, 50, 0.35);
+  stroke: #81c784;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 10px rgba(76, 175, 80, 0.7));
+}
+
 .game-scene {
   position: absolute;
   top: 0;
@@ -1546,25 +1620,6 @@ body.app-prod #scene-zip-box .hitbox:hover {
   touch-action: none;
 }
 
-.tank-3d-status {
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  z-index: 20;
-  max-width: min(90%, 720px);
-  margin: 0;
-  padding: 8px 14px;
-  font-size: 13px;
-  line-height: 1.35;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  pointer-events: none;
-}
-
 /**/
 .view-switch-btn {
   position: absolute;
@@ -1599,7 +1654,6 @@ body.app-prod #scene-zip-box .hitbox:hover {
 /* HUD и кнопки ангара прячем, пока открыто стартовое меню */
 body.menu-open .view-switch-btn,
 body.menu-open .xray-btn,
-body.menu-open .tank-3d-status,
 body.menu-open .test-sensors-button,
 body.menu-open #inventoryBar,
 body.menu-open #simFinishButton,
@@ -2775,11 +2829,11 @@ body.familiarization-mode-active .fam-item-inactive {
    =========================================================== */
 .systems-test-panel {
   position: fixed;
-  right: 8px;
-  bottom: 8px;
+  right: 12px;
+  bottom: 60px;
   z-index: 3000;
   width: 250px;
-  max-height: 70vh;
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
   background: rgba(18, 20, 24, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.18);

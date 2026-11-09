@@ -47,6 +47,7 @@ const STATE_SOUNDS = [
 
   { key: "leftTank", enter: "valveOpen", exit: "valveClose" },
   { key: "rightTank", enter: "valveOpen", exit: "valveClose" },
+  { key: "heaterFuelValve", enter: "valveOpen", exit: "valveClose" },
 
   {
     key: "airBleedValve",

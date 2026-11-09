@@ -163,6 +163,7 @@ function bootstrap() {
     },
     raycastFromMouse: () => null,
     changeScene: (name, id) => changeScene(name, id),
+    actionNotifier,
   };
 
   const hangarScene = new HangarScene(app);
@@ -319,9 +320,6 @@ function bootstrap() {
   if (heaterBackBtn) {
     heaterBackBtn.addEventListener("click", () => {
       changeScene("hangar");
-      setTimeout(() => {
-        hangarScene?.showSideView?.();
-      }, 50);
     });
   }
 

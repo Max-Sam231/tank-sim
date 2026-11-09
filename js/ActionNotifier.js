@@ -48,6 +48,12 @@ class ActionNotifier {
       "engine-start": () => `Выключатель «ПУСК МОТОРА»: ${snapshot.engineStart === 1 ? "ВЫКЛ" : "ВКЛ"}`,
       "emergency-hatch-rotation": () => boolText(snapshot.emergencyHatchRotation, "Аварийный поворот колпака командира включен", "Аварийный поворот колпака командира выключен"),
       "oil-pump-gearbox": () => boolText(snapshot.oilPumpGearbox, "Откачка масла из КП включена", "Откачка масла из КП выключена"),
+      "toggle_heater_fuel_valve": () => boolText(snapshot.heaterFuelValve, "Топливный кран подогревателя: ОТКРЫТ (подача топлива)", "Топливный кран подогревателя: ЗАКРЫТ"),
+      // Сигнальные лампы выносного пульта ПВ-82
+      "lamp-pv82-rpm": () => boolText(snapshot.lamp_pv82_rpm, "Лампа «ОБОРОТЫ ДВИГАТ.» (ПВ-82): ГОРИТ (опасные обороты)", "Лампа «ОБОРОТЫ ДВИГАТ.» (ПВ-82): не горит"),
+      "lamp-pv82-coolant": () => boolText(snapshot.lamp_pv82_coolant, "Лампа «ОХЛ. ЖИДКОСТЬ» (ПВ-82): ГОРИТ (перегрев / нейтраль)", "Лампа «ОХЛ. ЖИДКОСТЬ» (ПВ-82): не горит"),
+      "lamp-pv82-fan": () => boolText(snapshot.lamp_pv82_fan, "Лампа «ВЕНТ. / ДАВЛЕН. ДВ.» (ПВ-82): ГОРИТ (вентилятор отключен / давление масла)", "Лампа «ВЕНТ. / ДАВЛЕН. ДВ.» (ПВ-82): не горит"),
+      "lamp-pv82-brake": () => boolText(snapshot.lamp_pv82_brake, "Лампа «ТОРМОЗ» (ПВ-82): ГОРИТ (тормоз на защёлке)", "Лампа «ТОРМОЗ» (ПВ-82): не горит"),
       // Note: commander-call and air-intake are indicator lamps only (non-interactive)
       heating: () => boolText(snapshot.heating, "Обогрев боевого отделения («ОБОГРЕВ БО») включен", "Обогрев боевого отделения («ОБОГРЕВ БО») выключен"),
       combined: () => boolText(snapshot.combined, "Комбинированный пуск («КОМБИНИР.») включен", "Комбинированный пуск («КОМБИНИР.») выключен"),
