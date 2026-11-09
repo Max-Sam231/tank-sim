@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Электронное пособие — Driver Sim</title>
+  <meta name="description" content="Макет электронного пособия по подготовке и пуску двигателя танка Т-72." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./landing.css" />
+  <script type="module" src="./manual.js"></script>
+</head>
+<body class="manual-page">
+  <div class="manual-shell">
+    <header class="manual-top">
+      <div class="manual-top-left">
+        <a class="manual-back" href="./index.html">← На главную</a>
+        <h1 class="manual-title">Электронное пособие</h1>
+      </div>
+      <span class="manual-badge">Макет</span>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-toc" aria-label="Оглавление">
+        <h2>Оглавление</h2>
+        <ul class="manual-toc-list" id="manualToc"></ul>
+      </aside>
+
+      <main class="manual-reader" id="manualReader" aria-live="polite">
+        <!-- Заполняется manual.js -->
+      </main>
+    </div>
+  </div>
+</body>
+</html>

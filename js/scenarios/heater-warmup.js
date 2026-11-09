@@ -72,27 +72,39 @@ function getHeaterWarmupScenario(ambientTemp = -20) {
         steps: [
           {
             id: "valve-open",
-            title: "В кабине командира открыть топливный кран подогревателя",
+            title: "В кабине командира открыть топливный кран подогревателя (рычаг вперёд)",
             gateKeys: ["heaterFuelValve"],
             completeWhen: (s) => Boolean(s.heaterFuelValve),
           },
           {
             id: "spark-plug-on",
-            title: "Установить переключатель СВЕЧА в положение СВЕЧА (влево)",
+            title: "Установить переключатель «СВЕЧА – МОТОР» в положение «СВЕЧА» (влево)",
             gateKeys: ["sparkPlug"],
             completeWhen: (s) => s.sparkPlug === 2,
           },
           {
+            id: "motor-start-on",
+            title: "Удерживая «СВЕЧА», включить выключатель «ПУСК МОТОРА» подогревателя",
+            gateKeys: ["engineStart"],
+            completeWhen: (s) => s.sparkPlug === 2 && s.engineStart !== 1,
+          },
+          {
             id: "heater-burning",
-            title: "Дождаться воспламенения топлива в подогревателе",
+            title: "Дождаться воспламенения топлива в подогревателе (хлопок и гул)",
             auto: true,
             completeWhen: (s) => Boolean(s.heaterBurning),
           },
           {
-            id: "spark-plug-release",
-            title: "Отпустить переключатель СВЕЧА (вернуть в среднее положение)",
+            id: "spark-plug-motor",
+            title: "Сразу после воспламенения перевести переключатель «СВЕЧА – МОТОР» в положение «МОТОР» (вправо)",
             gateKeys: ["sparkPlug"],
-            completeWhen: (s) => Boolean(s.heaterBurning) && s.sparkPlug === 1,
+            completeWhen: (s) => Boolean(s.heaterBurning) && s.sparkPlug === 0,
+          },
+          {
+            id: "motor-start-release",
+            title: "Отпустить выключатель «ПУСК МОТОРА» (вернуть в нейтральное положение)",
+            gateKeys: ["engineStart"],
+            completeWhen: (s) => Boolean(s.heaterBurning) && s.sparkPlug === 0 && s.engineStart === 1,
           }
         ]
       },
@@ -109,13 +121,19 @@ function getHeaterWarmupScenario(ambientTemp = -20) {
           },
           {
             id: "valve-close",
-            title: "В кабине командира закрыть топливный кран подогревателя",
+            title: "В кабине командира закрыть топливный кран подогревателя (рычаг назад)",
             gateKeys: ["heaterFuelValve"],
             completeWhen: (s) => !Boolean(s.heaterFuelValve),
           },
           {
+            id: "spark-plug-off",
+            title: "После продувки котла (15–30 с) выключить переключатель «СВЕЧА – МОТОР» (в нейтраль)",
+            gateKeys: ["sparkPlug"],
+            completeWhen: (s) => !Boolean(s.heaterFuelValve) && s.sparkPlug === 1,
+          },
+          {
             id: "cap-remove",
-            title: "Снять козырек выхлопа подогревателя",
+            title: "Снять козырек выхлопа подогревателя и убрать в ЗИП",
             gateKeys: ["exhaustCapInstalled"],
             completeWhen: (s) => !Boolean(s.exhaustCapInstalled),
           },

@@ -95,46 +95,46 @@ const CONTROL_OVERLAY_DEFS = {
 
 | Action              | Kind    | StateKey        | Описание                   |
 | ------------------- | ------- | --------------- | -------------------------- |
-| `battery-toggle`    | boolean | isBatteryOn     | Выключатель массы          |
-| `gear-lever`        | enum    | gearLever       | Рычаг переключения передач |
-| `shutters`          | boolean | shutters        | Жалюзи                     |
-| `right-tank`        | boolean | rightTank       | Правый воздушный баллон    |
-| `left-tank`         | boolean | leftTank        | Левый воздушный баллон     |
-| `gas-pedal`         | boolean | gasPedal        | Педаль газа                |
-| `brake-pedal`       | boolean | brakeEffective  | Педаль тормоза             |
-| `fuel-manual-feed`  | range   | fuelManualFeed  | Ручная подача топлива      |
-| `bcn`               | enum    | bcn             | БЦН ТЦА                    |
-| `air-bleed-valve`   | boolean | airBleedValve   | Клапан спуска воздуха      |
-| `fuel-primer-lever` | boolean | fuelPrimerLever | Рычаг ручной подкачки      |
+| `battery-toggle`    | boolean | isBatteryOn     | Выключатель батарей («Масса») |
+| `gear-lever`        | enum    | gearLever       | Избиратель передач            |
+| `shutters`          | boolean | shutters        | Кулиса привода жалюзи         |
+| `right-tank`        | boolean | rightTank       | Вентиль правого баллона       |
+| `left-tank`         | boolean | leftTank        | Вентиль левого баллона        |
+| `gas-pedal`         | boolean | gasPedal        | Педаль подачи топлива         |
+| `brake-pedal`       | boolean | brakeEffective  | Педаль остановочного тормоза  |
+| `fuel-manual-feed`  | range   | fuelManualFeed  | Рукоятка ручной подачи топлива|
+| `bcn`               | enum    | bcn             | Топливораспределительный кран |
+| `air-bleed-valve`   | boolean | airBleedValve   | Клапан выпуска воздуха        |
+| `fuel-primer-lever` | boolean | fuelPrimerLever | Ручной насос РНМ-1            |
 
 ### Приборная панель
 
-| Action                     | Kind    | StateKey               | Описание                  |
-| -------------------------- | ------- | ---------------------- | ------------------------- |
-| `azr`                      | enum    | azr                    | АЗР (0/1/2)               |
-| `epk`                      | boolean | epk                    | ЭПК                       |
-| `horn`                     | boolean | horn                   | Звуковой сигнал           |
-| `mzn-engine`               | boolean | mznEngine              | МЗН двигателя             |
-| `ammeter-button`           | boolean | ammeterButton          | Кнопка амперметра         |
-| `left-right-tanks`         | enum    | leftRightTanks         | Переключатель баков       |
-| `spark-plug`               | enum    | sparkPlug              | Свеча/мотор               |
-| `engine-start`             | enum    | engineStart            | Пуск мотора               |
-| `emergency-hatch-rotation` | boolean | emergencyHatchRotation | Аварийный поворот колпака |
-| `oil-pump-gearbox`         | boolean | oilPumpGearbox         | Откачка масла КП          |
-| `commander-call`           | boolean | commanderCall          | Вызов командира           |
-| `air-intake`               | boolean | airIntake              | ВО                        |
-| `heating`                  | boolean | heating                | Обогрев боевого отделения (ОБОГРЕВ БО) |
-| `combined`                 | boolean | combined               | Комбинированный           |
-| `left-lights`              | boolean | leftLights             | Левые фары                |
-| `right-lights`             | boolean | rightLights            | Правые фары               |
-| `gabrate-lights`           | boolean | gabrateLights          | Габаритные огни           |
-| `lights-all`               | boolean | lightsAll              | Все/задние фонари         |
-| `water-antifreeze`         | boolean | waterAntifreeze        | Вода/антифриз             |
-| `gpk`                      | boolean | gpk                    | ГПК                       |
-| `bca-tca`                  | boolean | bcaTca                 | БЦА/ТЦА                   |
-| `mzn-tow`                  | enum    | mznTow                 | МЗН буксир (0/1/2)        |
-| `starter`                  | enum    | starter                | Стартер (0/1/2)           |
-| `signal-lamps`             | enum    | signalLamps            | Контроль ламп (0/1/2)     |
+| Action                     | Kind    | StateKey               | Описание                              |
+| -------------------------- | ------- | ---------------------- | ------------------------------------- |
+| `azr`                      | enum    | azr                    | Автоматы защиты сети АЗР (0/1/2)      |
+| `epk`                      | boolean | epk                    | Кнопка ЭПК-48 (пуск воздухом)         |
+| `horn`                     | boolean | horn                   | Кнопка звукового сигнала С-314Г       |
+| `mzn-engine`               | boolean | mznEngine              | Кнопка «МЗН ДВИГАТЕЛЯ»                |
+| `ammeter-button`           | boolean | ammeterButton          | Кнопка вольтамперметра ВА-540         |
+| `left-right-tanks`         | enum    | leftRightTanks         | Переключатель баков ТМУ-23            |
+| `spark-plug`               | enum    | sparkPlug              | Переключатель «СВЕЧА – МОТОР»         |
+| `engine-start`             | enum    | engineStart            | Выключатель «ПУСК МОТОРА»             |
+| `emergency-hatch-rotation` | boolean | emergencyHatchRotation | Тумблер «АВАРИЙНЫЙ ПОВОРОТ КОЛПАКА»   |
+| `oil-pump-gearbox`         | boolean | oilPumpGearbox         | Выключатель «ОТКАЧКА МАСЛА ИЗ КП»     |
+| `commander-call`           | boolean | commanderCall          | Сигнальная лампа «ВЫЗОВ КОМАНДИРА»    |
+| `air-intake`               | boolean | airIntake              | Сигнальная лампа «ВО»                 |
+| `heating`                  | boolean | heating                | Тумблер «ОБОГРЕВ БО»                  |
+| `combined`                 | boolean | combined               | Тумблер «КОМБИНИР.» (комбинир. пуск)  |
+| `left-lights`              | boolean | leftLights             | Тумблер «ФАРЫ: ЛЕВЫЕ»                 |
+| `right-lights`             | boolean | rightLights            | Тумблер «ФАРЫ: ПРАВЫЕ»                |
+| `gabrate-lights`           | boolean | gabrateLights          | Переключатель габаритов большой/малый |
+| `lights-all`               | boolean | lightsAll              | Переключатель габаритов все/задние    |
+| `water-antifreeze`         | boolean | waterAntifreeze        | Переключатель «ВОДА – АНТИФРИЗ»       |
+| `gpk`                      | boolean | gpk                    | Выключатель питания «ГПК» (ГПК-59)    |
+| `bca-tca`                  | boolean | bcaTca                 | Переключатель «ТДА – БЦН»             |
+| `mzn-tow`                  | enum    | mznTow                 | Кнопка «МЗН БУКСИРА» (0/1/2)          |
+| `starter`                  | enum    | starter                | Кнопка «СТАРТЕР» (0/1/2)              |
+| `signal-lamps`             | enum    | signalLamps            | Кнопка контроля ламп (0/1/2)          |
 
 ## Типичные спрайты
 
