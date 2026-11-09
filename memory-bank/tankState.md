@@ -43,7 +43,7 @@
 | `leftRightTanks` | number  | Переключатель баков: 0=прав, 1=сред, 2=лев |
 | `sparkPlug`      | number  | Свеча/мотор                                |
 | `engineStart`    | number  | Пуск мотора                                |
-| `heating`        | boolean | Обогрев                                    |
+| `heating`        | boolean | Обогрев боевого отделения (ОБОГРЕВ БО)     |
 | `combined`       | boolean | Комбинированный                            |
 | И другие...      |         |                                            |
 

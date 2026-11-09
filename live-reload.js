@@ -1,5 +1,13 @@
 // Live reload script
 (function() {
+  // Skip live reload in desktop runtimes (Electron / NW.js) or direct file:// access
+  if (typeof window !== 'undefined') {
+    const isDesktop = window.location.protocol === 'file:' ||
+      (typeof navigator !== 'undefined' && /electron/i.test(navigator.userAgent)) ||
+      (typeof nw !== 'undefined');
+    if (isDesktop) return;
+  }
+
   let ws;
   let reconnectTimer;
   

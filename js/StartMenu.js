@@ -1,168 +1,146 @@
+import { MENU_SCREENS, FULLSCREEN_PROMPT_HTML } from "./menu/menuScreens.js";
+import { requestFullscreen } from "./fullscreen.js";
+
+/**
+ * Стартовое меню: выбор режима занятия и условий тренировки.
+ *
+ * Разметка экранов лежит в menu/menuScreens.js — здесь только
+ * переключение между ними и сбор выбранных условий.
+ */
+const DEFAULTS = {
+  startMethod: "prestart-preparation",
+  ambientTemp: 20,
+  fuelType: "diesel",
+};
+
 class StartMenu {
-  constructor({ rootEl, onTrainingStart, onInstruction }) {
+  constructor({ rootEl, onTrainingStart, onInstruction, onFamiliarization }) {
     this.rootEl = rootEl;
     this.onTrainingStart = onTrainingStart;
     this.onInstruction = onInstruction;
-    this.currentScreen = 'main';
+    this.onFamiliarization = onFamiliarization;
+    this.currentScreen = "main";
+
     this._build();
   }
 
   _build() {
-    // Main start screen
-    const mainScreen = document.createElement('div');
-    mainScreen.className = 'start-screen start-screen-main';
-    mainScreen.setAttribute('data-screen', 'main');
-    mainScreen.innerHTML = `
-      <nav class="start-nav">
-        <button class="start-nav-item" data-action="training">Тренировка</button>
-        <button class="start-nav-item" data-action="instruction">Инструкция</button>
-      </nav>
-    `;
+    for (const screen of MENU_SCREENS) {
+      const el = document.createElement("div");
+      el.className = screen.className;
+      el.setAttribute("data-screen", screen.name);
+      el.innerHTML = screen.html;
+      this.rootEl.appendChild(el);
+    }
 
-    // Training screen (scenario selection)
-    const trainingScreen = document.createElement('div');
-    trainingScreen.className = 'start-screen start-screen-training';
-    trainingScreen.setAttribute('data-screen', 'training');
-    trainingScreen.innerHTML = `
-      <div class="training-header">
-        <button class="training-back" data-action="back">← Назад</button>
-        <h1 class="training-title">Тренировка</h1>
-      </div>
-      <div class="training-content">
-        <div class="scenario-menu-full">
-          <div class="scenario-menu-content-full">
-            <div class="scenario-menu-title">Условия тренировки</div>
-            <label class="scenario-menu-field">
-              <span class="scenario-menu-label">Способ запуска</span>
-              <select id="scenarioStartMethod" class="scenario-menu-input">
-                <option value="starter-generator">Стартер-генератор</option>
-              </select>
-            </label>
-            <label class="scenario-menu-field">
-              <span class="scenario-menu-label">Температура, °C</span>
-              <select id="scenarioAmbientTemp" class="scenario-menu-input">
-                <option value="15" selected>+15</option>
-              </select>
-            </label>
-            <button class="scenario-menu-apply-full" id="scenarioApply">Начать тренировку</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Instruction screen (placeholder)
-    const instructionScreen = document.createElement('div');
-    instructionScreen.className = 'start-screen start-screen-instruction';
-    instructionScreen.setAttribute('data-screen', 'instruction');
-    instructionScreen.innerHTML = `
-      <div class="instruction-header">
-        <button class="instruction-back" data-action="back">← Назад</button>
-        <h1 class="instruction-title">Инструкция</h1>
-      </div>
-      <div class="instruction-content">
-        <p class="instruction-placeholder">Здесь будет инструкция...</p>
-      </div>
-    `;
-
-    this.rootEl.appendChild(mainScreen);
-    this.rootEl.appendChild(trainingScreen);
-    this.rootEl.appendChild(instructionScreen);
-
-    // Add fullscreen modal
-    const fullscreenModal = document.createElement('div');
-    fullscreenModal.className = 'start-fullscreen-modal';
-    fullscreenModal.innerHTML = `
-      <div class="start-fullscreen-modal-content">
-        <h2>Нажмите для синхронизации размеров экрана</h2>
-        <p>Программа работает корректно только в полноэкранном режиме</p>
-        <button class="start-fullscreen-modal-button" id="startFullscreenButton">Перейти в полноэкранный режим</button>
-      </div>
-    `;
-    this.rootEl.appendChild(fullscreenModal);
+    const prompt = document.createElement("div");
+    prompt.className = "start-fullscreen-modal";
+    prompt.innerHTML = FULLSCREEN_PROMPT_HTML;
+    this.rootEl.appendChild(prompt);
 
     this._wireEvents();
-    this.showScreen('main');
+    this.showScreen("main");
     this._showFullscreenModal();
   }
 
-  _wireEvents() {
-    this.rootEl.addEventListener('click', (e) => {
-      const action = e.target.dataset.action;
-      if (!action) return;
+  // --- События -------------------------------------------------------------
 
-      switch (action) {
-        case 'training':
-          this.showScreen('training');
-          break;
-        case 'instruction':
-          this.showScreen('instruction');
-          if (this.onInstruction) this.onInstruction();
-          break;
-        case 'back':
-          this.showScreen('main');
-          break;
-      }
-    });
-
-    // Apply scenario button
-    const applyBtn = this.rootEl.querySelector('#scenarioApply');
-    if (applyBtn) {
-      applyBtn.addEventListener('click', () => {
-        const startMethod = this.rootEl.querySelector('#scenarioStartMethod')?.value || 'starter-generator';
-        const ambientTemp = Number(this.rootEl.querySelector('#scenarioAmbientTemp')?.value) || 15;
-        if (this.onTrainingStart) {
-          this.onTrainingStart({ startMethod, ambientTemp });
-        }
-      });
-    }
-
-    // Fullscreen modal button
-    const fullscreenBtn = this.rootEl.querySelector('#startFullscreenButton');
-    if (fullscreenBtn) {
-      fullscreenBtn.addEventListener('click', () => {
-        if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-          document.documentElement.webkitRequestFullscreen();
-        } else if (document.documentElement.mozRequestFullScreen) {
-          document.documentElement.mozRequestFullScreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-          document.documentElement.msRequestFullscreen();
-        }
-        this._hideFullscreenModal();
-      });
-    }
+  /** Куда ведёт каждая кнопка главного меню. */
+  get _navTargets() {
+    return {
+      training: () => this.showScreen("training"),
+      // Ознакомление ведёт на выбор режима: изучение или проверка
+      familiarization: () => this.showScreen("familiarization"),
+      "familiarization-study": () => this.onFamiliarization?.("study"),
+      "familiarization-quiz": () => this.onFamiliarization?.("quiz"),
+      instruction: () => {
+        this.showScreen("instruction");
+        this.onInstruction?.();
+      },
+      authors: () => this.showScreen("authors"),
+      back: () => this.showScreen("main"),
+    };
   }
 
+  _wireEvents() {
+    this.rootEl.addEventListener("click", (event) => {
+      // Ищем ближайшего носителя действия: у кнопки может быть вложенная
+      // разметка, и клик приходит на внутренний элемент, а не на неё саму
+      const actionEl = event.target.closest("[data-action]");
+      this._navTargets[actionEl?.dataset.action]?.();
+    });
+
+    this._wireInstructionTabs();
+
+    this.rootEl.querySelector("#scenarioApply")?.addEventListener("click", () => {
+      this.onTrainingStart?.(this._readScenario());
+    });
+
+    this.rootEl.querySelector("#startFullscreenButton")?.addEventListener("click", () => {
+      requestFullscreen().catch(() => {});
+      this._hideFullscreenModal();
+    });
+  }
+
+  /** Вкладки внутри экрана инструкции. */
+  _wireInstructionTabs() {
+    const tabButtons = this.rootEl.querySelectorAll(".instruction-tab-btn");
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        const targetTab = event.target.dataset.tab;
+        if (!targetTab) return;
+
+        tabButtons.forEach((other) => other.classList.remove("active"));
+        this.rootEl
+          .querySelectorAll(".instruction-tab-pane")
+          .forEach((pane) => pane.classList.remove("active"));
+
+        event.target.classList.add("active");
+        this.rootEl.querySelector(`#${targetTab}`)?.classList.add("active");
+      });
+    });
+  }
+
+  /** Условия тренировки, выбранные на экране настройки. */
+  _readScenario() {
+    const value = (selector) => this.rootEl.querySelector(selector)?.value;
+
+    const rawTemp = Number(value("#scenarioAmbientTemp"));
+
+    return {
+      startMethod: value("#scenarioStartMethod") || DEFAULTS.startMethod,
+      ambientTemp: Number.isFinite(rawTemp) ? rawTemp : DEFAULTS.ambientTemp,
+      fuelType: value("#scenarioFuelType") || DEFAULTS.fuelType,
+    };
+  }
+
+  // --- Показ экранов -------------------------------------------------------
+
   _showFullscreenModal() {
-    const modal = this.rootEl.querySelector('.start-fullscreen-modal');
-    if (modal) modal.style.display = 'flex';
+    const modal = this.rootEl.querySelector(".start-fullscreen-modal");
+    if (modal) modal.style.display = "flex";
   }
 
   _hideFullscreenModal() {
-    const modal = this.rootEl.querySelector('.start-fullscreen-modal');
-    if (modal) modal.style.display = 'none';
+    const modal = this.rootEl.querySelector(".start-fullscreen-modal");
+    if (modal) modal.style.display = "none";
   }
 
   showScreen(name) {
-    const screens = this.rootEl.querySelectorAll('.start-screen');
-    screens.forEach(screen => {
-      if (screen.getAttribute('data-screen') === name) {
-        screen.classList.add('is-active');
-      } else {
-        screen.classList.remove('is-active');
-      }
+    this.rootEl.querySelectorAll(".start-screen").forEach((screen) => {
+      screen.classList.toggle("is-active", screen.getAttribute("data-screen") === name);
     });
     this.currentScreen = name;
   }
 
   hide() {
-    this.rootEl.classList.add('is-hidden');
+    this.rootEl.classList.add("is-hidden");
   }
 
   show() {
-    this.rootEl.classList.remove('is-hidden');
-    this.showScreen('main');
+    this.rootEl.classList.remove("is-hidden");
+    this.showScreen("main");
   }
 }
 

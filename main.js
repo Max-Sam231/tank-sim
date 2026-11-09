@@ -4,21 +4,36 @@ import { FullscreenManager } from './js/FullscreenManager.js';
 import { StartMenu } from './js/StartMenu.js';
 import { TrainingEngine } from './js/TrainingEngine.js';
 import { FinishReportModal } from './js/FinishReportModal.js';
-
+import { ActionNotifier } from './js/ActionNotifier.js';
+import { AudioManager } from './js/audio/AudioManager.js'; // <-- Импорт аудио
 import { SceneManager } from './js/SceneManager.js';
-import { HangarScene } from './js/HangarScene.js';
-import { DriverScene } from './js/DriverScene.js';
-import { CommanderScene } from './js/CommanderScene.js'; 
-
-const APP_MODE = "prod"; 
+import { HangarScene } from './js/scenes/HangarScene.js';
+import { DriverScene } from './js/scenes/DriverScene.js';
+import { CommanderScene } from './js/scenes/CommanderScene.js';
+import { SmokeEmitter } from './js/smoke/SmokeEmitter.js';
+import { FamiliarizationController } from './js/familiarization/FamiliarizationController.js';
+import { SystemsTestPanel } from './js/ui/SystemsTestPanel.js';
+import { AlarmOverlay } from './js/ui/AlarmOverlay.js';
+import { HitboxEditor } from './js/ui/HitboxEditor.js';
+import { ZipBoxModal } from './js/ui/ZipBoxModal.js';
+const APP_MODE = "prod"; // "debug" или "prod" — отладочные хитбоксы и подписи
 const IS_DEBUG = APP_MODE === "debug";
 
+// Панель проверки систем нужна и без отладочных хитбоксов:
+// у новых органов управления пока нет своих полигонов на фоне
+const SHOW_TEST_PANEL = true;
+
+// Редактор хитбоксов: обвести орган на сцене и получить строку разметки.
+// Включать только для разметки — он перехватывает клики по сцене.
+const SHOW_HITBOX_EDITOR = false;
 
 function bootstrap() {
   const sceneEl = document.getElementById("scene");
   const consoleEl = document.getElementById("debugConsole");
   const startMenuContainerEl = document.getElementById("startMenuContainer");
   const finishBtnEl = document.getElementById("simFinishButton");
+  const topToolbarEl = document.getElementById("simTopToolbar");
+  const zipBox2Btn = document.getElementById("zipBox2ModalBtn");
 
   if (!sceneEl || !consoleEl || !startMenuContainerEl) return;
 
@@ -26,15 +41,98 @@ function bootstrap() {
   document.body.classList.toggle("app-prod", !IS_DEBUG);
 
   const state = new TankState();
+  const exhaustSmoke = new SmokeEmitter('exhaust-smoke-container', 'exhaust');
+  const fireSmoke = new SmokeEmitter('fire-smoke-container', 'fire');
+  const audioManager = new AudioManager();
+  const actionNotifier = new ActionNotifier({ rootEl: document.body });
+
+  // 🔊 ПРИНУДИТЕЛЬНАЯ РАЗБЛОКИРОВКА ЗВУКА
+  // Этот обработчик срабатывает при ПЕРВОМ клике где угодно на странице
+  let audioUnlocked = false;
+  const unlockAudioOnFirstClick = (event) => {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    audioManager.init();
+    console.log("🔊 Глобальный разблокировщик звука сработал по клику");
+    
+    window.removeEventListener('click', unlockAudioOnFirstClick);
+    window.removeEventListener('mousedown', unlockAudioOnFirstClick);
+    window.removeEventListener('touchstart', unlockAudioOnFirstClick);
+    window.removeEventListener('keydown', unlockAudioOnFirstClick);
+  };
+
+  window.addEventListener('click', unlockAudioOnFirstClick);
+  window.addEventListener('mousedown', unlockAudioOnFirstClick);
+  window.addEventListener('touchstart', unlockAudioOnFirstClick);
+  window.addEventListener('keydown', unlockAudioOnFirstClick);
+  
+  // Также пробуем разблокировать сразу при загрузке (если браузер уже разрешил)
+  setTimeout(() => audioManager.init(), 100);
+
+  function updateInventoryBar(snapshot) {
+    const bar = document.getElementById("inventoryBar");
+    if (!bar) return;
+
+    const keyStatus = document.getElementById("inv-key-status");
+    const visorStatus = document.getElementById("inv-visor-status");
+
+    // Update key
+    if (keyStatus) {
+      if (snapshot.hasZipKey) {
+        keyStatus.className = "status-value status-green";
+        keyStatus.textContent = "есть";
+      } else {
+        keyStatus.className = "status-value status-red";
+        keyStatus.textContent = "нет";
+      }
+    }
+
+    // Update visor
+    if (visorStatus) {
+      if (snapshot.exhaustCapInstalled) {
+        visorStatus.className = "status-value status-blue";
+        visorStatus.textContent = "установлен";
+      } else if (snapshot.hasExhaustCap) {
+        visorStatus.className = "status-value status-green";
+        visorStatus.textContent = "есть";
+      } else {
+        visorStatus.className = "status-value status-red";
+        visorStatus.textContent = "нет";
+      }
+    }
+  }
+
+  state.subscribe((snapshot) => {
+    audioManager.onStateChange(snapshot);
+    exhaustSmoke.update(snapshot.engineRunning, {
+      intensity: snapshot.engine_rpm / 2500,
+      style: snapshot.is_smoke_screen_active ? "smokeScreen" : "exhaust",
+    });
+
+    // Пожар в МТО виден снаружи — в ангаре над моторным отделением
+    fireSmoke.update(snapshot.is_fire_detected, { intensity: snapshot.fire_level });
+    updateInventoryBar(snapshot);
+  });
 
   const ui = new UIController({
     rootEl: sceneEl,
     consoleEl,
     state,
-    isDebug: IS_DEBUG
+    isDebug: IS_DEBUG,
+    actionNotifier
   });
 
+  // Временно: пока у новых систем нет хитбоксов, их проверяют через панель
+  // Аварийная сигнализация: лампы приборной панели пока не размечены
+  new AlarmOverlay({ state });
+
+  if (SHOW_TEST_PANEL) new SystemsTestPanel({ state, ui });
+  if (SHOW_HITBOX_EDITOR) new HitboxEditor();
+
   const training = new TrainingEngine({ state });
+
+  /** Открыть главное меню поверх 3D-танка в ангаре. */
+  let openStartMenu = () => {};
 
   const reportModal = new FinishReportModal({
     onContinue: () => {
@@ -42,7 +140,13 @@ function bootstrap() {
     },
     onMenu: () => {
       stopLoop();
-      startMenu.show();
+      familiarization.stop();
+      audioManager.stopAll();
+      if (finishBtnEl) finishBtnEl.classList.add("hidden");
+      document.getElementById("inventoryBar")?.classList.add("hidden");
+      topToolbarEl?.classList.add("hidden");
+      zipBoxModal.hide();
+      openStartMenu();
     },
   });
 
@@ -53,49 +157,64 @@ function bootstrap() {
     ui,
     sceneManager,
     sceneEl,
-
-    scene: null,     
+    scene: null,
     assets: {
       get: () => null
     },
-
     raycastFromMouse: () => null,
-
-    changeScene: (name, id) => changeScene(name, id), // Передаем ID сцены
+    changeScene: (name, id) => changeScene(name, id),
   };
 
   const hangarScene = new HangarScene(app);
   const driverScene = new DriverScene(app);
-  const commanderScene = new CommanderScene(app); // <--- 2. СОЗДАНИЕ ЭКЗЕМПЛЯРА
+  const commanderScene = new CommanderScene(app);
+
+  const zipBoxModal = new ZipBoxModal({
+    state,
+    onInventoryChange: (snapshot) => {
+      updateInventoryBar(snapshot);
+      hangarScene?.zipBox?.syncDOM();
+    },
+  });
+
+  app.openZipBoxModal = () => {
+    zipBoxModal.show();
+  };
 
   const changeScene = (name, sceneId) => {
     switch (name) {
       case "hangar":
         sceneManager.change(hangarScene, sceneId || "scene-hangar");
+        app.getScene = () => sceneManager.currentScene;
         break;
-
       case "driver":
         sceneManager.change(driverScene, sceneId || "scene-driver");
         break;
-        
-      case "commander": // <--- 3. НОВЫЙ КЕЙС ДЛЯ КОМАНДИРА
+      case "commander":
         sceneManager.change(commanderScene, sceneId || "scene-commander");
+        break;
+      case "heater":
+        sceneManager.change(null, sceneId || "scene-heater");
+        hangarScene.syncHeaterDOM();
+        break;
+      case "zip-box":
+        sceneManager.change(null, sceneId || "scene-zip-box");
+        hangarScene.syncZipBoxDOM();
         break;
     }
   };
 
+  // 4. Игровой цикл
   let rafId = null;
   let isLoopRunning = false;
 
   const startLoop = () => {
     if (isLoopRunning) return;
     isLoopRunning = true;
-
     let lastTs = performance.now();
 
     const loop = (ts) => {
       if (!isLoopRunning) return;
-
       const dt = Math.max(0, (ts - lastTs) / 1000);
       lastTs = ts;
 
@@ -104,48 +223,91 @@ function bootstrap() {
 
       rafId = requestAnimationFrame(loop);
     };
-
     rafId = requestAnimationFrame(loop);
   };
 
   const stopLoop = () => {
     isLoopRunning = false;
-
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;
     }
   };
 
+  const familiarization = new FamiliarizationController({
+    app,
+    onExit: () => {
+      audioManager.stopAll();
+      openStartMenu();
+    },
+  });
+
+  // 5. Меню запуска (с интеграцией audioManager.init)
   const startMenu = new StartMenu({
     rootEl: startMenuContainerEl,
 
-    onTrainingStart: ({ startMethod, ambientTemp }) => {
+    onTrainingStart: ({ startMethod, ambientTemp, fuelType }) => {
+      familiarization.stop();
+      // Разблокируем звук при первом реальном действии пользователя
+      audioManager.init(); 
+      audioManager.stopAll();
+      
       stopLoop();
 
       state.setScenario({
         startMethod,
-        ambientTempC: ambientTemp
+        ambientTempC: ambientTemp,
+        fuelType,
       });
 
       state.reset();
       training.setGoal({
         startMethod,
-        ambientTempC: ambientTemp
+        ambientTempC: ambientTemp,
+        fuelType,
       });
 
+      document.body.classList.remove("menu-open");
+      hangarScene.leaveMenuBackdrop();
       startMenu.hide();
-
+      if (finishBtnEl) finishBtnEl.classList.remove("hidden");
+      document.getElementById("inventoryBar")?.classList.remove("hidden");
+      topToolbarEl?.classList.remove("hidden");
+      updateInventoryBar(state.getSnapshot());
       changeScene("hangar");
-
       startLoop();
     },
 
+    onFamiliarization: (mode) => {
+      audioManager.init();
+      audioManager.stopAll();
+      stopLoop();
+      state.reset();
+      document.body.classList.remove("menu-open");
+      hangarScene.leaveMenuBackdrop();
+      startMenu.hide();
+      if (finishBtnEl) finishBtnEl.classList.add("hidden");
+      document.getElementById("inventoryBar")?.classList.add("hidden");
+      topToolbarEl?.classList.add("hidden");
+      zipBoxModal.hide();
+      changeScene("driver");
+      familiarization.start(mode);
+    },
+
     onInstruction: () => {
-      // позже тут будет обучение
+      // Также разблокируем звук, если нажали инструкцию
+      audioManager.init(); 
     },
   });
 
+  openStartMenu = () => {
+    document.body.classList.add("menu-open");
+    startMenu.show();
+    changeScene("hangar");
+    hangarScene.enterMenuBackdrop();
+  };
+
+  // 6. Обработчики кнопок
   if (finishBtnEl) {
     finishBtnEl.addEventListener("click", () => {
       stopLoop();
@@ -153,12 +315,39 @@ function bootstrap() {
     });
   }
 
+  const heaterBackBtn = document.getElementById("heaterBackBtn");
+  if (heaterBackBtn) {
+    heaterBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
+      setTimeout(() => {
+        hangarScene?.showSideView?.();
+      }, 50);
+    });
+  }
+
+  const zipBackBtn = document.getElementById("zipBackBtn");
+  if (zipBackBtn) {
+    zipBackBtn.addEventListener("click", () => {
+      changeScene("hangar");
+    });
+  }
+
+  if (zipBox2Btn) {
+    zipBox2Btn.addEventListener("click", () => {
+      zipBoxModal.show();
+    });
+  }
+
+  const openZipBoxModalFromSceneBtn = document.getElementById("openZipBoxModalFromSceneBtn");
+  if (openZipBoxModalFromSceneBtn) {
+    openZipBoxModalFromSceneBtn.addEventListener("click", () => {
+      zipBoxModal.show();
+    });
+  }
+
+  // 7. Запуск — меню поверх 3D-танка в ангаре
   FullscreenManager.setup();
-
-  startMenu.show();
-
-  // стартовая сцена
-  changeScene("hangar");
+  openStartMenu();
 }
 
 if (document.readyState === "loading") {

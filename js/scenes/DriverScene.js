@@ -9,9 +9,6 @@ export class DriverScene {
     init() {
         console.log("DriverScene init");
 
-        const finishBtn = document.getElementById("simFinishButton");
-        if (finishBtn) finishBtn.classList.remove("hidden");
-
         if (this.el) {
             this.el.addEventListener("click", this.handleExit);
         }
@@ -34,9 +31,6 @@ export class DriverScene {
     dispose() {
         console.log("DriverScene dispose");
         
-        const finishBtn = document.getElementById("simFinishButton");
-        if (finishBtn) finishBtn.classList.add("hidden");
-
         if (this.el) {
             this.el.removeEventListener("click", this.handleExit);
         }

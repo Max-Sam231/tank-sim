@@ -1,0 +1,158 @@
+function getHeaterWarmupScenario(ambientTemp = -20) {
+  return {
+    id: "heater-warmup",
+    title: `Разогрев подогревателем: ${ambientTemp}°C, дизель`,
+    stages: [
+      {
+        id: "stage-preparation-non-strict",
+        title: "Подготовительные действия в кабине",
+        strict: false,
+        steps: [
+          {
+            id: "gear-neutral",
+            title: "Убедиться, что рычаг избирателя находится в нейтральном положении",
+            auto: true,
+            completeWhen: (s) => s.gearLever === "neutral",
+          },
+          {
+            id: "parking-brake",
+            title: "Затормозить машину остановочным тормозом",
+            gateKeys: ["parkingBrakeLatched"],
+            completeWhen: (s) => Boolean(s.parkingBrakeLatched),
+          },
+          {
+            id: "battery-on",
+            title: "Включить выключатель аккумуляторных батарей",
+            gateKeys: ["isBatteryOn"],
+            completeWhen: (s) => Boolean(s.isBatteryOn) && s.voltage >= 22 && s.voltage <= 26,
+          }
+        ]
+      },
+      {
+        id: "stage-heater-hull-preparation",
+        title: "Подготовка подогревателя снаружи машины",
+        strict: true,
+        steps: [
+          {
+            id: "latch-open",
+            title: "Открыть три шпингалета лючка подогревателя",
+            gateKeys: ["hingeLatch1", "hingeLatch2", "hingeLatch3"],
+            completeWhen: (s) => Boolean(s.hingeLatch1) && Boolean(s.hingeLatch2) && Boolean(s.hingeLatch3),
+          },
+          {
+            id: "panel-open",
+            title: "Открыть борт лючка подогревателя",
+            gateKeys: ["sidePanelOpen"],
+            completeWhen: (s) => Boolean(s.sidePanelOpen),
+          },
+          {
+            id: "unscrew-bolts",
+            title: "Выкрутить два болта крышки выхлопа подогревателя",
+            gateKeys: ["exhaustBolt1", "exhaustBolt2"],
+            completeWhen: (s) => Boolean(s.exhaustBolt1) && Boolean(s.exhaustBolt2),
+          },
+          {
+            id: "cover-remove",
+            title: "Снять крышку выхлопа",
+            gateKeys: ["exhaustCoverRemoved"],
+            completeWhen: (s) => Boolean(s.exhaustCoverRemoved),
+          },
+          {
+            id: "cap-install",
+            title: "Установить козырек выхлопа",
+            gateKeys: ["exhaustCapInstalled"],
+            completeWhen: (s) => Boolean(s.exhaustCapInstalled),
+          }
+        ]
+      },
+      {
+        id: "stage-heater-startup",
+        title: "Запуск подогревателя",
+        strict: true,
+        steps: [
+          {
+            id: "valve-open",
+            title: "В кабине командира открыть топливный кран подогревателя (рычаг вперёд)",
+            gateKeys: ["heaterFuelValve"],
+            completeWhen: (s) => Boolean(s.heaterFuelValve),
+          },
+          {
+            id: "spark-plug-on",
+            title: "Установить переключатель «СВЕЧА – МОТОР» в положение «СВЕЧА» (влево)",
+            gateKeys: ["sparkPlug"],
+            completeWhen: (s) => s.sparkPlug === 2,
+          },
+          {
+            id: "motor-start-on",
+            title: "Удерживая «СВЕЧА», включить выключатель «ПУСК МОТОРА» подогревателя",
+            gateKeys: ["engineStart"],
+            completeWhen: (s) => s.sparkPlug === 2 && s.engineStart !== 1,
+          },
+          {
+            id: "heater-burning",
+            title: "Дождаться воспламенения топлива в подогревателе (хлопок и гул)",
+            auto: true,
+            completeWhen: (s) => Boolean(s.heaterBurning),
+          },
+          {
+            id: "spark-plug-motor",
+            title: "Сразу после воспламенения перевести переключатель «СВЕЧА – МОТОР» в положение «МОТОР» (вправо)",
+            gateKeys: ["sparkPlug"],
+            completeWhen: (s) => Boolean(s.heaterBurning) && s.sparkPlug === 0,
+          },
+          {
+            id: "motor-start-release",
+            title: "Отпустить выключатель «ПУСК МОТОРА» (вернуть в нейтральное положение)",
+            gateKeys: ["engineStart"],
+            completeWhen: (s) => Boolean(s.heaterBurning) && s.sparkPlug === 0 && s.engineStart === 1,
+          }
+        ]
+      },
+      {
+        id: "stage-warmup-and-stop",
+        title: "Разогрев и остановка",
+        strict: true,
+        steps: [
+          {
+            id: "engine-warmup",
+            title: "Дождаться прогрева двигателя (жидкость ≥ 40 °C, масло ≥ 30 °C)",
+            auto: true,
+            completeWhen: (s) => s.coolant_temp >= 40 && s.oil_temp >= 30,
+          },
+          {
+            id: "valve-close",
+            title: "В кабине командира закрыть топливный кран подогревателя (рычаг назад)",
+            gateKeys: ["heaterFuelValve"],
+            completeWhen: (s) => !Boolean(s.heaterFuelValve),
+          },
+          {
+            id: "spark-plug-off",
+            title: "После продувки котла (15–30 с) выключить переключатель «СВЕЧА – МОТОР» (в нейтраль)",
+            gateKeys: ["sparkPlug"],
+            completeWhen: (s) => !Boolean(s.heaterFuelValve) && s.sparkPlug === 1,
+          },
+          {
+            id: "cap-remove",
+            title: "Снять козырек выхлопа подогревателя и убрать в ЗИП",
+            gateKeys: ["exhaustCapInstalled"],
+            completeWhen: (s) => !Boolean(s.exhaustCapInstalled),
+          },
+          {
+            id: "cover-screw",
+            title: "Закрутить крышку выхлопа подогревателя",
+            gateKeys: ["exhaustCoverRemoved", "exhaustBolt1", "exhaustBolt2"],
+            completeWhen: (s) => !Boolean(s.exhaustCoverRemoved) && !Boolean(s.exhaustBolt1) && !Boolean(s.exhaustBolt2),
+          },
+          {
+            id: "panel-close",
+            title: "Закрыть борт лючка подогревателя",
+            gateKeys: ["sidePanelOpen", "hingeLatch1", "hingeLatch2", "hingeLatch3"],
+            completeWhen: (s) => !Boolean(s.sidePanelOpen) && !Boolean(s.hingeLatch1) && !Boolean(s.hingeLatch2) && !Boolean(s.hingeLatch3),
+          }
+        ]
+      }
+    ]
+  };
+}
+
+export { getHeaterWarmupScenario };
