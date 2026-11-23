@@ -514,11 +514,21 @@ check("Кабина командира: хитбокс крана подогре
   assert(!window.document.querySelector('#scene-commander [data-action="toggle_commander_view"]'), "хитбокс toggle_commander_view не должен присутствовать");
 
   assert(!state.heaterFuelValve, "клапан изначально должен быть закрыт");
+  assert(state.commanderView === "straight", "вид командира изначально прямой");
   valveHitbox.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   assert(state.heaterFuelValve, "клик по хитбоксу не открыл топливный кран подогревателя");
+  assert(state.commanderView === "tilted", "клик по крану должен наклонить взгляд вниз к тросику");
+  assert(scene.el.classList.contains("commander-view-tilted"), "нет класса наклона");
+  assert(scene.el.classList.contains("valve-up"), "нет класса поднятого рычага/тросика");
 
   valveHitbox.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
   assert(!state.heaterFuelValve, "повторный клик не закрыл топливный кран подогревателя");
+  assert(!scene.el.classList.contains("valve-up"), "класс valve-up должен сняться при закрытом кране");
+
+  const lookBtn = window.document.getElementById("commanderLookBtn");
+  assert(lookBtn, "нет кнопки наклона взгляда");
+  lookBtn.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert(state.commanderView === "straight", "кнопка взгляда не вернула прямой вид");
 
   scene.dispose();
 });
@@ -2141,8 +2151,8 @@ check("Сигнальные лампы не перекрывают органы 
 
   assert(clashes.length === 0, clashes.join("; "));
 
-  // Пульт ПВ-82 смонтирован в правом верхнем секторе
-  const PV82_ZONE = { minX: 1350, minY: 35, maxX: 1880, maxY: 170 };
+  // Пульт ПВ-82 сдвинут левее/ниже (не на правом верхнем краю)
+  const PV82_ZONE = { minX: 1220, minY: 90, maxX: 1760, maxY: 240 };
   for (const lamp of lamps) {
     const inside =
       lamp.minX >= PV82_ZONE.minX &&

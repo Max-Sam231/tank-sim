@@ -26,11 +26,14 @@ body {
   color: #e6edf3;
 }
 
+/* Снизу по центру — не накрывает ПВ-82 и верх щитка */
 .action-notifier {
   position: fixed;
-  top: 120px;
-  right: 18px;
-  max-width: 320px;
+  top: auto;
+  right: auto;
+  bottom: 72px;
+  left: 50%;
+  max-width: min(420px, calc(100vw - 32px));
   z-index: 3000;
   padding: 12px 16px;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -39,11 +42,12 @@ body {
   color: #f4f7fb;
   font-size: 15px;
   line-height: 1.35;
+  text-align: center;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(8px);
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateX(-50%) translateY(10px);
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
@@ -51,7 +55,7 @@ body {
 
 .action-notifier.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
 }
 
 .app {
@@ -293,10 +297,45 @@ body.app-debug .gauge-hitbox:hover {
 .pv82-title-text {
   fill: #dce3e8;
   font-family: "Courier New", monospace, sans-serif;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   pointer-events: none;
+}
+.azr-legend-plate {
+  fill: rgba(12, 16, 20, 0.88);
+  stroke: rgba(220, 230, 240, 0.45);
+  stroke-width: 2;
+}
+.azr-legend-title {
+  fill: #e8eef3;
+  font-family: "Courier New", monospace, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+.azr-legend-on,
+.azr-legend-off {
+  font-family: "Courier New", monospace, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  pointer-events: none;
+  fill: #6a737d;
+  opacity: 0.45;
+  transition: fill 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+}
+/* Активное положение подсвечивается */
+.azr-legend[data-state="on"] .azr-legend-on {
+  fill: #3fb950;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(63, 185, 80, 0.85));
+}
+.azr-legend[data-state="off"] .azr-legend-off {
+  fill: #ff7b72;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 123, 114, 0.85));
 }
 .pv82-labels-strip {
   fill: #15181b;
@@ -1655,7 +1694,7 @@ body.app-prod #scene-zip-box .hitbox:hover {
 body.menu-open .view-switch-btn,
 body.menu-open .xray-btn,
 body.menu-open .test-sensors-button,
-body.menu-open #inventoryBar,
+body.menu-open #inventoryDock,
 body.menu-open #simFinishButton,
 body.menu-open .systems-test-panel {
   display: none !important;
@@ -2244,46 +2283,119 @@ body.app-prod #scene-hangar .hitbox:hover {
   filter: none;
 }
 
-/* === Панель Инвентаря (Inventory Bar) === */
-.inventory-bar {
+/* === Снаряжение: (!) + выезжающая боковая панель === */
+.inventory-dock {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 14px;
+  bottom: 14px;
   z-index: 9999;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  background: rgba(11, 17, 26, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.inventory-dock.hidden {
+  display: none !important;
+}
+
+.inventory-toggle-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 200, 80, 0.85);
+  background: rgba(18, 22, 28, 0.92);
+  color: #ffc850;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55), 0 0 12px rgba(255, 200, 80, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inventory-toggle-btn:hover {
+  background: rgba(36, 42, 52, 0.96);
+  transform: scale(1.06);
+}
+
+.inventory-toggle-btn:active {
+  transform: scale(0.96);
+}
+
+.inventory-toggle-btn.is-open {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #e6edf3;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+.inventory-panel {
+  pointer-events: auto;
+  width: 260px;
+  max-width: min(260px, calc(100vw - 80px));
+  background: rgba(11, 17, 26, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  padding: 6px 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
   color: #8b949e;
-  pointer-events: none;
-  user-select: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateX(-12px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
 }
 
-.inventory-bar.hidden {
-  display: none !important;
+.inventory-dock.is-open .inventory-panel {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.inventory-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.inventory-panel-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b949e;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.inventory-panel-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e6edf3;
+}
+
+.inventory-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
 }
 
 .inventory-title {
   font-weight: bold;
   color: #c9d1d9;
+  letter-spacing: 0.6px;
 }
 
 .inventory-item {
   color: #c9d1d9;
-}
-
-.inventory-divider {
-  color: rgba(255, 255, 255, 0.2);
 }
 
 .status-value {

@@ -26,16 +26,32 @@
       </button>
       <button class="test-sensors-button" id="testSensorsButton" type="button">Датчики</button>
       
-      <!-- Панель инвентаря -->
-      <div class="inventory-bar hidden" id="inventoryBar">
-        <span class="inventory-title">СНАРЯЖЕНИЕ:</span>
-        <div class="inventory-item" id="inv-key">
-          Ключ ЗИП: <span class="status-value status-red" id="inv-key-status">нет</span>
-        </div>
-        <div class="inventory-divider">|</div>
-        <div class="inventory-item" id="inv-visor">
-          Козырек выхлопа: <span class="status-value status-red" id="inv-visor-status">нет</span>
-        </div>
+      <!-- Снаряжение: кнопка (!) + выезжающая боковая панель -->
+      <div class="inventory-dock hidden" id="inventoryDock">
+        <button
+          class="inventory-toggle-btn"
+          id="inventoryToggleBtn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="inventoryPanel"
+          title="Снаряжение"
+        >
+          !
+        </button>
+        <aside class="inventory-panel" id="inventoryPanel" aria-hidden="true">
+          <div class="inventory-panel-header">
+            <span class="inventory-title">СНАРЯЖЕНИЕ</span>
+            <button class="inventory-panel-close" id="inventoryCloseBtn" type="button" title="Закрыть" aria-label="Закрыть">✕</button>
+          </div>
+          <div class="inventory-panel-body">
+            <div class="inventory-item" id="inv-key">
+              Ключ ЗИП: <span class="status-value status-red" id="inv-key-status">нет</span>
+            </div>
+            <div class="inventory-item" id="inv-visor">
+              Козырек выхлопа: <span class="status-value status-red" id="inv-visor-status">нет</span>
+            </div>
+          </div>
+        </aside>
       </div>
 
       <div class="debug-console" id="debugConsole" aria-live="polite"></div>
@@ -513,36 +529,36 @@
               </polygon>
               <!-- Сигнальная лампа «ВО» -->
               <polygon class="hitbox" data-action="air-intake" points="1125,600 1175,600 1175,650 1125,650" title="Сигнальная лампа «ВО» (воздухоочиститель)"></polygon>
-              <!-- Выносной пульт ПВ-82 с 4 сигнальными лампами (правый верхний сектор) -->
+              <!-- Выносной пульт ПВ-82 (сдвинут левее/ниже — не пересекается с тостами и правым краем) -->
               <g class="pv82-panel-assembly" id="pv82Panel">
                 <!-- Внешний литой корпус пульта -->
-                <rect x="1380" y="35" width="490" height="135" rx="12" class="pv82-casing-body"></rect>
-                <rect x="1384" y="39" width="482" height="127" rx="9" class="pv82-casing-inner"></rect>
+                <rect x="1260" y="95" width="490" height="135" rx="12" class="pv82-casing-body"></rect>
+                <rect x="1264" y="99" width="482" height="127" rx="9" class="pv82-casing-inner"></rect>
 
                 <!-- Монтажное ухо / кабельный ввод -->
-                <rect x="1348" y="70" width="34" height="65" rx="4" class="pv82-bracket"></rect>
-                <circle cx="1362" cy="102" r="8" class="pv82-bracket-bolt"></circle>
+                <rect x="1228" y="130" width="34" height="65" rx="4" class="pv82-bracket"></rect>
+                <circle cx="1242" cy="162" r="8" class="pv82-bracket-bolt"></circle>
 
                 <!-- Заводская табличка наименования прибора -->
-                <rect x="1490" y="43" width="270" height="18" rx="4" class="pv82-title-plate"></rect>
-                <text x="1625" y="56" class="pv82-title-text" text-anchor="middle">ПУЛЬТ ВЫНОСНОЙ ПВ-82</text>
+                <rect x="1345" y="101" width="320" height="24" rx="4" class="pv82-title-plate"></rect>
+                <text x="1505" y="118" class="pv82-title-text" text-anchor="middle">ПУЛЬТ ВЫНОСНОЙ ПВ-82</text>
 
                 <!-- Планка трафаретных обозначений сигналов -->
-                <rect x="1430" y="132" width="430" height="26" rx="4" class="pv82-labels-strip"></rect>
-                <line x1="1530" y1="134" x2="1530" y2="156" class="pv82-strip-divider"></line>
-                <line x1="1630" y1="134" x2="1645" y2="156" class="pv82-strip-divider diagonal"></line>
-                <line x1="1730" y1="134" x2="1730" y2="156" class="pv82-strip-divider"></line>
+                <rect x="1310" y="192" width="430" height="26" rx="4" class="pv82-labels-strip"></rect>
+                <line x1="1410" y1="194" x2="1410" y2="216" class="pv82-strip-divider"></line>
+                <line x1="1510" y1="194" x2="1525" y2="216" class="pv82-strip-divider diagonal"></line>
+                <line x1="1610" y1="194" x2="1610" y2="216" class="pv82-strip-divider"></line>
 
-                <text x="1480" y="149" class="pv82-label-text" text-anchor="middle">ОБОРОТЫ ДВИГАТ.</text>
-                <text x="1580" y="149" class="pv82-label-text" text-anchor="middle">ОХЛ. ЖИДКОСТЬ</text>
-                <text x="1680" y="149" class="pv82-label-text" text-anchor="middle">ВЕНТ.</text>
-                <text x="1780" y="149" class="pv82-label-text" text-anchor="middle">ТОРМОЗ</text>
+                <text x="1360" y="209" class="pv82-label-text" text-anchor="middle">ОБОРОТЫ ДВИГАТ.</text>
+                <text x="1460" y="209" class="pv82-label-text" text-anchor="middle">ОХЛ. ЖИДКОСТЬ</text>
+                <text x="1560" y="209" class="pv82-label-text" text-anchor="middle">ВЕНТ.</text>
+                <text x="1660" y="209" class="pv82-label-text" text-anchor="middle">ТОРМОЗ</text>
 
                 <!-- Хитбоксы 4 сигнальных ламп ПВ-82 -->
-                <polygon class="hitbox" data-action="lamp-pv82-rpm" points="1450,65 1510,65 1510,125 1450,125" title="Сигнальная лампа «ОБОРОТЫ ДВИГАТ.» (ПВ-82)"></polygon>
-                <polygon class="hitbox" data-action="lamp-pv82-coolant" points="1550,65 1610,65 1610,125 1550,125" title="Сигнальная лампа «ОХЛ. ЖИДКОСТЬ» (ПВ-82)"></polygon>
-                <polygon class="hitbox" data-action="lamp-pv82-fan" points="1650,65 1710,65 1710,125 1650,125" title="Сигнальная лампа «ВЕНТ. / ДАВЛЕН. ДВ.» (ПВ-82)"></polygon>
-                <polygon class="hitbox" data-action="lamp-pv82-brake" points="1750,65 1810,65 1810,125 1750,125" title="Сигнальная лампа «ТОРМОЗ» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-rpm" points="1330,125 1390,125 1390,185 1330,185" title="Сигнальная лампа «ОБОРОТЫ ДВИГАТ.» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-coolant" points="1430,125 1490,125 1490,185 1430,185" title="Сигнальная лампа «ОХЛ. ЖИДКОСТЬ» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-fan" points="1530,125 1590,125 1590,185 1530,185" title="Сигнальная лампа «ВЕНТ. / ДАВЛЕН. ДВ.» (ПВ-82)"></polygon>
+                <polygon class="hitbox" data-action="lamp-pv82-brake" points="1630,125 1690,125 1690,185 1630,185" title="Сигнальная лампа «ТОРМОЗ» (ПВ-82)"></polygon>
               </g>
               <!-- Выключатель «ОТКАЧКА МАСЛА ИЗ КП» -->
               <polygon class="hitbox" data-action="oil-pump-gearbox" points="1495,540 1545,540 1545,590 1495,590" title="Выключатель «ОТКАЧКА МАСЛА ИЗ КП»">
@@ -566,6 +582,13 @@
               <polygon class="hitbox" data-action="ammeter-button" points="840,340 870,340 870,370 840,370" title="Кнопка вольтамперметра ВА-540"></polygon>
               <!-- Автоматы защиты сети (АЗР) -->
               <polygon class="hitbox" data-action="azr" points="1240,660 1560,660 1560,1050 1240,1050" title="Автоматы защиты сети (АЗР)"></polygon>
+              <!-- Легенда положений АЗР: вверх = ВКЛ, вниз = ВЫКЛ (активная подсвечивается) -->
+              <g class="azr-legend" id="azrLegend" data-state="closed" pointer-events="none">
+                <rect x="1568" y="780" width="150" height="110" rx="8" class="azr-legend-plate"></rect>
+                <text x="1643" y="808" class="azr-legend-title" text-anchor="middle">АЗР</text>
+                <text x="1643" y="838" class="azr-legend-on" text-anchor="middle">↑ ВКЛ</text>
+                <text x="1643" y="872" class="azr-legend-off" text-anchor="middle">↓ ВЫКЛ</text>
+              </g>
             </svg>
 
             <div class="overlay-layer" aria-hidden="true"></div>
@@ -577,26 +600,30 @@
       <button class="view-switch-btn" data-action="exit_to_hangar" style="top: 20px; right: 20px; z-index: 100">
         ← В ангар
       </button>
+      <!-- Кнопка наклона взгляда (без data-action=toggle_commander_view — smoke-тест запрещает хитбокс) -->
+      <button class="view-switch-btn commander-look-btn" id="commanderLookBtn" type="button" style="top: 20px; right: 160px; z-index: 100">
+        Взгляд вниз
+      </button>
       <div class="scene-content" id="scene-commander-content">
         <!-- Фон: прямой вид -->
         <img class="cmd-bg cmd-bg-straight" src="./img/commander/straight.png" alt="Commander View Straight" />
 
-        <!-- Фон: наклоненный вид, рычаг ОПУЩЕН -->
-        <img class="cmd-bg cmd-bg-tilted-down" src="./img/commander/tilted.png" alt="Commander Tilted Down" />
+        <!-- Фон: наклоненный вид, рычаг/тросик ОПУЩЕН (кран ЗАКРЫТ) -->
+        <img class="cmd-bg cmd-bg-tilted-down" src="./img/commander/tilted.png" alt="Рычаг тросового привода опущен" />
 
-        <!-- Фон: наклоненный вид, рычаг ПОДНЯТ (полный экран) -->
-        <img class="cmd-bg cmd-bg-tilted-up" src="./img/commander/fuel_valve_up.png" alt="Commander Tilted Up" />
+        <!-- Фон: наклоненный вид, рычаг/тросик ПОДНЯТ (кран ОТКРЫТ) -->
+        <img class="cmd-bg cmd-bg-tilted-up" src="./img/commander/fuel_valve_up.png" alt="Рычаг тросового привода поднят" />
 
         <div class="overlay-layer" aria-hidden="true"></div>
 
         <svg class="hitbox-layer commander-hitbox-layer" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet"
           aria-hidden="true">
-          <!-- Топливный кран подогревателя (рычаг подачи топлива) -->
+          <!-- Топливный кран подогревателя (рычаг тросового привода) -->
           <polygon
             class="hitbox"
             data-action="toggle_heater_fuel_valve"
             points="1140,945 1265,945 1265,1065 1140,1065"
-            title="Топливный кран подогревателя"
+            title="Рычаг тросового привода топливного крана подогревателя"
           />
         </svg>
       </div>

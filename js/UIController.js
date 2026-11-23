@@ -397,15 +397,16 @@ class UIController {
     this._renderManometerTooltip(snapshot);
     this._renderGaugeTooltip();
 
-    // Для командира
+    // Для командира: наклон взгляда + картинки тросика (рычаг вверх/вниз)
     const commanderSection = document.getElementById("scene-commander");
-
-    // Проверяем, активна ли сейчас сцена командира (она не скрыта)
     if (commanderSection && !commanderSection.classList.contains("hidden")) {
-      if (snapshot.commanderView === "tilted") {
-        commanderSection.classList.add("commander-view-tilted");
-      } else {
-        commanderSection.classList.remove("commander-view-tilted");
+      const isTilted = snapshot.commanderView === "tilted";
+      const isValveUp = Boolean(snapshot.heaterFuelValve);
+      commanderSection.classList.toggle("commander-view-tilted", isTilted);
+      commanderSection.classList.toggle("valve-up", isTilted && isValveUp);
+      const lookBtn = document.getElementById("commanderLookBtn");
+      if (lookBtn) {
+        lookBtn.textContent = isTilted ? "Взгляд прямо" : "Взгляд вниз";
       }
     }
 

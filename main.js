@@ -70,9 +70,21 @@ function bootstrap() {
   // Также пробуем разблокировать сразу при загрузке (если браузер уже разрешил)
   setTimeout(() => audioManager.init(), 100);
 
+  const inventoryDock = document.getElementById("inventoryDock");
+  const inventoryToggleBtn = document.getElementById("inventoryToggleBtn");
+  const inventoryPanel = document.getElementById("inventoryPanel");
+  const inventoryCloseBtn = document.getElementById("inventoryCloseBtn");
+
+  function setInventoryOpen(open) {
+    if (!inventoryDock || !inventoryToggleBtn || !inventoryPanel) return;
+    inventoryDock.classList.toggle("is-open", open);
+    inventoryToggleBtn.classList.toggle("is-open", open);
+    inventoryToggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    inventoryPanel.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+
   function updateInventoryBar(snapshot) {
-    const bar = document.getElementById("inventoryBar");
-    if (!bar) return;
+    if (!inventoryDock) return;
 
     const keyStatus = document.getElementById("inv-key-status");
     const visorStatus = document.getElementById("inv-visor-status");
@@ -103,6 +115,24 @@ function bootstrap() {
     }
   }
 
+  /** Подсветка активной надписи легенды АЗР: 2=ВКЛ, 1=ВЫКЛ, 0=крышка. */
+  function updateAzrLegend(snapshot) {
+    const legend = document.getElementById("azrLegend");
+    if (!legend) return;
+    const azr = Number(snapshot?.azr ?? 0);
+    const state = azr === 2 ? "on" : azr === 1 ? "off" : "closed";
+    legend.setAttribute("data-state", state);
+  }
+
+  if (inventoryToggleBtn) {
+    inventoryToggleBtn.addEventListener("click", () => {
+      setInventoryOpen(!inventoryDock?.classList.contains("is-open"));
+    });
+  }
+  if (inventoryCloseBtn) {
+    inventoryCloseBtn.addEventListener("click", () => setInventoryOpen(false));
+  }
+
   state.subscribe((snapshot) => {
     audioManager.onStateChange(snapshot);
     exhaustSmoke.update(snapshot.engineRunning, {
@@ -121,6 +151,7 @@ function bootstrap() {
     document.getElementById("heater-exhaust-fx")?.classList.toggle("invisible", !heaterFxOn);
 
     updateInventoryBar(snapshot);
+    updateAzrLegend(snapshot);
   });
 
   const ui = new UIController({
@@ -152,7 +183,8 @@ function bootstrap() {
       familiarization.stop();
       audioManager.stopAll();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
-      document.getElementById("inventoryBar")?.classList.add("hidden");
+      inventoryDock?.classList.add("hidden");
+      setInventoryOpen(false);
       topToolbarEl?.classList.add("hidden");
       zipBoxModal.hide();
       openStartMenu();
@@ -183,6 +215,7 @@ function bootstrap() {
     state,
     onInventoryChange: (snapshot) => {
       updateInventoryBar(snapshot);
+      updateAzrLegend(snapshot);
       hangarScene?.zipBox?.syncDOM();
     },
   });
@@ -281,9 +314,11 @@ function bootstrap() {
       hangarScene.leaveMenuBackdrop();
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.remove("hidden");
-      document.getElementById("inventoryBar")?.classList.remove("hidden");
+      inventoryDock?.classList.remove("hidden");
+      setInventoryOpen(false);
       topToolbarEl?.classList.remove("hidden");
       updateInventoryBar(state.getSnapshot());
+      updateAzrLegend(state.getSnapshot());
       changeScene("hangar");
       startLoop();
     },
@@ -297,7 +332,8 @@ function bootstrap() {
       hangarScene.leaveMenuBackdrop();
       startMenu.hide();
       if (finishBtnEl) finishBtnEl.classList.add("hidden");
-      document.getElementById("inventoryBar")?.classList.add("hidden");
+      inventoryDock?.classList.add("hidden");
+      setInventoryOpen(false);
       topToolbarEl?.classList.add("hidden");
       zipBoxModal.hide();
       changeScene("driver");
